@@ -204,7 +204,7 @@ export default function Home() {
 
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-between p-6 relative overflow-hidden transition-all duration-700 bg-background">
+    <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
 
       {/* Top Link: Lightbulb Button */}
       <a
@@ -245,7 +245,7 @@ export default function Home() {
         {/* The Big Card */}
         <form
           onSubmit={handleSendMessage}
-          className={`bg-white w-full rounded-3xl shadow-sm border border-black/5 p-8 flex flex-col justify-end transition-all duration-500
+          className={`bg-white w-full rounded-3xl shadow-sm border border-black/5 p-4 md:p-8 flex flex-col justify-end transition-all duration-500
               ${hasInteracted ? 'h-[160px]' : 'h-[320px] shadow-xl'}
             `}
         >
