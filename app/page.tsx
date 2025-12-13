@@ -197,10 +197,15 @@ export default function Home() {
         href="https://estudioprompt.com/banco-de-ideas/"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed top-12 left-1/2 -translate-x-1/2 z-[99999] p-4 bg-transparent outline-none border-none cursor-pointer"
+        onClick={(e) => {
+          // Force navigation if default fails for some reason
+          // e.preventDefault(); // Don't prevent default unless we are 100% sure href is broken, but let's leave default behavior and just add log or backup
+          console.log("Lightbulb clicked");
+        }}
+        className="fixed top-10 left-1/2 -translate-x-1/2 z-[99999] p-4 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full cursor-pointer shadow-sm transition-all duration-300"
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >
-        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-gray-500 hover:text-yellow-500 transition-colors drop-shadow-sm">
+        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-gray-600 hover:text-[#C5A47E] transition-colors">
           <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 18h6"></path>
           <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 22h4"></path>
           <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
