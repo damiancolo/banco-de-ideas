@@ -192,18 +192,20 @@ export default function Home() {
   return (
     <main className="min-h-screen flex flex-col items-center justify-between p-6 relative overflow-hidden transition-all duration-700 bg-background">
 
-      {/* Top Icon: Lightbulb */}
-      <div className="fixed top-12 md:top-14 left-1/2 -translate-x-1/2 z-[9999] opacity-80 hover:opacity-100 transition-opacity cursor-pointer pointer-events-auto">
-        <a href="https://estudioprompt.com/banco-de-ideas/" target="_blank" rel="noopener noreferrer" className="block p-6">
-          <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-gray-500 hover:text-yellow-500 transition-colors">
-            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 18h6"></path>
-            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 22h4"></path>
-            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
-            {/* Robust click target: White fill with 0 opacity is safer than "transparent" for some touch drivers */}
-            <rect width="24" height="24" fill="white" fillOpacity="0" />
-          </svg>
-        </a>
-      </div>
+      {/* Top Link: Lightbulb Button */}
+      <a
+        href="https://estudioprompt.com/banco-de-ideas/"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed top-12 left-1/2 -translate-x-1/2 z-[99999] p-4 bg-transparent outline-none border-none cursor-pointer"
+        style={{ WebkitTapHighlightColor: 'transparent' }}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" className="text-gray-500 hover:text-yellow-500 transition-colors drop-shadow-sm">
+          <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 18h6"></path>
+          <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 22h4"></path>
+          <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
+        </svg>
+      </a>
 
       {/* Center Content */}
       <div className="w-full flex flex-col items-center justify-center flex-1 max-w-xl gap-8">
