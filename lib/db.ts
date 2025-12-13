@@ -10,23 +10,37 @@ export type SavedIdea = {
     category: 'user' | 'bisociation';
 };
 
-// Inicializar DB si no existe
-if (!fs.existsSync(DB_PATH)) {
-    // Asegurar directorio data existe
-    const dir = path.dirname(DB_PATH);
-    if (!fs.existsSync(dir)) {
-        fs.mkdirSync(dir, { recursive: true });
+// Inicializar DB si no existe (Solo si es posible escribir)
+try {
+    if (!fs.existsSync(DB_PATH)) {
+        const dir = path.dirname(DB_PATH);
+        if (!fs.existsSync(dir)) {
+            try {
+                fs.mkdirSync(dir, { recursive: true });
+            } catch (e) {
+                console.warn("Could not create data directory (expected in serverless):", e);
+            }
+        }
+        try {
+            fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2));
+        } catch (e) {
+            console.warn("Could not write init db (expected in serverless):", e);
+        }
     }
-    fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2));
+} catch (e) {
+    console.warn("FS access error:", e);
 }
 
 export function getIdeas(): SavedIdea[] {
     try {
-        const data = fs.readFileSync(DB_PATH, 'utf-8');
-        return JSON.parse(data);
+        if (fs.existsSync(DB_PATH)) {
+            const data = fs.readFileSync(DB_PATH, 'utf-8');
+            return JSON.parse(data);
+        }
     } catch (error) {
-        return [];
+        console.warn("Error reading DB:", error);
     }
+    return [];
 }
 
 export function saveIdea(text: string, category: 'user' | 'bisociation' = 'user'): SavedIdea {
@@ -39,7 +53,13 @@ export function saveIdea(text: string, category: 'user' | 'bisociation' = 'user'
     };
 
     ideas.unshift(newIdea); // Agregar al principio
-    fs.writeFileSync(DB_PATH, JSON.stringify(ideas, null, 2));
+
+    try {
+        fs.writeFileSync(DB_PATH, JSON.stringify(ideas, null, 2));
+    } catch (error) {
+        console.error("Error writing to DB (read-only system?):", error);
+        // En Vercel no podemos guardar, pero devolvemos la idea para que el frontend no falle
+    }
 
     return newIdea;
 }
