@@ -65,6 +65,14 @@ export default function Home() {
       if (!currentIdea) {
         // Step 1: User submitted an idea
         setCurrentIdea(userText);
+
+        // 🔥 GUARDAR IDEA EN SEGUNDO PLANO
+        fetch("/api/analyze", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ action: "save", idea: userText }),
+        }).catch(err => console.error("Error guardando idea:", err));
+
         setTimeout(() => {
           const reply: Message = {
             id: Date.now() + 1,

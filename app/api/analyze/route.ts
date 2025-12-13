@@ -29,6 +29,19 @@ export async function POST(request: Request) {
             }));
         }
 
+        if (action === "save") {
+            // Guardar la idea del usuario explícitamente
+            try {
+                if (idea) {
+                    saveIdea(idea, 'user');
+                    return NextResponse.json({ result: "Idea guardada" });
+                }
+            } catch (err) {
+                console.error("Error saving user idea:", err);
+                return NextResponse.json({ error: "No se pudo guardar la idea" }, { status: 500 });
+            }
+        }
+
         if (action === "similar") {
             const systemPrompt = "Eres un gestor de un Banco de Ideas innovador. Tu tarea es generar ideas similares. Devuelve JSON { result: [{id, title, summary}] }.";
 
