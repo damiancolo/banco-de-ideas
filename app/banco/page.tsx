@@ -5,7 +5,9 @@ import BancoView from '@/components/BancoView';
 export const dynamic = 'force-dynamic';
 
 export default function BancoPage() {
-    const ideas = getIdeas();
+    // Al ser entorno serverless sin persistencia real, evitamos leer del FS que puede estar vacío
+    // Dejamos que el cliente (BancoView) cargue de LocalStorage
+    const ideas: any[] = [];
 
     return (
         <main className="min-h-screen bg-[#F8F5F0] p-6 md:p-12 relative">

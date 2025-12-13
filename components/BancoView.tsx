@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 
 // Definición local del tipo para no importar desde lib/db (que tiene 'fs')
@@ -13,9 +13,39 @@ type SavedIdea = {
 
 export default function BancoView({ initialIdeas }: { initialIdeas: SavedIdea[] }) {
     const [view, setView] = useState<'user' | 'bisociation'>('user');
+    const [localIdeas, setLocalIdeas] = useState<SavedIdea[]>([]);
+
+    // Cargar ideas de LocalStorage al iniciar
+    useEffect(() => {
+        try {
+            const stored = JSON.parse(localStorage.getItem("ideas_bank_v1") || "[]");
+            // Mapear al formato interno si es necesario (el guardado en page.tsx tiene date en vez de createdAt)
+            const formatted = stored.map((item: any) => ({
+                id: item.id.toString(),
+                text: item.text,
+                createdAt: item.date || new Date().toISOString(), // Fallback a hoy si no hay fecha
+                category: item.category || 'user'
+            }));
+            setLocalIdeas(formatted);
+        } catch (e) {
+            console.error("Error loading local ideas", e);
+        }
+    }, []);
+
+    // Combinar ideas del servidor (si las hubiera) con las locales
+    // Damos prioridad a las locales para la vista de usuario para garantizar inmediatez
+    // Para bisociaciones, si vienen del servidor, las mostramos. Si no, quizá habría que migrarlas a local también.
+    // Por ahora, fusionamos todo.
+    const allIdeas = [...initialIdeas, ...localIdeas];
+
+    // Eliminar duplicados por ID (aunque los IDs son timestamps y es dificil que choquen)
+    const uniqueIdeas = Array.from(new Map(allIdeas.map(item => [item.id, item])).values());
+
+    // Ordenar por fecha descendente
+    uniqueIdeas.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
     // Filtrar ideas según la vista
-    const visibleIdeas = initialIdeas.filter(idea => {
+    const visibleIdeas = uniqueIdeas.filter(idea => {
         // Compatibilidad hacia atrás: si no tiene category, es user
         const category = idea.category || 'user';
         return category === view;
