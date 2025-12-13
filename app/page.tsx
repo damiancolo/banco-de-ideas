@@ -66,7 +66,13 @@ export default function Home() {
         // Step 1: User submitted an idea
         setCurrentIdea(userText);
 
-        // 🔥 GUARDAR IDEA EN SEGUNDO PLANO
+        // 🔥 GUARDAR IDEA EN LOCALSTORAGE (Persistencia Real Client-Side)
+        const newIdea = { id: Date.now(), text: userText, category: 'user', date: new Date().toISOString() };
+        const savedIdeas = JSON.parse(localStorage.getItem("ideas_bank_v1") || "[]");
+        savedIdeas.push(newIdea);
+        localStorage.setItem("ideas_bank_v1", JSON.stringify(savedIdeas));
+
+        // Intentar también persistencia en servidor (aunque sea efímera en Vercel)
         fetch("/api/analyze", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
