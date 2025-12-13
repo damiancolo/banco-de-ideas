@@ -1,4 +1,4 @@
-import { getIdeas } from '@/lib/db';
+// import { getIdeas } from '@/lib/db'; // Removed to avoid bundling fs
 import Link from 'next/link';
 import BancoView from '@/components/BancoView';
 

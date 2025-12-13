@@ -1,7 +1,30 @@
-import fs from 'fs';
 import path from 'path';
 
+// NOTA: Usamos require dinámico para 'fs' para evitar errores de compilación
+// en entornos Edge/Client donde 'fs' no existe.
+
 const DB_PATH = path.join(process.cwd(), 'data', 'ideas.json');
+const IS_PROD = process.env.NODE_ENV === 'production';
+
+// Inicialización Lazy
+function initDB() {
+    if (IS_PROD) return; // No tocar FS en prod
+    try {
+        const fs = require('fs');
+        if (!fs.existsSync(DB_PATH)) {
+            const dir = path.dirname(DB_PATH);
+            if (!fs.existsSync(dir)) {
+                fs.mkdirSync(dir, { recursive: true });
+            }
+            fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2));
+        }
+    } catch (e) {
+        // Ignorar errores de FS si falla el require
+    }
+}
+
+// Ejecutar init solo si estamos en node puro (opcional, o llamar dentro de save)
+try { initDB(); } catch (e) { }
 
 export type SavedIdea = {
     id: string;
@@ -10,46 +33,21 @@ export type SavedIdea = {
     category: 'user' | 'bisociation';
 };
 
-// Inicializar DB si no existe (Solo en desarrollo)
-// En producción (Vercel), evitamos tocar FS para no romper el build/runtime inmutables
-const IS_PROD = process.env.NODE_ENV === 'production';
-
-try {
-    if (!IS_PROD && !fs.existsSync(DB_PATH)) {
-        const dir = path.dirname(DB_PATH);
-        if (!fs.existsSync(dir)) {
-            try {
-                fs.mkdirSync(dir, { recursive: true });
-            } catch (e) {
-                console.warn("Could not create data directory:", e);
-            }
-        }
-        try {
-            fs.writeFileSync(DB_PATH, JSON.stringify([], null, 2));
-        } catch (e) {
-            console.warn("Could not write init db:", e);
-        }
-    }
-} catch (e) {
-    if (!IS_PROD) console.warn("FS access error:", e);
-}
-
 export function getIdeas(): SavedIdea[] {
-    if (IS_PROD) return []; // En Vercel no leemos del disco
-
+    if (IS_PROD) return [];
     try {
+        const fs = require('fs');
         if (fs.existsSync(DB_PATH)) {
             const data = fs.readFileSync(DB_PATH, 'utf-8');
             return JSON.parse(data);
         }
     } catch (error) {
-        console.warn("Error reading DB:", error);
+        // Silent fail
     }
     return [];
 }
 
 export function saveIdea(text: string, category: 'user' | 'bisociation' = 'user'): SavedIdea {
-    const ideas = getIdeas();
     const newIdea: SavedIdea = {
         id: Date.now().toString() + Math.random().toString().slice(2, 5),
         text,
@@ -57,11 +55,12 @@ export function saveIdea(text: string, category: 'user' | 'bisociation' = 'user'
         category
     };
 
-    if (IS_PROD) return newIdea; // En Vercel devolvemos éxito sin guardar en disco
-
-    ideas.unshift(newIdea); // Agregar al principio
+    if (IS_PROD) return newIdea;
 
     try {
+        const fs = require('fs');
+        const ideas = getIdeas(); // Esto ya usa require interno
+        ideas.unshift(newIdea);
         fs.writeFileSync(DB_PATH, JSON.stringify(ideas, null, 2));
     } catch (error) {
         console.error("Error writing to DB:", error);
