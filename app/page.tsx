@@ -249,7 +249,7 @@ export default function Home() {
               ${hasInteracted ? 'h-[160px]' : 'h-[320px] shadow-xl'}
             `}
         >
-          <div className="flex items-center gap-4 w-full">
+          <div className="flex items-center gap-2 md:gap-4 w-full">
             {/* Plus Button */}
             <button
               type="button"
@@ -264,7 +264,7 @@ export default function Home() {
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               placeholder="Idea..."
-              className="flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12"
+              className="flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0"
               disabled={loading}
               autoFocus={!hasInteracted}
             />
@@ -275,7 +275,7 @@ export default function Home() {
               disabled={!inputValue.trim() || loading}
               className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${inputValue.trim()
                 ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
-                : "bg-[#C5A47E]/60 text-white/80"
+                : "bg-gray-100 text-gray-300"
                 }`}
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
