@@ -79,7 +79,7 @@ export default function Home() {
       } else if (awaitingDecision) {
         // Step 2: User decided action
         const lowerText = userText.toLowerCase();
-        let action: "similar" | "analysis" | null = null;
+        let action: "similar" | "analysis" | "chat" | null = null;
 
         if (lowerText.includes("similar") || lowerText.includes("otra") || lowerText.includes("parecida")) {
           action = "similar";
