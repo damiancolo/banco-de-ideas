@@ -1,13 +1,12 @@
-// import { getIdeas } from '@/lib/db'; // Removed to avoid bundling fs
+import { getIdeas } from '@/lib/db';
 import Link from 'next/link';
 import BancoView from '@/components/BancoView';
 
 export const dynamic = 'force-dynamic';
 
-export default function BancoPage() {
-    // Al ser entorno serverless sin persistencia real, evitamos leer del FS que puede estar vacío
-    // Dejamos que el cliente (BancoView) cargue de LocalStorage
-    const ideas: any[] = [];
+export default async function BancoPage() {
+    // Cargar ideas desde MongoDB en el servidor
+    const ideas = await getIdeas();
 
     return (
         <main className="min-h-screen bg-[#F8F5F0] p-6 md:p-12 relative">

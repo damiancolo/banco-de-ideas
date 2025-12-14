@@ -1,10 +1,49 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { saveIdea, getIdeas } from '@/lib/db';
+import { saveIdea, saveIdeas } from '@/lib/db';
 
+/**
+ * Tipo para los mensajes del historial de chat
+ */
+type ChatMessage = {
+    role: 'user' | 'assistant';
+    content: string;
+    plainText?: string;
+};
+
+/**
+ * POST /api/analyze
+ * Endpoint principal para interactuar con la IA del Banco de Ideas
+ * 
+ * @param request - Request con { action, idea, history }
+ * @returns JSON con el resultado de la acción
+ * 
+ * Acciones soportadas:
+ * - save: Guardar idea del usuario
+ * - similar: Generar ideas similares (bisociaciones)
+ * - analysis: Analizar idea desde perspectiva de negocio
+ * - chat: Conversación fluida con el asistente
+ */
 export async function POST(request: Request) {
     try {
         const { action, idea, history } = await request.json();
+
+        // Validar que action esté presente
+        if (!action || typeof action !== 'string') {
+            return NextResponse.json(
+                { error: 'Acción requerida. Debe ser: save, similar, analysis o chat' },
+                { status: 400 }
+            );
+        }
+
+        // Validar acciones permitidas
+        const validActions = ['save', 'similar', 'analysis', 'chat'];
+        if (!validActions.includes(action)) {
+            return NextResponse.json(
+                { error: `Acción inválida: "${action}". Debe ser: ${validActions.join(', ')}` },
+                { status: 400 }
+            );
+        }
 
         // Inicializar OpenAI
         const openai = new OpenAI({
@@ -12,29 +51,49 @@ export async function POST(request: Request) {
         });
 
         if (!process.env.OPENAI_API_KEY) {
-            return NextResponse.json({ result: "⚠️ **Falta Configuración**: `OPENAI_API_KEY` faltante." }, { status: 200 });
+            return NextResponse.json(
+                { error: "OPENAI_API_KEY no configurada. Por favor configura esta variable en .env.local" },
+                { status: 500 }
+            );
         }
 
-        if (!idea && !history) {
-            return NextResponse.json({ error: "Idea o historial requeridos" }, { status: 400 });
+        // Validar que idea esté presente para acciones que la requieren
+        if (!idea && action !== 'chat') {
+            return NextResponse.json(
+                { error: 'El campo "idea" es requerido para esta acción' },
+                { status: 400 }
+            );
         }
 
-        // Construir contexto base
-        let messages: any[] = [];
+        // Validar longitud de la idea
+        if (idea && typeof idea === 'string' && idea.trim().length > 2000) {
+            return NextResponse.json(
+                { error: 'La idea no puede exceder 2000 caracteres' },
+                { status: 400 }
+            );
+        }
+
+        // Construir contexto base del historial
+        let messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [];
 
         if (history && Array.isArray(history)) {
-            messages = history.map((msg: any) => ({
-                role: msg.role === 'user' ? 'user' : 'assistant',
-                content: msg.plainText || (typeof msg.content === 'string' ? msg.content : "Contenido visual mostrado al usuario")
-            }));
+            messages = history
+                .filter((msg: any) => msg && (msg.role === 'user' || msg.role === 'assistant'))
+                .map((msg: ChatMessage) => ({
+                    role: msg.role,
+                    content: msg.plainText || (typeof msg.content === 'string' ? msg.content : "Contenido visual")
+                }));
         }
 
         if (action === "save") {
             // Guardar la idea del usuario explícitamente
             try {
                 if (idea) {
-                    saveIdea(idea, 'user');
-                    return NextResponse.json({ result: "Idea guardada" });
+                    const savedIdea = await saveIdea(idea, 'user');
+                    return NextResponse.json({
+                        result: "Idea guardada",
+                        idea: savedIdea
+                    });
                 }
             } catch (err) {
                 console.error("Error saving user idea:", err);
@@ -70,13 +129,30 @@ export async function POST(request: Request) {
                         result = parsed.ideas || parsed.result || [];
                     }
 
-                    // Nota: El guardado se delega al Cliente (LocalStorage) porque el FS es read-only en Vercel
+                    // Guardar bisociaciones en MongoDB automáticamente
+                    if (result.length > 0) {
+                        const ideasToSave = result.map((item: any) => ({
+                            text: item.summary || item.title || item.text || JSON.stringify(item),
+                            category: 'bisociation' as const
+                        }));
+
+                        const savedIdeas = await saveIdeas(ideasToSave);
+
+                        // Devolver las ideas guardadas con sus IDs reales
+                        return NextResponse.json({
+                            result: savedIdeas.map(idea => ({
+                                id: idea.id,
+                                title: idea.text.substring(0, 50),
+                                summary: idea.text
+                            }))
+                        });
+                    }
                 }
             } catch (e) {
-                console.error("Error parsing JSON from OpenAI", e);
+                console.error("Error parsing/saving bisociations:", e);
             }
 
-            return NextResponse.json({ result });
+            return NextResponse.json({ result: [] });
 
         } else if (action === "analysis") {
             const systemPrompt = "Eres un consultor de negocios crítico. Analiza la idea. Usa Markdown.";
