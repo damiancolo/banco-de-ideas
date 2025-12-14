@@ -171,6 +171,17 @@ export default function Home() {
               console.error("❌ Error guardando bisociaciones:", err);
             }
 
+          } else if (typeof result === 'string' && (result.includes("⚠️") || result.includes("Error"))) {
+            // Error de Configuración del Backend (ej. Falta API Key)
+            console.error("Backend Error:", result);
+            content = (
+              <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700 mt-2">
+                <p><strong>Error del Sistema:</strong></p>
+                <div dangerouslySetInnerHTML={{ __html: result.replace(/\*\*/g, '') }} />
+              </div>
+            );
+            plainTextForContext = result;
+
           } else {
             // Analysis AND Chat result (Both are text based)
             content = (
