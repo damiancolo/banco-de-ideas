@@ -110,12 +110,18 @@ export default function Home() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               action,
-              idea: action === 'chat' ? userText : currentIdea, // En chat enviamos lo que escribió ahora. En otros, la idea original.
+              idea: action === 'chat' ? userText : (currentIdea || messages.findLast(m => m.role === 'user')?.plainText || messages.findLast(m => m.role === 'user')?.content || userText),
               history: messages
             }),
           });
           const data = await response.json();
           const result = data.result;
+
+          // 🔥 DEBUG ALERT (Temporal para el usuario)
+          if (action === "similar" && (!result || !Array.isArray(result))) {
+            // alert("DEBUG: La IA no devolvió una lista válida. Intenta de nuevo."); 
+            // Comentado para no ser intrusivo, pero lógica mejorada abajo
+          }
 
           let content: React.ReactNode;
           let plainTextForContext = "";

@@ -63,7 +63,12 @@ export async function POST(request: Request) {
             try {
                 if (content) {
                     const parsed = JSON.parse(content);
-                    result = parsed.ideas || parsed.result || [];
+                    // Robust handling: parsed could be { ideas: [...] }, { result: [...] } or just [...]
+                    if (Array.isArray(parsed)) {
+                        result = parsed;
+                    } else {
+                        result = parsed.ideas || parsed.result || [];
+                    }
 
                     // Nota: El guardado se delega al Cliente (LocalStorage) porque el FS es read-only en Vercel
                 }
