@@ -134,26 +134,35 @@ export default function Home() {
               </div>
             );
 
+            // 🔥 DEBUG LOGS
+            console.log("Action:", action);
+            console.log("Result received:", result);
+            console.log("Is Array?", Array.isArray(result));
+
             // Construir representación textual para la memoria
             plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
               result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
 
             // 🔥 GUARDAR BISOCIACIONES AUTOMÁTICAMENTE EN LOCALSTORAGE
             try {
-              const savedIdeas = JSON.parse(localStorage.getItem("ideas_bank_v1") || "[]");
-              result.forEach((idea: Idea, i: number) => {
-                const newBisociation = {
-                  id: Date.now() + i + 100, // Offset ID to avoid collision
-                  text: `${idea.title}: ${idea.summary}`,
-                  category: 'bisociation',
-                  date: new Date().toISOString()
-                };
-                savedIdeas.push(newBisociation);
-              });
-              localStorage.setItem("ideas_bank_v1", JSON.stringify(savedIdeas));
-              console.log("Bisociaciones guardadas en LocalStorage");
+              if (Array.isArray(result)) {
+                const savedIdeas = JSON.parse(localStorage.getItem("ideas_bank_v1") || "[]");
+                result.forEach((idea: Idea, i: number) => {
+                  const newBisociation = {
+                    id: Date.now() + i + 100, // Offset ID to avoid collision
+                    text: `${idea.title}: ${idea.summary}`,
+                    category: 'bisociation',
+                    date: new Date().toISOString()
+                  };
+                  savedIdeas.push(newBisociation);
+                });
+                localStorage.setItem("ideas_bank_v1", JSON.stringify(savedIdeas));
+                console.log("✅ Bisociaciones guardadas EXTERNAMENTE en LocalStorage:", savedIdeas);
+              } else {
+                console.warn("⚠️ Resultado no es array, no se guarda.");
+              }
             } catch (err) {
-              console.error("Error guardando bisociaciones:", err);
+              console.error("❌ Error guardando bisociaciones:", err);
             }
 
           } else {
