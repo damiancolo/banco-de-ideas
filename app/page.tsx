@@ -138,6 +138,24 @@ export default function Home() {
             plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
               result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
 
+            // 🔥 GUARDAR BISOCIACIONES AUTOMÁTICAMENTE EN LOCALSTORAGE
+            try {
+              const savedIdeas = JSON.parse(localStorage.getItem("ideas_bank_v1") || "[]");
+              result.forEach((idea: Idea, i: number) => {
+                const newBisociation = {
+                  id: Date.now() + i + 100, // Offset ID to avoid collision
+                  text: `${idea.title}: ${idea.summary}`,
+                  category: 'bisociation',
+                  date: new Date().toISOString()
+                };
+                savedIdeas.push(newBisociation);
+              });
+              localStorage.setItem("ideas_bank_v1", JSON.stringify(savedIdeas));
+              console.log("Bisociaciones guardadas en LocalStorage");
+            } catch (err) {
+              console.error("Error guardando bisociaciones:", err);
+            }
+
           } else {
             // Analysis AND Chat result (Both are text based)
             content = (

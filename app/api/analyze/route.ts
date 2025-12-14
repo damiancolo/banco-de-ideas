@@ -65,17 +65,7 @@ export async function POST(request: Request) {
                     const parsed = JSON.parse(content);
                     result = parsed.ideas || parsed.result || [];
 
-                    // Guardar automáticamente las bisociaciones
-                    if (Array.isArray(result)) {
-                        result.forEach((generatedIdea: any) => {
-                            try {
-                                const ideaText = `${generatedIdea.title}: ${generatedIdea.summary}`;
-                                saveIdea(ideaText, 'bisociation');
-                            } catch (err) {
-                                console.error("Error saving bisociation:", err);
-                            }
-                        });
-                    }
+                    // Nota: El guardado se delega al Cliente (LocalStorage) porque el FS es read-only en Vercel
                 }
             } catch (e) {
                 console.error("Error parsing JSON from OpenAI", e);
