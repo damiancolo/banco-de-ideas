@@ -95,7 +95,7 @@ export default function Home() {
         const lowerText = userText.toLowerCase();
         let action = "";
 
-        if (lowerText.includes("similar") || lowerText.includes("ideas") || lowerText.includes("conectar") || lowerText.includes("dame") || lowerText.includes("generar")) {
+        if (lowerText.includes("similar") || lowerText.includes("ideas") || lowerText.includes("conectar") || lowerText.includes("dame") || lowerText.includes("generar") || lowerText === "si" || lowerText === "sí" || lowerText === "claro" || lowerText === "dale" || lowerText === "ok" || lowerText.includes("si")) {
           action = "similar";
         } else if (lowerText.includes("profundiz") || lowerText.includes("analiz") || lowerText.includes("criti")) {
           action = "analysis";
