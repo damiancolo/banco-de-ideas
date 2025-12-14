@@ -91,11 +91,11 @@ export default function Home() {
           setAwaitingDecision(true);
         }, 800);
       } else if (awaitingDecision) {
-        // Step 2: User decided action
+        // Simple Intent Detection (Client-side)
         const lowerText = userText.toLowerCase();
-        let action: "similar" | "analysis" | "chat" | null = null;
+        let action = "";
 
-        if (lowerText.includes("similar") || lowerText.includes("otra") || lowerText.includes("parecida")) {
+        if (lowerText.includes("similar") || lowerText.includes("ideas") || lowerText.includes("conectar") || lowerText.includes("dame") || lowerText.includes("generar")) {
           action = "similar";
         } else if (lowerText.includes("profundiz") || lowerText.includes("analiz") || lowerText.includes("criti")) {
           action = "analysis";
