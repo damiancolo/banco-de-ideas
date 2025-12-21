@@ -66,12 +66,6 @@ export default function Home() {
         // Step 1: User submitted an idea
         setCurrentIdea(userText);
 
-        // 🔥 GUARDAR IDEA EN LOCALSTORAGE (Persistencia de Respaldo)
-        const newIdea = { id: Date.now(), text: userText, category: 'user', date: new Date().toISOString() };
-        const savedIdeas = JSON.parse(localStorage.getItem("ideas_bank_v1") || "[]");
-        savedIdeas.push(newIdea);
-        localStorage.setItem("ideas_bank_v1", JSON.stringify(savedIdeas));
-
         // Intentar persistencia en servidor (MongoDB)
         fetch("/api/analyze", {
           method: "POST",
@@ -79,7 +73,7 @@ export default function Home() {
           body: JSON.stringify({ action: "save", idea: userText }),
         }).then(res => {
           if (!res.ok) {
-            console.warn("⚠️ No se pudo guardar en MongoDB (posible IP no autorizada). Se guardó solo localmente.");
+            console.warn("⚠️ No se pudo guardar en MongoDB.");
           } else {
             console.log("✅ Idea guardada exitosamente en MongoDB");
           }
@@ -157,27 +151,8 @@ export default function Home() {
             plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
               result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
 
-            // 🔥 GUARDAR BISOCIACIONES AUTOMÁTICAMENTE EN LOCALSTORAGE
-            try {
-              if (Array.isArray(result)) {
-                const savedIdeas = JSON.parse(localStorage.getItem("ideas_bank_v1") || "[]");
-                result.forEach((idea: Idea, i: number) => {
-                  const newBisociation = {
-                    id: Date.now() + i + 100, // Offset ID to avoid collision
-                    text: `${idea.title}: ${idea.summary}`,
-                    category: 'bisociation',
-                    date: new Date().toISOString()
-                  };
-                  savedIdeas.push(newBisociation);
-                });
-                localStorage.setItem("ideas_bank_v1", JSON.stringify(savedIdeas));
-                console.log("✅ Bisociaciones guardadas EXTERNAMENTE en LocalStorage:", savedIdeas);
-              } else {
-                console.warn("⚠️ Resultado no es array, no se guarda.");
-              }
-            } catch (err) {
-              console.error("❌ Error guardando bisociaciones:", err);
-            }
+            // Las bisociaciones ya se guardan en el servidor (action: similar las guarda automáticamente)
+            console.log("Bisociaciones recibidas:", result);
 
           } else if (typeof result === 'string' && (result.includes("⚠️") || result.includes("Error"))) {
             // Error de Configuración del Backend (ej. Falta API Key)

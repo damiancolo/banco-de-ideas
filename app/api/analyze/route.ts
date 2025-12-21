@@ -86,24 +86,17 @@ export async function POST(request: Request) {
         }
 
         if (action === "save") {
-            // Guardar la idea del usuario explícitamente
-            try {
-                if (idea) {
-                    // No bloqueamos el flujo principal si el guardado falla
-                    const savedIdeaPromise = saveIdea(idea, 'user').catch(err => {
-                        console.error("Delayed Save Error:", err.message);
-                        return null;
-                    });
-
-                    // Respondemos rápido para no bloquear la UI
+            if (idea) {
+                try {
+                    await saveIdea(idea, 'user');
+                    return NextResponse.json({ result: "Idea guardada exitosamente" });
+                } catch (err: any) {
+                    console.error("Error saving idea:", err.message);
                     return NextResponse.json({
-                        result: "Idea recibida",
-                        status: "pending_save"
+                        result: "Idea recibida (error al persistir)",
+                        error: err.message
                     });
                 }
-            } catch (err) {
-                console.error("Error in save block:", err);
-                return NextResponse.json({ result: "Idea recibida (error local)" });
             }
         }
 
@@ -154,9 +147,12 @@ export async function POST(request: Request) {
 
                         console.log("Background saving bisociations to DB...");
                         // No esperamos al guardado para responder al usuario
-                        saveIdeas(ideasToSave).catch(err => {
-                            console.error("Delayed Bisociation Save Error:", err.message);
-                        });
+                        try {
+                            await saveIdeas(ideasToSave);
+                            console.log("✅ Bisociaciones guardadas correctamente");
+                        } catch (err: any) {
+                            console.error("❌ Error guardando bisociaciones:", err.message);
+                        }
 
                         return NextResponse.json({
                             result: result.map((item: any, i: number) => ({
