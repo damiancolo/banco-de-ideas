@@ -48,6 +48,9 @@ export async function connectDB(): Promise<typeof mongoose> {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false, // Deshabilitar buffering para mejor manejo de errores
+            connectTimeoutMS: 2000, // Timeout de 2 segundos para conexión inicial
+            socketTimeoutMS: 30000, // Timeout para sockets
+            serverSelectionTimeoutMS: 2000, // Timeout de 2 segundos para selección del servidor
         };
 
         cached.promise = mongoose.connect(MONGODB_URI, opts);
@@ -73,6 +76,15 @@ export async function connectDB(): Promise<typeof mongoose> {
         );
     }
 }
+
+/**
+ * Verifica el estado actual de la conexión a la base de datos
+ * @returns {boolean} True si está conectado
+ */
+export function isDBConnected(): boolean {
+    return mongoose.connection.readyState === 1;
+}
+
 
 /**
  * Desconecta de MongoDB

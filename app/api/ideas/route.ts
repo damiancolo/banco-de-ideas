@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getIdeas, getIdeasByCategory, deleteIdea } from '@/lib/db';
+import { getIdeas, getIdeasByCategory, deleteIdea, saveIdea } from '@/lib/db';
 
 /**
  * GET /api/ideas?category=user|bisociation
@@ -106,3 +106,40 @@ export async function DELETE(request: Request) {
         );
     }
 }
+
+/**
+ * POST /api/ideas
+ * Crea una nueva idea
+ * 
+ * @param request - Request object de Next.js
+ * @returns JSON con la idea creada
+ */
+export async function POST(request: Request) {
+    try {
+        const { text, category } = await request.json();
+
+        if (!text) {
+            return NextResponse.json(
+                { error: 'El texto de la idea es requerido' },
+                { status: 400 }
+            );
+        }
+
+        const idea = await saveIdea(text, category || 'user');
+
+        return NextResponse.json({
+            success: true,
+            idea
+        });
+    } catch (error) {
+        console.error('Error saving idea via API:', error);
+        return NextResponse.json(
+            {
+                error: 'Error al guardar la idea',
+                message: error instanceof Error ? error.message : 'Error desconocido'
+            },
+            { status: 500 }
+        );
+    }
+}
+

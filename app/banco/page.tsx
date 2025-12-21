@@ -1,4 +1,5 @@
 import { getIdeas } from '@/lib/db';
+import { isDBConnected } from '@/lib/mongodb';
 import Link from 'next/link';
 import BancoView from '@/components/BancoView';
 
@@ -7,6 +8,7 @@ export const dynamic = 'force-dynamic';
 export default async function BancoPage() {
     // Cargar ideas desde MongoDB en el servidor
     const ideas = await getIdeas();
+    const connected = isDBConnected();
 
     return (
         <main className="min-h-screen bg-[#F8F5F0] p-6 md:p-12 relative">
@@ -23,7 +25,7 @@ export default async function BancoPage() {
                 </Link>
             </div>
 
-            <BancoView initialIdeas={ideas} />
+            <BancoView initialIdeas={ideas} isConnected={connected} />
         </main>
     );
 }

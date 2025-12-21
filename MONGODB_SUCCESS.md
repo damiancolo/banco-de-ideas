@@ -39,14 +39,15 @@ GET /api/ideas
 
 ### Connection String
 ```
-mongodb+srv://Damianlafferranderie:jeP7CcyPXTcShheV@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
+mongodb+srv://bancodeideas:nvX3Di4ua3i4NceS@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
 ```
 
 ### Archivo `.env.local`
 ```bash
 OPENAI_API_KEY=sk-proj-...
-MONGODB_URI=mongodb+srv://Damianlafferranderie:jeP7CcyPXTcShheV@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
+MONGODB_URI=mongodb+srv://bancodeideas:nvX3Di4ua3i4NceS@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
 ```
+
 
 ---
 

@@ -89,72 +89,96 @@ export async function POST(request: Request) {
             // Guardar la idea del usuario explícitamente
             try {
                 if (idea) {
-                    const savedIdea = await saveIdea(idea, 'user');
+                    // No bloqueamos el flujo principal si el guardado falla
+                    const savedIdeaPromise = saveIdea(idea, 'user').catch(err => {
+                        console.error("Delayed Save Error:", err.message);
+                        return null;
+                    });
+
+                    // Respondemos rápido para no bloquear la UI
                     return NextResponse.json({
-                        result: "Idea guardada",
-                        idea: savedIdea
+                        result: "Idea recibida",
+                        status: "pending_save"
                     });
                 }
             } catch (err) {
-                console.error("Error saving user idea:", err);
-                return NextResponse.json({ error: "No se pudo guardar la idea" }, { status: 500 });
+                console.error("Error in save block:", err);
+                return NextResponse.json({ result: "Idea recibida (error local)" });
             }
         }
 
+
         if (action === "similar") {
-            const systemPrompt = "Eres un gestor de un Banco de Ideas innovador. Tu tarea es generar ideas similares. Devuelve JSON { result: [{id, title, summary}] }.";
-
-            messages = [
-                { role: "system", content: systemPrompt },
-                ...messages,
-                { role: "user", content: `La idea es: "${idea}". Dame 3 ideas similares.` }
-            ];
-
-            const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
-                messages: messages,
-                response_format: { type: "json_object" },
-            });
-
-            const content = completion.choices[0].message.content;
-            let result = [];
-
             try {
-                if (content) {
-                    const parsed = JSON.parse(content);
-                    // Robust handling: parsed could be { ideas: [...] }, { result: [...] } or just [...]
-                    if (Array.isArray(parsed)) {
-                        result = parsed;
-                    } else {
-                        result = parsed.ideas || parsed.result || [];
-                    }
+                const systemPrompt = "Eres un gestor de un Banco de Ideas innovador. Tu tarea es generar ideas similares. Devuelve JSON { result: [{id, title, summary}] }.";
 
-                    // Guardar bisociaciones en MongoDB automáticamente
-                    if (result.length > 0) {
+                const llmMessages: any = [
+                    { role: "system", content: systemPrompt },
+                    ...messages,
+                    { role: "user", content: `La idea es: "${idea}". Dame 3 ideas similares.` }
+                ];
+
+                console.log("Calling OpenAI with messages count:", llmMessages.length);
+
+                const completion = await openai.chat.completions.create({
+                    model: "gpt-4o-mini",
+                    messages: llmMessages,
+                    response_format: { type: "json_object" },
+                });
+
+                const content = completion.choices[0].message.content;
+                console.log("OpenAI raw response content:", content);
+
+                let result = [];
+
+                if (content) {
+                    try {
+                        const parsed = JSON.parse(content);
+                        if (Array.isArray(parsed)) {
+                            result = parsed;
+                        } else {
+                            result = parsed.ideas || parsed.result || parsed.bisociations || [];
+                        }
+                        console.log("Parsed result count:", result.length);
+                    } catch (parseErr) {
+                        console.error("Error parsing OpenAI JSON:", parseErr);
+                    }
+                }
+
+                if (result.length > 0) {
+                    try {
                         const ideasToSave = result.map((item: any) => ({
                             text: item.summary || item.title || item.text || JSON.stringify(item),
                             category: 'bisociation' as const
                         }));
 
-                        const savedIdeas = await saveIdeas(ideasToSave);
+                        console.log("Background saving bisociations to DB...");
+                        // No esperamos al guardado para responder al usuario
+                        saveIdeas(ideasToSave).catch(err => {
+                            console.error("Delayed Bisociation Save Error:", err.message);
+                        });
 
-                        // Devolver las ideas guardadas con sus IDs reales
                         return NextResponse.json({
-                            result: savedIdeas.map(idea => ({
-                                id: idea.id,
-                                title: idea.text.substring(0, 50),
-                                summary: idea.text
+                            result: result.map((item: any, i: number) => ({
+                                id: item.id || `temp-${Date.now()}-${i}`,
+                                title: item.title || item.text?.substring(0, 50) || "Idea Sugerida",
+                                summary: item.summary || item.text || JSON.stringify(item)
                             }))
                         });
+                    } catch (err) {
+                        console.error("Error in result processing:", err);
+                        return NextResponse.json({ result: [] });
                     }
                 }
-            } catch (e) {
-                console.error("Error parsing/saving bisociations:", e);
+
+
+                return NextResponse.json({ result: [] });
+            } catch (llmErr: any) {
+                console.error("LLM Error in similar action:", llmErr);
+                return NextResponse.json({ error: "Error de IA", message: llmErr.message }, { status: 500 });
             }
-
-            return NextResponse.json({ result: [] });
-
-        } else if (action === "analysis") {
+        }
+        else if (action === "analysis") {
             const systemPrompt = "Eres un consultor de negocios crítico. Analiza la idea. Usa Markdown.";
             messages = [
                 { role: "system", content: systemPrompt },
