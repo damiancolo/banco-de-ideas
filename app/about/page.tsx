@@ -2,6 +2,13 @@ export default function AboutPage() {
     return (
         <main className="min-h-screen bg-gradient-to-br from-[#F8F5F0] via-white to-[#EBE8E0] p-6 md:p-12">
             <div className="max-w-4xl mx-auto">
+                {/* Main Title */}
+                <div className="text-center mb-8 animate-in fade-in slide-in-from-top duration-500">
+                    <h1 className="text-6xl md:text-7xl font-black text-transparent bg-clip-text bg-gradient-to-r from-[#C5A47E] via-[#b08e68] to-[#C5A47E] mb-2 tracking-tight">
+                        UNBAN CODE IDEAS
+                    </h1>
+                </div>
+
                 {/* Header */}
                 <div className="text-center mb-16 animate-in fade-in slide-in-from-top duration-700">
                     <div className="inline-block p-4 bg-gradient-to-br from-[#C5A47E] to-[#b08e68] rounded-2xl mb-6 shadow-lg">
@@ -15,19 +22,101 @@ export default function AboutPage() {
                     <p className="text-xl text-gray-600 font-light">Solsticio de Invierno 2025</p>
                 </div>
 
-                {/* Vision Statement */}
+                {/* El Banco de Ideas - Introduction */}
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Una Herramienta para Cambiar el Mundo</h2>
-                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        En un mundo donde las mejores ideas a menudo se pierden en notas dispersas o conversaciones olvidadas,
-                        <span className="font-semibold text-[#C5A47E]"> Banco de Ideas</span> emerge como una infraestructura
-                        crítica para la innovación humana.
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">El Banco de Ideas</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-4">
+                        Creemos que las ideas son la capital más importante de la humanidad y que la inteligencia artificial es un catalizador de su potencial.
+                        Es urgente y necesario comenzar a explorar este maridaje por lo que proponemos un espacio para experimentar con las posibilidades.
+                        Este espacio se llama el Banco de Ideas.
                     </p>
+                </div>
+
+                {/* Description */}
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Descripción del Banco de Ideas</h2>
                     <p className="text-lg text-gray-700 leading-relaxed">
-                        No es solo una aplicación para guardar pensamientos—es un <span className="font-semibold">sistema de amplificación cognitiva</span> que
-                        utiliza Inteligencia Artificial para expandir, conectar y madurar conceptos que podrían transformar industrias,
-                        resolver problemas globales o simplemente mejorar la vida cotidiana.
+                        El Banco de Ideas es un espacio diseñado para facilitar la generación y desarrollo de ideas individuales y colectivas.
+                        Utiliza tecnologías avanzadas de inteligencia artificial para asistir a los usuarios en la creación, co-creación,
+                        refinamiento, expansión y colectivización de las Ideas.
                     </p>
+                </div>
+
+                {/* Justification */}
+                <div className="bg-gradient-to-br from-[#C5A47E]/10 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/20 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificación</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed">
+                        El Banco de Ideas es una herramienta clave para un futuro con una cosmovisión más alineada con un sistema sostenible.
+                    </p>
+                </div>
+
+                {/* Key Functionalities */}
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-250">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Funcionalidades Clave</h2>
+                    <div className="space-y-6">
+                        <div className="border-l-4 border-[#C5A47E] pl-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">1. Creación de Ideas</h3>
+                            <p className="text-gray-700 leading-relaxed">
+                                Los usuarios pueden presentar sus ideas, optando por hacerlo de manera anónima o no. Esta flexibilidad
+                                garantiza que todos puedan participar cómodamente, respetando su preferencia por la privacidad.
+                            </p>
+                        </div>
+
+                        <div className="border-l-4 border-blue-500 pl-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">2. Análisis Inteligente</h3>
+                            <p className="text-gray-700 leading-relaxed">
+                                Al ingresar una idea, la plataforma emplea algoritmos de procesamiento de lenguaje natural para identificar
+                                y reportar existencias de ideas similares dentro de la base de datos. Proporciona un resumen de coincidencias
+                                y diferencias significativas, ofreciendo una perspectiva inicial sobre el contexto en que se inserta la nueva idea.
+                            </p>
+                        </div>
+
+                        <div className="border-l-4 border-green-500 pl-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">3. Colaboración y Evolución</h3>
+                            <p className="text-gray-700 leading-relaxed">
+                                Las ideas en la plataforma están abiertas o no a la contribución de otros usuarios, permitiendo que se modifiquen,
+                                expandan o adapten. Este proceso colaborativo está diseñado para enriquecer las propuestas y explorar nuevas
+                                direcciones basadas en la interacción colectiva.
+                            </p>
+                        </div>
+
+                        <div className="border-l-4 border-purple-500 pl-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">4. Control y Personalización</h3>
+                            <p className="text-gray-700 leading-relaxed">
+                                Los usuarios tienen control total sobre sus contribuciones, pudiendo personalizar la manera en que desean recibir
+                                feedback y sugerencias. La plataforma también facilita el seguimiento de cómo otras personas han interactuado con
+                                sus ideas, permitiendo a los usuarios gestionar activamente la evolución de sus propuestas.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Objectives */}
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Objetivos del Banco de Ideas</h2>
+                    <div className="space-y-6">
+                        <div className="flex gap-4">
+                            <div className="text-3xl flex-shrink-0">🎯</div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800 mb-2">Optimizar la Innovación</h3>
+                                <p className="text-gray-700 leading-relaxed">
+                                    Mejorar la eficiencia en el proceso de generación de ideas, evitando duplicaciones y promoviendo un uso
+                                    más efectivo de los recursos creativos disponibles.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-4">
+                            <div className="text-3xl flex-shrink-0">🌍</div>
+                            <div>
+                                <h3 className="text-xl font-bold text-gray-800 mb-2">Fomentar la Colaboración Global</h3>
+                                <p className="text-gray-700 leading-relaxed">
+                                    Eliminar barreras para la colaboración, permitiendo que ideas de diversas partes del mundo sean
+                                    compartidas y desarrolladas en conjunto.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* Technical Architecture */}
