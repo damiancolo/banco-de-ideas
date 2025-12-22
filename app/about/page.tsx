@@ -1,0 +1,173 @@
+export default function AboutPage() {
+    return (
+        <main className="min-h-screen bg-gradient-to-br from-[#F8F5F0] via-white to-[#EBE8E0] p-6 md:p-12">
+            <div className="max-w-4xl mx-auto">
+                {/* Header */}
+                <div className="text-center mb-16 animate-in fade-in slide-in-from-top duration-700">
+                    <div className="inline-block p-4 bg-gradient-to-br from-[#C5A47E] to-[#b08e68] rounded-2xl mb-6 shadow-lg">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-white">
+                            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 18h6"></path>
+                            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 22h4"></path>
+                            <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
+                        </svg>
+                    </div>
+                    <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">Banco de Ideas</h1>
+                    <p className="text-xl text-gray-600 font-light">Solsticio de Invierno 2025</p>
+                </div>
+
+                {/* Vision Statement */}
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Una Herramienta para Cambiar el Mundo</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        En un mundo donde las mejores ideas a menudo se pierden en notas dispersas o conversaciones olvidadas,
+                        <span className="font-semibold text-[#C5A47E]"> Banco de Ideas</span> emerge como una infraestructura
+                        crítica para la innovación humana.
+                    </p>
+                    <p className="text-lg text-gray-700 leading-relaxed">
+                        No es solo una aplicación para guardar pensamientos—es un <span className="font-semibold">sistema de amplificación cognitiva</span> que
+                        utiliza Inteligencia Artificial para expandir, conectar y madurar conceptos que podrían transformar industrias,
+                        resolver problemas globales o simplemente mejorar la vida cotidiana.
+                    </p>
+                </div>
+
+                {/* Technical Architecture */}
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Arquitectura Técnica</h2>
+
+                    <div className="space-y-6">
+                        <div className="border-l-4 border-[#C5A47E] pl-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">🧠 Motor de IA Generativa</h3>
+                            <p className="text-gray-700 leading-relaxed">
+                                Powered by <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">GPT-4o-mini</span>,
+                                el sistema no solo almacena ideas—las <span className="font-semibold">bisocía</span>. Inspirado en el concepto
+                                de Arthur Koestler, genera conexiones inesperadas entre dominios aparentemente no relacionados,
+                                el mismo proceso que impulsa los avances científicos y artísticos más revolucionarios.
+                            </p>
+                        </div>
+
+                        <div className="border-l-4 border-blue-500 pl-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">☁️ Persistencia Distribuida</h3>
+                            <p className="text-gray-700 leading-relaxed">
+                                Construido sobre <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">MongoDB Atlas</span>,
+                                garantiza que ninguna idea se pierda. Cada concepto, cada bisociación, cada iteración queda
+                                registrada en una base de datos en la nube, accesible desde cualquier dispositivo, en cualquier momento.
+                            </p>
+                        </div>
+
+                        <div className="border-l-4 border-green-500 pl-6">
+                            <h3 className="text-xl font-bold text-gray-800 mb-2">⚡ Stack Moderno y Escalable</h3>
+                            <p className="text-gray-700 leading-relaxed mb-3">
+                                Desarrollado con <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded">Next.js 16</span> y
+                                <span className="font-mono text-sm bg-gray-100 px-2 py-1 rounded ml-1">TypeScript</span>,
+                                el código está diseñado para escalar desde un usuario individual hasta organizaciones completas.
+                            </p>
+                            <ul className="text-sm text-gray-600 space-y-1 ml-4">
+                                <li>• Server-Side Rendering para performance óptima</li>
+                                <li>• Type-safe architecture para prevenir errores</li>
+                                <li>• Modular design para fácil extensibilidad</li>
+                                <li>• Production-ready logging y error handling</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Impact Potential */}
+                <div className="bg-gradient-to-br from-[#C5A47E]/10 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/20 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Potencial de Impacto</h2>
+
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100">
+                            <div className="text-3xl mb-3">🚀</div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Emprendedores</h3>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                                Transforma conceptos vagos en propuestas de negocio estructuradas. La IA actúa como co-founder
+                                que nunca duerme, generando variaciones y análisis críticos.
+                            </p>
+                        </div>
+
+                        <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100">
+                            <div className="text-3xl mb-3">🔬</div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Investigadores</h3>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                                Captura hipótesis emergentes y explora conexiones interdisciplinarias.
+                                Cada idea puede ser el punto de partida de un paper revolucionario.
+                            </p>
+                        </div>
+
+                        <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100">
+                            <div className="text-3xl mb-3">🎨</div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Creativos</h3>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                                Rompe bloqueos creativos con bisociaciones inesperadas. La IA sugiere
+                                combinaciones que tu mente consciente nunca consideraría.
+                            </p>
+                        </div>
+
+                        <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100">
+                            <div className="text-3xl mb-3">🌍</div>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Changemakers</h3>
+                            <p className="text-gray-700 text-sm leading-relaxed">
+                                Desarrolla soluciones a problemas sociales complejos. Cada idea guardada
+                                es una semilla potencial para impacto sistémico.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Philosophy */}
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-400">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Filosofía del Proyecto</h2>
+                    <blockquote className="border-l-4 border-[#C5A47E] pl-6 italic text-lg text-gray-700 mb-6">
+                        "Las mejores ideas no nacen completamente formadas. Emergen de la colisión de conceptos,
+                        la iteración constante y la voluntad de explorar lo desconocido."
+                    </blockquote>
+                    <p className="text-gray-700 leading-relaxed mb-4">
+                        Este proyecto nace en el <span className="font-semibold">Solsticio de Invierno de 2025</span>,
+                        un momento simbólico de renovación y nuevos comienzos. Representa la creencia de que la tecnología
+                        debe amplificar la creatividad humana, no reemplazarla.
+                    </p>
+                    <p className="text-gray-700 leading-relaxed">
+                        Cada línea de código está escrita con la intención de que esta herramienta sea
+                        <span className="font-semibold"> open source, escalable y accesible</span>—porque las mejores
+                        ideas para cambiar el mundo pueden venir de cualquier persona, en cualquier lugar.
+                    </p>
+                </div>
+
+                {/* CTA */}
+                <div className="text-center bg-gradient-to-r from-[#C5A47E] to-[#b08e68] rounded-3xl p-8 md:p-12 shadow-2xl animate-in fade-in slide-in-from-bottom duration-700 delay-500">
+                    <h2 className="text-3xl font-bold text-white mb-4">¿Listo para Amplificar tus Ideas?</h2>
+                    <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
+                        Únete al experimento. Guarda tu primera idea. Deja que la IA te sorprenda con conexiones
+                        que nunca imaginaste.
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                        <a
+                            href="/"
+                            className="px-8 py-4 bg-white text-[#C5A47E] rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+                        >
+                            Empezar Ahora →
+                        </a>
+                        <a
+                            href="https://estudioprompt.com/banco-de-ideas/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-bold text-lg hover:bg-white/10 transition-all"
+                        >
+                            Leer Más
+                        </a>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="text-center mt-12 text-gray-500 text-sm">
+                    <p>Desarrollado con 💡 por Damián Lafferranderie</p>
+                    <p className="mt-2">
+                        <a href="https://github.com/damiancolo/banco-de-ideas" target="_blank" rel="noopener noreferrer" className="hover:text-[#C5A47E] transition-colors">
+                            Ver en GitHub
+                        </a>
+                    </p>
+                </div>
+            </div>
+        </main>
+    );
+}

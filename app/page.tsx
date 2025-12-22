@@ -235,14 +235,8 @@ export default function Home() {
     <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
 
       {/* Top Link: Lightbulb Button */}
-      <a
-        href="https://estudioprompt.com/banco-de-ideas/"
-        target="_blank"
-        rel="noopener noreferrer"
-        onClick={(e) => {
-          // Force navigation if default fails for some reason
-          logger.debug("Lightbulb clicked");
-        }}
+      <Link
+        href="/about"
         className="fixed top-10 left-1/2 -translate-x-1/2 z-[99999] p-4 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full cursor-pointer shadow-sm transition-all duration-300"
         style={{ WebkitTapHighlightColor: 'transparent' }}
       >
@@ -251,7 +245,7 @@ export default function Home() {
           <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 22h4"></path>
           <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
         </svg>
-      </a>
+      </Link>
 
       {/* Center Content */}
       <div className="w-full flex flex-col items-center justify-center flex-1 max-w-xl gap-8">
