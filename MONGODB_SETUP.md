@@ -187,10 +187,10 @@ Abre `.env.local` y pega:
 
 ```bash
 # MongoDB Atlas
-MONGODB_URI=mongodb+srv://banco_user:MiPassword123@cluster0.abc123.mongodb.net/banco-ideas?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/banco-ideas?retryWrites=true&w=majority
 
 # OpenAI (ya la tienes)
-OPENAI_API_KEY=sk-...
+OPENAI_API_KEY=sk-proj-TU_CLAVE_AQUI
 ```
 
 > [!IMPORTANT]

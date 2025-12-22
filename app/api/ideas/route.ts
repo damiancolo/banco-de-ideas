@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getIdeas, getIdeasByCategory, deleteIdea, saveIdea } from '@/lib/db';
+import { logger } from '@/lib/logger';
 
 /**
  * GET /api/ideas?category=user|bisociation
@@ -36,7 +37,7 @@ export async function GET(request: Request) {
             category: category || 'all'
         });
     } catch (error) {
-        console.error('Error fetching ideas:', error);
+        logger.error('Error fetching ideas:', error);
         return NextResponse.json(
             {
                 error: 'Error al obtener ideas',
@@ -96,7 +97,7 @@ export async function DELETE(request: Request) {
             );
         }
     } catch (error) {
-        console.error('Error deleting idea:', error);
+        logger.error('Error deleting idea:', error);
         return NextResponse.json(
             {
                 error: 'Error al eliminar idea',
@@ -132,7 +133,7 @@ export async function POST(request: Request) {
             idea
         });
     } catch (error) {
-        console.error('Error saving idea via API:', error);
+        logger.error('Error saving idea via API:', error);
         return NextResponse.json(
             {
                 error: 'Error al guardar la idea',

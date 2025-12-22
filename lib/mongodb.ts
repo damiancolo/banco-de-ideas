@@ -1,4 +1,5 @@
 import mongoose from 'mongoose';
+import { logger } from './logger';
 
 const MONGODB_URI = process.env.MONGODB_URI || '';
 
@@ -62,7 +63,7 @@ export async function connectDB(): Promise<typeof mongoose> {
 
         // Log solo en desarrollo
         if (process.env.NODE_ENV !== 'production') {
-            console.log('✅ MongoDB conectado exitosamente');
+            logger.info('MongoDB conectado exitosamente');
         }
 
         return cached.conn;
@@ -70,7 +71,7 @@ export async function connectDB(): Promise<typeof mongoose> {
         // Limpiar promesa fallida para permitir reintentos
         cached.promise = null;
 
-        console.error('❌ Error conectando a MongoDB:', error);
+        logger.error('Error conectando a MongoDB:', error);
         throw new Error(
             `No se pudo conectar a MongoDB: ${error instanceof Error ? error.message : 'Error desconocido'}`
         );
@@ -99,7 +100,7 @@ export async function disconnectDB(): Promise<void> {
         cached.promise = null;
 
         if (process.env.NODE_ENV !== 'production') {
-            console.log('MongoDB desconectado');
+            logger.info('MongoDB desconectado');
         }
     }
 }

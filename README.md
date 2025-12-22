@@ -1,36 +1,170 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 💡 Banco de Ideas
 
-## Getting Started
+Una aplicación web moderna para gestionar y expandir tus ideas usando Inteligencia Artificial.
 
-First, run the development server:
+![Next.js](https://img.shields.io/badge/Next.js-16.0-black?style=flat-square&logo=next.js)
+![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue?style=flat-square&logo=typescript)
+![MongoDB](https://img.shields.io/badge/MongoDB-Atlas-green?style=flat-square&logo=mongodb)
+![OpenAI](https://img.shields.io/badge/OpenAI-GPT--4-purple?style=flat-square&logo=openai)
+
+## ✨ Características
+
+- 💾 **Persistencia en la Nube**: Tus ideas se guardan en MongoDB Atlas
+- 🤖 **IA Generativa**: Genera ideas similares (bisociaciones) usando GPT-4
+- 📊 **Análisis de Ideas**: Obtén análisis crítico de negocio para tus conceptos
+- 💬 **Chat Inteligente**: Conversa con la IA sobre tus ideas
+- 🎨 **UI Moderna**: Interfaz limpia y responsive
+- 🔒 **Seguro**: Variables de entorno protegidas, código production-ready
+
+## 🚀 Demo
+
+**Producción:** [banco-de-ideas.vercel.app](https://banco-de-ideas.vercel.app)
+
+## 🛠️ Stack Tecnológico
+
+- **Framework:** Next.js 16 (App Router)
+- **Lenguaje:** TypeScript
+- **Base de Datos:** MongoDB Atlas (Mongoose)
+- **IA:** OpenAI GPT-4o-mini
+- **Estilos:** Tailwind CSS
+- **Deploy:** Vercel
+
+## 📋 Requisitos Previos
+
+- Node.js 18+ 
+- npm o yarn
+- Cuenta en [MongoDB Atlas](https://www.mongodb.com/cloud/atlas) (gratis)
+- API Key de [OpenAI](https://platform.openai.com/api-keys)
+
+## ⚙️ Instalación
+
+1. **Clonar el repositorio**
+   ```bash
+   git clone https://github.com/tu-usuario/banco-de-ideas.git
+   cd banco-de-ideas
+   ```
+
+2. **Instalar dependencias**
+   ```bash
+   npm install
+   ```
+
+3. **Configurar variables de entorno**
+   
+   Crea un archivo `.env.local` en la raíz del proyecto:
+   ```bash
+   cp env.example .env.local
+   ```
+   
+   Edita `.env.local` y añade tus credenciales:
+   ```env
+   # MongoDB Atlas
+   MONGODB_URI=mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/banco-ideas?retryWrites=true&w=majority
+
+   # OpenAI API Key
+   OPENAI_API_KEY=sk-proj-TU_CLAVE_AQUI
+   ```
+
+4. **Ejecutar en desarrollo**
+   ```bash
+   npm run dev
+   ```
+   
+   Abre [http://localhost:3000](http://localhost:3000) en tu navegador.
+
+## 📦 Build de Producción
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm run build
+npm start
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🌐 Deploy en Vercel
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+1. **Conecta tu repositorio** en [Vercel](https://vercel.com)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+2. **Configura las variables de entorno** en Vercel:
+   - `MONGODB_URI`
+   - `OPENAI_API_KEY`
 
-## Learn More
+3. **Deploy automático** con cada push a `main`
 
-To learn more about Next.js, take a look at the following resources:
+## 📖 Uso
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Guardar una Idea
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Escribe tu idea en el input principal
+2. Presiona Enter o clic en el botón de enviar
+3. La idea se guarda automáticamente en MongoDB
 
-## Deploy on Vercel
+### Generar Bisociaciones
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Después de guardar una idea, la IA te preguntará qué quieres hacer
+2. Responde "ideas similares" o "dame 3 ideas"
+3. La IA generará 3 conceptos relacionados
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Ver tus Ideas
+
+- Navega a `/banco` para ver todas tus ideas guardadas
+- Las ideas del usuario y las bisociaciones están organizadas en carpetas separadas
+
+## 🏗️ Arquitectura
+
+```
+banco_de_ideas/
+├── app/                    # Next.js App Router
+│   ├── api/               # API Routes
+│   │   ├── analyze/       # Endpoint de IA
+│   │   └── ideas/         # CRUD de ideas
+│   ├── banco/             # Vista de ideas guardadas
+│   └── page.tsx           # Página principal (chat)
+├── components/            # Componentes React
+├── lib/                   # Utilidades
+│   ├── constants.ts       # Constantes centralizadas
+│   ├── logger.ts          # Sistema de logging
+│   ├── mongodb.ts         # Conexión a MongoDB
+│   ├── db.ts              # Capa de acceso a datos
+│   └── models/            # Modelos de Mongoose
+├── services/              # Capa de servicios
+│   └── ideaService.ts     # API calls centralizadas
+└── types/                 # Tipos TypeScript compartidos
+```
+
+## 🔐 Seguridad
+
+- ✅ Variables de entorno protegidas con `.gitignore`
+- ✅ Sin credenciales hardcodeadas en el código
+- ✅ Validación de entrada en todos los endpoints
+- ✅ Logging controlado (solo errores en producción)
+
+## 🤝 Contribuir
+
+Las contribuciones son bienvenidas. Por favor:
+
+1. Fork el proyecto
+2. Crea una rama para tu feature (`git checkout -b feature/AmazingFeature`)
+3. Commit tus cambios (`git commit -m 'Add some AmazingFeature'`)
+4. Push a la rama (`git push origin feature/AmazingFeature`)
+5. Abre un Pull Request
+
+## 📝 Licencia
+
+Este proyecto está bajo la Licencia MIT. Ver el archivo `LICENSE` para más detalles.
+
+## 👤 Autor
+
+**Damián Lafferranderie**
+
+- GitHub: [@damianlafferranderie](https://github.com/damianlafferranderie)
+- Website: [estudioprompt.com](https://estudioprompt.com)
+
+## 🙏 Agradecimientos
+
+- [Next.js](https://nextjs.org/) por el increíble framework
+- [OpenAI](https://openai.com/) por la API de GPT-4
+- [MongoDB](https://www.mongodb.com/) por la base de datos en la nube
+- [Vercel](https://vercel.com/) por el hosting
+
+---
+
+⭐ Si este proyecto te resultó útil, considera darle una estrella en GitHub!

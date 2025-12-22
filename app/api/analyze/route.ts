@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { saveIdea, saveIdeas } from '@/lib/db';
+import { logger } from '@/lib/logger';
+import { PROMPTS, API } from '@/lib/constants';
+import type { Message, Idea } from '@/types';
 
 /**
  * Tipo para los mensajes del historial de chat
@@ -91,7 +94,7 @@ export async function POST(request: Request) {
                     await saveIdea(idea, 'user');
                     return NextResponse.json({ result: "Idea guardada exitosamente" });
                 } catch (err: any) {
-                    console.error("Error saving idea:", err.message);
+                    logger.error("Error saving idea:", err.message);
                     return NextResponse.json({
                         result: "Idea recibida (error al persistir)",
                         error: err.message
@@ -103,7 +106,7 @@ export async function POST(request: Request) {
 
         if (action === "similar") {
             try {
-                const systemPrompt = "Eres un gestor de un Banco de Ideas innovador. Tu tarea es generar ideas similares. Devuelve JSON { result: [{id, title, summary}] }.";
+                const systemPrompt = PROMPTS.SIMILAR;
 
                 const llmMessages: any = [
                     { role: "system", content: systemPrompt },
@@ -111,16 +114,16 @@ export async function POST(request: Request) {
                     { role: "user", content: `La idea es: "${idea}". Dame 3 ideas similares.` }
                 ];
 
-                console.log("Calling OpenAI with messages count:", llmMessages.length);
+                logger.debug("Calling OpenAI with messages count:", llmMessages.length);
 
                 const completion = await openai.chat.completions.create({
-                    model: "gpt-4o-mini",
+                    model: API.MODEL,
                     messages: llmMessages,
                     response_format: { type: "json_object" },
                 });
 
                 const content = completion.choices[0].message.content;
-                console.log("OpenAI raw response content:", content);
+                logger.debug("OpenAI raw response content:", content);
 
                 let result = [];
 
@@ -132,9 +135,9 @@ export async function POST(request: Request) {
                         } else {
                             result = parsed.ideas || parsed.result || parsed.bisociations || [];
                         }
-                        console.log("Parsed result count:", result.length);
+                        logger.debug("Parsed result count:", result.length);
                     } catch (parseErr) {
-                        console.error("Error parsing OpenAI JSON:", parseErr);
+                        logger.error("Error parsing OpenAI JSON:", parseErr);
                     }
                 }
 
@@ -145,13 +148,13 @@ export async function POST(request: Request) {
                             category: 'bisociation' as const
                         }));
 
-                        console.log("Background saving bisociations to DB...");
+                        logger.debug("Background saving bisociations to DB...");
                         // No esperamos al guardado para responder al usuario
                         try {
                             await saveIdeas(ideasToSave);
-                            console.log("✅ Bisociaciones guardadas correctamente");
+                            logger.info("Bisociaciones guardadas correctamente");
                         } catch (err: any) {
-                            console.error("❌ Error guardando bisociaciones:", err.message);
+                            logger.error("Error guardando bisociaciones:", err.message);
                         }
 
                         return NextResponse.json({
@@ -162,7 +165,7 @@ export async function POST(request: Request) {
                             }))
                         });
                     } catch (err) {
-                        console.error("Error in result processing:", err);
+                        logger.error("Error in result processing:", err);
                         return NextResponse.json({ result: [] });
                     }
                 }
@@ -170,12 +173,12 @@ export async function POST(request: Request) {
 
                 return NextResponse.json({ result: [] });
             } catch (llmErr: any) {
-                console.error("LLM Error in similar action:", llmErr);
+                logger.error("LLM Error in similar action:", llmErr);
                 return NextResponse.json({ error: "Error de IA", message: llmErr.message }, { status: 500 });
             }
         }
         else if (action === "analysis") {
-            const systemPrompt = "Eres un consultor de negocios crítico. Analiza la idea. Usa Markdown.";
+            const systemPrompt = PROMPTS.ANALYSIS;
             messages = [
                 { role: "system", content: systemPrompt },
                 ...messages,
@@ -190,7 +193,7 @@ export async function POST(request: Request) {
 
         } else if (action === "chat") {
             // Conversación General / Fluida
-            const systemPrompt = "Eres el Gestor inteligente de este Banco de Ideas. Tu objetivo es ayudar al usuario a madurar, conectar y explorar sus ideas. Ya has presentado opciones o análisis previos (visibles en el historial). Continúa la conversación de forma natural, respondiendo a las preguntas del usuario o profundizando en los puntos que le interesen. Sé útil, perspicaz y breve.";
+            const systemPrompt = PROMPTS.CHAT;
 
             // En modo chat, 'idea' es el mensaje actual del usuario
             messages = [
@@ -210,7 +213,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Acción no válida o flujo no soportado" }, { status: 400 });
 
     } catch (error: any) {
-        console.error("API Error:", error);
+        logger.error("API Error:", error);
         return NextResponse.json({ error: "Error procesando solicitud" }, { status: 500 });
     }
 }

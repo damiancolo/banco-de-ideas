@@ -39,13 +39,13 @@ GET /api/ideas
 
 ### Connection String
 ```
-mongodb+srv://bancodeideas:nvX3Di4ua3i4NceS@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
+mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=<appName>
 ```
 
 ### Archivo `.env.local`
 ```bash
-OPENAI_API_KEY=sk-proj-...
-MONGODB_URI=mongodb+srv://bancodeideas:nvX3Di4ua3i4NceS@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
+OPENAI_API_KEY=sk-proj-TU_CLAVE_AQUI
+MONGODB_URI=mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=<appName>
 ```
 
 

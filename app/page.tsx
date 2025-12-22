@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import Link from "next/link";
+import { logger } from "@/lib/logger";
 
 type Message = {
   id: number;
@@ -73,12 +74,12 @@ export default function Home() {
           body: JSON.stringify({ action: "save", idea: userText }),
         }).then(res => {
           if (!res.ok) {
-            console.warn("⚠️ No se pudo guardar en MongoDB.");
+            logger.warn("No se pudo guardar en MongoDB.");
           } else {
-            console.log("✅ Idea guardada exitosamente en MongoDB");
+            logger.info("Idea guardada exitosamente en MongoDB");
           }
         }).catch(err => {
-          console.error("❌ Error de red al guardar:", err);
+          logger.error("Error de red al guardar:", err);
         });
 
         setTimeout(() => {
@@ -142,21 +143,21 @@ export default function Home() {
               </div>
             );
 
-            // 🔥 DEBUG LOGS
-            console.log("Action:", action);
-            console.log("Result received:", result);
-            console.log("Is Array?", Array.isArray(result));
+            // DEBUG LOGS
+            logger.debug("Action:", action);
+            logger.debug("Result received:", result);
+            logger.debug("Is Array?", Array.isArray(result));
 
             // Construir representación textual para la memoria
             plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
               result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
 
             // Las bisociaciones ya se guardan en el servidor (action: similar las guarda automáticamente)
-            console.log("Bisociaciones recibidas:", result);
+            logger.debug("Bisociaciones recibidas:", result);
 
           } else if (typeof result === 'string' && (result.includes("⚠️") || result.includes("Error"))) {
             // Error de Configuración del Backend (ej. Falta API Key)
-            console.error("Backend Error:", result);
+            logger.error("Backend Error:", result);
             content = (
               <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700 mt-2">
                 <p><strong>Error del Sistema:</strong></p>
@@ -224,7 +225,7 @@ export default function Home() {
       }
 
     } catch (error) {
-      console.error(error);
+      logger.error("Error in handleSendMessage:", error);
       setLoading(false);
     }
   };
@@ -240,8 +241,7 @@ export default function Home() {
         rel="noopener noreferrer"
         onClick={(e) => {
           // Force navigation if default fails for some reason
-          // e.preventDefault(); // Don't prevent default unless we are 100% sure href is broken, but let's leave default behavior and just add log or backup
-          console.log("Lightbulb clicked");
+          logger.debug("Lightbulb clicked");
         }}
         className="fixed top-10 left-1/2 -translate-x-1/2 z-[99999] p-4 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full cursor-pointer shadow-sm transition-all duration-300"
         style={{ WebkitTapHighlightColor: 'transparent' }}

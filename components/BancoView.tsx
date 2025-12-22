@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from 'react';
+import { logger } from '@/lib/logger';
 
 type SavedIdea = {
     id: string;
@@ -42,7 +43,7 @@ export default function BancoView({
                 alert(`Error al eliminar: ${data.error || 'Desconocido'}`);
             }
         } catch (error) {
-            console.error('Error deleting idea:', error);
+            logger.error('Error deleting idea:', error);
             alert('Error de conexión al intentar eliminar la idea.');
         } finally {
             setDeletingId(null);

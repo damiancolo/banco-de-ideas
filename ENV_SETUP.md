@@ -43,10 +43,10 @@ OPENAI_API_KEY=sk-...
 
 ```bash
 # MongoDB
-MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/banco-ideas?retryWrites=true&w=majority
+MONGODB_URI=mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/banco-ideas?retryWrites=true&w=majority
 
 # OpenAI
-OPENAI_API_KEY=sk-proj-...
+OPENAI_API_KEY=sk-proj-TU_CLAVE_AQUI
 ```
 
 ## Seguridad
