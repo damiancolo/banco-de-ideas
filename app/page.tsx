@@ -233,6 +233,14 @@ export default function Home() {
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
+      {/* Semantic Content for SEO & Screen Readers */}
+      <div className="sr-only">
+        <h1>Banco de Ideas - Potenciando la Creatividad con IA</h1>
+        <p>
+          Herramienta inteligente para capturar ideas, generar bisociaciones (conexiones creativas)
+          y recibir análisis de viabilidad en tiempo real. Tu co-piloto para la innovación.
+        </p>
+      </div>
 
       {/* Top Link: Lightbulb Button */}
       <Link
