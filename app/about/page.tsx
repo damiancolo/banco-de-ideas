@@ -245,6 +245,18 @@ export default function AboutPage() {
                             Leer Más
                         </a>
                     </div>
+
+                    <div className="mt-8">
+                        <a
+                            href="https://docs.google.com/document/d/1f9gPyeVa-QOIigMyLdfKVpkB--BmvH44q1bMKJZM5gU/edit?usp=sharing"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-all text-sm backdrop-blur-sm"
+                        >
+                            <span>🚀</span>
+                            Futuras funcionalidades previstas (se aceptan ideas)
+                        </a>
+                    </div>
                 </div>
 
                 {/* Footer */}
@@ -257,6 +269,6 @@ export default function AboutPage() {
                     </p>
                 </div>
             </div>
-        </main>
+        </main >
     );
 }
