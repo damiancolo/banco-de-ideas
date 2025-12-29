@@ -54,6 +54,16 @@ export default function Home() {
     scrollToBottom();
   }, [messages, loading, isTranscribing]);
 
+  const resetConversation = () => {
+    setCurrentIdea(null);
+    setAwaitingDecision(false);
+    setVoiceEnabled(true);
+    setInputValue("");
+    setHasInteracted(false); // Opcional: ¿queremos que vuelva a la pantalla inicial? 
+    // Si queremos mantener el historial, no reseteamos hasInteracted.
+    // Pero si queremos que la "Big Card" vuelva a ser grande, entonces sí.
+  };
+
   const handleSendMessage = async (e?: React.FormEvent, forcedText?: string) => {
     e?.preventDefault();
     const textToProcess = forcedText || inputValue.trim();
@@ -207,9 +217,9 @@ export default function Home() {
         }
         setLoading(false);
       } else {
-        // Restarting loop
+        // Restarting loop (Default behavior when typing something out of order)
         setCurrentIdea(userText);
-        setVoiceEnabled(true); // Rehabilitar voz para nueva idea
+        setVoiceEnabled(true);
         setTimeout(() => {
           const reply: Message = {
             id: Date.now() + 1,
@@ -286,7 +296,9 @@ export default function Home() {
             {/* Plus Button */}
             <button
               type="button"
+              onClick={resetConversation}
               className="w-10 h-10 md:w-12 md:h-12 flex-none rounded-xl border border-gray-100 bg-white hover:bg-gray-50 text-gray-400 flex items-center justify-center transition-colors"
+              title="Nueva idea"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
             </button>
