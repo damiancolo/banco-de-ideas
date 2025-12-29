@@ -33,6 +33,13 @@ export default function Home() {
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isTranscribing, setIsTranscribing] = useState(false);
+
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const recordingStartTimeRef = useRef<number>(0);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -42,14 +49,15 @@ export default function Home() {
     scrollToBottom();
   }, [messages, loading]);
 
-  const handleSendMessage = async (e?: React.FormEvent) => {
+  const handleSendMessage = async (e?: React.FormEvent, forcedText?: string) => {
     e?.preventDefault();
-    if (!inputValue.trim() || loading) return;
+    const textToProcess = forcedText || inputValue.trim();
+    if (!textToProcess || loading || isTranscribing) return;
 
     if (!hasInteracted) setHasInteracted(true);
 
-    const userText = inputValue.trim();
-    setInputValue("");
+    const userText = textToProcess;
+    if (!forcedText) setInputValue("");
 
     // Add User Message
     const userMsg: Message = {
@@ -230,6 +238,88 @@ export default function Home() {
     }
   };
 
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mediaRecorder = new MediaRecorder(stream);
+      mediaRecorderRef.current = mediaRecorder;
+      chunksRef.current = [];
+      recordingStartTimeRef.current = Date.now();
+
+      mediaRecorder.ondataavailable = (e) => {
+        if (e.data.size > 0) chunksRef.current.push(e.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const duration = Date.now() - recordingStartTimeRef.current;
+        if (duration < 500) {
+          logger.info("Recording too short");
+          return;
+        }
+        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
+        await handleTranscription(audioBlob);
+      };
+
+      mediaRecorder.start();
+      setIsRecording(true);
+    } catch (err) {
+      logger.error("Microphone error:", err);
+      alert("No se pudo acceder al micrófono.");
+    }
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const cancelRecording = () => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+      mediaRecorderRef.current.onstop = null;
+      mediaRecorderRef.current.stop();
+      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
+      setIsRecording(false);
+    }
+  };
+
+  const handleTranscription = async (blob: Blob) => {
+    setIsTranscribing(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", blob, "recording.webm");
+      const res = await fetch("/api/transcribe", { method: "POST", body: formData });
+      if (!res.ok) throw new Error("Transcription failed");
+      const data = await res.json();
+      if (data.text?.trim()) {
+        handleSendMessage(undefined, data.text);
+      }
+    } catch (err) {
+      logger.error("Transcription error:", err);
+      alert("Error al transcribir voz.");
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
+
+  const handlePointerUp = (e: React.PointerEvent) => {
+    if (!isRecording) return;
+    const rect = buttonRef.current?.getBoundingClientRect();
+    if (rect) {
+      const isInside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
+      if (!isInside) cancelRecording(); else stopRecording();
+    } else stopRecording();
+  };
+
+  useEffect(() => {
+    if (isRecording) {
+      const handler = () => stopRecording();
+      window.addEventListener('pointerup', handler);
+      return () => window.removeEventListener('pointerup', handler);
+    }
+  }, [isRecording]);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
@@ -264,8 +354,10 @@ export default function Home() {
             {messages.map((msg) => (
               <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
             ))}
-            {loading && (
-              <div className="pl-4 text-sm text-gray-400 animate-pulse">Escribiendo...</div>
+            {(loading || isTranscribing) && (
+              <div className="pl-4 text-sm text-gray-400 animate-pulse">
+                {isTranscribing ? "Transcribiendo audio..." : "Escribiendo..."}
+              </div>
             )}
             <div ref={messagesEndRef} />
           </div>
@@ -274,8 +366,9 @@ export default function Home() {
         {/* The Big Card */}
         <form
           onSubmit={handleSendMessage}
-          className={`bg-white w-full rounded-3xl shadow-sm border border-black/5 p-4 md:p-8 flex flex-col justify-end transition-all duration-500
+          className={`bg-white w-full rounded-3xl shadow-sm border border-black/5 p-4 md:p-8 flex flex-col justify-end transition-all duration-500 relative
               ${hasInteracted ? 'h-[160px]' : 'h-[320px] shadow-xl'}
+              ${isRecording ? 'ring-2 ring-red-400 translate-y-[-4px]' : ''}
             `}
         >
           <div className="flex items-center gap-2 md:gap-4 w-full">
@@ -292,26 +385,53 @@ export default function Home() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder="Idea..."
-              className="flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0"
-              disabled={loading}
+              placeholder={isRecording ? "Grabando..." : "Idea..."}
+              className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
+              disabled={loading || isTranscribing}
               autoFocus={!hasInteracted}
             />
 
-            {/* Send Button */}
+            {/* Send / Mic Button */}
             <button
-              type="submit"
-              disabled={!inputValue.trim() || loading}
+              ref={buttonRef}
+              type={inputValue.trim() ? "submit" : "button"}
+              onPointerDown={(e) => {
+                if (!inputValue.trim() && !loading && !isTranscribing) {
+                  e.preventDefault();
+                  startRecording();
+                }
+              }}
+              onPointerUp={handlePointerUp}
+              disabled={loading || isTranscribing}
               className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${inputValue.trim()
                 ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
-                : "bg-gray-100 text-gray-300"
+                : isRecording
+                  ? "bg-red-500 text-white scale-110 shadow-lg"
+                  : "bg-gray-100 text-gray-300"
                 }`}
+              title={inputValue.trim() ? "Enviar" : "Mantener para grabar"}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+              {(loading || isTranscribing) ? (
+                <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isRecording ? (
+                <div className="relative">
+                  <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75" />
+                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
+                </div>
+              ) : inputValue.trim() ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
+              )}
             </button>
           </div>
           {/* Divider Line */}
           <div className="w-full h-px bg-gray-100 mt-6 mb-2"></div>
+          {isRecording && (
+            <div className="text-[10px] text-red-500 absolute bottom-2 left-8 animate-pulse font-bold tracking-wider">
+              SOLTAR PARA ENVIAR • MOVER FUERA PARA CANCELAR
+            </div>
+          )}
         </form>
 
       </div>
