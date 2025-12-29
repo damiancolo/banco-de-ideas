@@ -7,10 +7,10 @@ import { logger } from "@/lib/logger";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 type Message = {
-  id: number;
+  id: string | number;
   role: 'user' | 'assistant';
   content: React.ReactNode | string;
-  plainText?: string; // Para memoria del contexto
+  plainText?: string;
 };
 
 type Idea = {
@@ -19,6 +19,9 @@ type Idea = {
   summary: string;
 };
 
+// ID generator to avoid race conditions
+let messageIdCounter = 0;
+const generateMessageId = () => `msg-${Date.now()}-${++messageIdCounter}`;
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -74,6 +77,15 @@ export default function Home() {
   };
 
   const handleTTS = async (text: string) => {
+    // Validation: check text length
+    if (text.length > 4000) {
+      alert("El texto es demasiado largo para leer en voz alta (máximo 4000 caracteres).");
+      return;
+    }
+
+    // Prevent audio overlap: stop any previous audio
+    stopSpeaking();
+
     try {
       setIsSpeaking(true);
       const res = await fetch("/api/speak", {
@@ -90,6 +102,13 @@ export default function Home() {
       audioRef.current = audio;
 
       audio.onended = () => {
+        URL.revokeObjectURL(url); // Fix memory leak
+        setIsSpeaking(false);
+        audioRef.current = null;
+      };
+
+      audio.onerror = () => {
+        URL.revokeObjectURL(url); // Also clean up on error
         setIsSpeaking(false);
         audioRef.current = null;
       };
@@ -113,10 +132,10 @@ export default function Home() {
 
     // Add User Message
     const userMsg: Message = {
-      id: Date.now(),
+      id: generateMessageId(),
       role: 'user',
       content: userText,
-      plainText: userText // Guardamos el texto plano del usuario
+      plainText: userText
     };
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
@@ -145,10 +164,10 @@ export default function Home() {
 
         const replyText = `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`;
         const reply: Message = {
-          id: Date.now() + 1,
+          id: generateMessageId(),
           role: 'assistant',
           content: replyText,
-          plainText: replyText // Guardamos el texto plano
+          plainText: replyText
         };
         setMessages(prev => [...prev, reply]);
         setLoading(false);
@@ -238,10 +257,10 @@ export default function Home() {
           }
 
           const reply: Message = {
-            id: Date.now() + 1,
+            id: generateMessageId(),
             role: 'assistant',
             content: content,
-            plainText: plainTextForContext // Guardamos el texto plano
+            plainText: plainTextForContext
           };
 
           setMessages(prev => [...prev, reply]);
@@ -255,7 +274,7 @@ export default function Home() {
             const followUpText = "¿Qué opinas? ¿Cuál te parece más interesante? ¿O prefieres profundizar en tu idea original?";
             setTimeout(() => {
               setMessages(prev => [...prev, {
-                id: Date.now() + 2,
+                id: generateMessageId(),
                 role: 'assistant',
                 content: followUpText,
                 plainText: followUpText
@@ -276,7 +295,7 @@ export default function Home() {
         const replyText = `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`;
         setTimeout(() => {
           const reply: Message = {
-            id: Date.now() + 1,
+            id: generateMessageId(),
             role: 'assistant',
             content: replyText,
             plainText: replyText
@@ -293,6 +312,7 @@ export default function Home() {
 
     } catch (error) {
       logger.error("Error in handleSendMessage:", error);
+    } finally {
       setLoading(false);
     }
   };
