@@ -385,7 +385,7 @@ export default function Home() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={isRecording ? "Grabando..." : "Idea..."}
+              placeholder={isRecording ? "Grabando..." : hasInteracted ? "Escribe aquí..." : "Cuenta tu idea (o mantén para grabar)..."}
               className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
               disabled={loading || isTranscribing}
               autoFocus={!hasInteracted}
@@ -394,22 +394,22 @@ export default function Home() {
             {/* Send / Mic Button */}
             <button
               ref={buttonRef}
-              type={inputValue.trim() ? "submit" : "button"}
+              type={(inputValue.trim() || hasInteracted) ? "submit" : "button"}
               onPointerDown={(e) => {
-                if (!inputValue.trim() && !loading && !isTranscribing) {
+                if (!hasInteracted && !inputValue.trim() && !loading && !isTranscribing) {
                   e.preventDefault();
                   startRecording();
                 }
               }}
               onPointerUp={handlePointerUp}
               disabled={loading || isTranscribing}
-              className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${inputValue.trim()
+              className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${inputValue.trim() || hasInteracted
                 ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
                 : isRecording
                   ? "bg-red-500 text-white scale-110 shadow-lg"
                   : "bg-gray-100 text-gray-300"
                 }`}
-              title={inputValue.trim() ? "Enviar" : "Mantener para grabar"}
+              title={inputValue.trim() || hasInteracted ? "Enviar" : "Mantener para grabar"}
             >
               {(loading || isTranscribing) ? (
                 <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -418,7 +418,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75" />
                   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
                 </div>
-              ) : inputValue.trim() ? (
+              ) : (inputValue.trim() || hasInteracted) ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
