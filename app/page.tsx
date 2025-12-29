@@ -19,11 +19,6 @@ type Idea = {
   summary: string;
 };
 
-const INITIAL_MESSAGE: Message = {
-  id: 0,
-  role: 'assistant',
-  content: ""
-};
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);

@@ -4,7 +4,7 @@ const nextConfig = {
         // !! WARN !!
         // Dangerously allow production builds to successfully complete even if
         // your project has type errors.
-        ignoreBuildErrors: true,
+        ignoreBuildErrors: false,
     },
     webpack: (config, { isServer }) => {
         if (!isServer) {
