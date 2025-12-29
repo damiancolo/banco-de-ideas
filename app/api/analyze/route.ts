@@ -3,14 +3,24 @@ import OpenAI from 'openai';
 import { saveIdea, saveIdeas } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { PROMPTS, API } from '@/lib/constants';
-import type { Message, Idea } from '@/types';
+// No type imports needed here if not used
+
+/**
+ * Tipo para los mensajes sugeridos por la IA
+ */
+type SuggestedIdea = {
+    id?: string;
+    title?: string;
+    summary?: string;
+    text?: string;
+};
 
 /**
  * Tipo para los mensajes del historial de chat
  */
 type ChatMessage = {
     role: 'user' | 'assistant';
-    content: string;
+    content: string | React.ReactNode;
     plainText?: string;
 };
 
@@ -81,7 +91,7 @@ export async function POST(request: Request) {
 
         if (history && Array.isArray(history)) {
             messages = history
-                .filter((msg: any) => msg && (msg.role === 'user' || msg.role === 'assistant'))
+                .filter((msg) => msg && (msg.role === 'user' || msg.role === 'assistant'))
                 .map((msg: ChatMessage) => ({
                     role: msg.role,
                     content: msg.plainText || (typeof msg.content === 'string' ? msg.content : "Contenido visual")
@@ -93,11 +103,12 @@ export async function POST(request: Request) {
                 try {
                     await saveIdea(idea, 'user');
                     return NextResponse.json({ result: "Idea guardada exitosamente" });
-                } catch (err: any) {
-                    logger.error("Error saving idea:", err.message);
+                } catch (err: unknown) {
+                    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
+                    logger.error("Error saving idea:", errorMessage);
                     return NextResponse.json({
                         result: "Idea recibida (error al persistir)",
-                        error: err.message
+                        error: errorMessage
                     });
                 }
             }
@@ -108,10 +119,10 @@ export async function POST(request: Request) {
             try {
                 const systemPrompt = PROMPTS.SIMILAR;
 
-                const llmMessages: any = [
-                    { role: "system", content: systemPrompt },
+                const llmMessages = [
+                    { role: "system" as const, content: systemPrompt },
                     ...messages,
-                    { role: "user", content: `La idea es: "${idea}". Dame 3 ideas similares.` }
+                    { role: "user" as const, content: `La idea es: "${idea}". Dame 3 ideas similares.` }
                 ];
 
                 logger.debug("Calling OpenAI with messages count:", llmMessages.length);
@@ -143,7 +154,7 @@ export async function POST(request: Request) {
 
                 if (result.length > 0) {
                     try {
-                        const ideasToSave = result.map((item: any) => ({
+                        const ideasToSave = result.map((item: SuggestedIdea) => ({
                             text: item.summary || item.title || item.text || JSON.stringify(item),
                             category: 'bisociation' as const
                         }));
@@ -153,12 +164,13 @@ export async function POST(request: Request) {
                         try {
                             await saveIdeas(ideasToSave);
                             logger.info("Bisociaciones guardadas correctamente");
-                        } catch (err: any) {
-                            logger.error("Error guardando bisociaciones:", err.message);
+                        } catch (err: unknown) {
+                            const errMsg = err instanceof Error ? err.message : "Desconocido";
+                            logger.error("Error guardando bisociaciones:", errMsg);
                         }
 
                         return NextResponse.json({
-                            result: result.map((item: any, i: number) => ({
+                            result: result.map((item: SuggestedIdea, i: number) => ({
                                 id: item.id || `temp-${Date.now()}-${i}`,
                                 title: item.title || item.text?.substring(0, 50) || "Idea Sugerida",
                                 summary: item.summary || item.text || JSON.stringify(item)
@@ -172,9 +184,10 @@ export async function POST(request: Request) {
 
 
                 return NextResponse.json({ result: [] });
-            } catch (llmErr: any) {
-                logger.error("LLM Error in similar action:", llmErr);
-                return NextResponse.json({ error: "Error de IA", message: llmErr.message }, { status: 500 });
+            } catch (llmErr: unknown) {
+                const llmErrMsg = llmErr instanceof Error ? llmErr.message : "Error de IA";
+                logger.error("LLM Error in similar action:", llmErrMsg);
+                return NextResponse.json({ error: "Error de IA", message: llmErrMsg }, { status: 500 });
             }
         }
         else if (action === "analysis") {
@@ -212,8 +225,9 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ error: "Acción no válida o flujo no soportado" }, { status: 400 });
 
-    } catch (error: any) {
-        logger.error("API Error:", error);
+    } catch (error: unknown) {
+        const errorMsg = error instanceof Error ? error.message : "Error desconocido";
+        logger.error("API Error:", errorMsg);
         return NextResponse.json({ error: "Error procesando solicitud" }, { status: 500 });
     }
 }

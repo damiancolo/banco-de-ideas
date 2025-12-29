@@ -6,7 +6,6 @@ const nextConfig = {
         // your project has type errors.
         ignoreBuildErrors: true,
     },
-    /* eslint config removed - managed by defaults */
     webpack: (config, { isServer }) => {
         if (!isServer) {
             config.resolve.fallback = {

@@ -23,6 +23,8 @@ const INITIAL_MESSAGE: Message = {
   role: 'assistant',
   content: "" // Empty initial message to keep the clean look
 };
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const _unused = INITIAL_MESSAGE;
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);

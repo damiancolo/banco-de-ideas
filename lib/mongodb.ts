@@ -13,10 +13,11 @@ interface MongooseCache {
 }
 
 // Usar global para persistir la conexión entre hot reloads
-let cached: MongooseCache = (global as any).mongoose;
+const globalWithMongoose = global as unknown as { mongoose: MongooseCache };
+let cached: MongooseCache = globalWithMongoose.mongoose;
 
 if (!cached) {
-    cached = (global as any).mongoose = { conn: null, promise: null };
+    cached = globalWithMongoose.mongoose = { conn: null, promise: null };
 }
 
 /**

@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function AboutPage() {
     return (
         <main className="min-h-screen bg-gradient-to-br from-[#F8F5F0] via-white to-[#EBE8E0] p-6 md:p-12">
@@ -207,8 +209,8 @@ export default function AboutPage() {
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-400">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Filosofía del Proyecto</h2>
                     <blockquote className="border-l-4 border-[#C5A47E] pl-6 italic text-lg text-gray-700 mb-6">
-                        "Las mejores ideas no nacen completamente formadas. Emergen de la colisión de conceptos,
-                        la iteración constante y la voluntad de explorar lo desconocido."
+                        &quot;Las mejores ideas no nacen completamente formadas. Emergen de la colisión de conceptos,
+                        la iteración constante y la voluntad de explorar lo desconocido.&quot;
                     </blockquote>
                     <p className="text-gray-700 leading-relaxed mb-4">
                         Este proyecto nace en el <span className="font-semibold">Solsticio de Invierno de 2025</span>,
@@ -230,12 +232,12 @@ export default function AboutPage() {
                         que nunca imaginaste.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                        <a
+                        <Link
                             href="/"
                             className="px-8 py-4 bg-white text-[#C5A47E] rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                         >
                             Empezar Ahora →
-                        </a>
+                        </Link>
                         <a
                             href="https://estudioprompt.com/banco-de-ideas/"
                             target="_blank"

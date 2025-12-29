@@ -8,8 +8,7 @@ type LogLevel = 'info' | 'warn' | 'error' | 'debug';
 class Logger {
     private isDevelopment = process.env.NODE_ENV !== 'production';
 
-    private log(level: LogLevel, message: string, data?: any) {
-        const timestamp = new Date().toISOString();
+    private log(level: LogLevel, message: string, data?: unknown) {
         const prefix = this.getPrefix(level);
 
         if (level === 'error') {
@@ -31,19 +30,19 @@ class Logger {
         return prefixes[level];
     }
 
-    info(message: string, data?: any) {
+    info(message: string, data?: unknown) {
         this.log('info', message, data);
     }
 
-    warn(message: string, data?: any) {
+    warn(message: string, data?: unknown) {
         this.log('warn', message, data);
     }
 
-    error(message: string, error?: any) {
+    error(message: string, error?: unknown) {
         this.log('error', message, error);
     }
 
-    debug(message: string, data?: any) {
+    debug(message: string, data?: unknown) {
         this.log('debug', message, data);
     }
 }

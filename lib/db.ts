@@ -18,19 +18,17 @@ export type SavedIdea = {
 
 /**
  * Convierte un documento de Mongoose a un objeto SavedIdea serializable
- * 
- * @param doc - Documento de Mongoose (puede ser lean o no)
- * @returns Objeto SavedIdea con tipos primitivos
- * @private
  */
-function toSavedIdea(doc: any): SavedIdea {
+function toSavedIdea(doc: IIdea | Record<string, unknown>): SavedIdea {
+    const d = doc as Record<string, unknown>;
+    const id = (d._id as { toString(): string }).toString();
     return {
-        id: doc._id.toString(),
-        text: doc.text,
-        createdAt: doc.createdAt instanceof Date
-            ? doc.createdAt.toISOString()
-            : doc.createdAt,
-        category: doc.category
+        id,
+        text: d.text as string,
+        createdAt: d.createdAt instanceof Date
+            ? d.createdAt.toISOString()
+            : d.createdAt as string,
+        category: d.category as 'user' | 'bisociation'
     };
 }
 
