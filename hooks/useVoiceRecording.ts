@@ -50,20 +50,30 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
     };
 
     const stopRecording = () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-            mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            setIsRecording(false);
+        if (mediaRecorderRef.current) {
+            if (mediaRecorderRef.current.state !== "inactive") {
+                mediaRecorderRef.current.stop();
+            }
+            mediaRecorderRef.current.stream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+            });
         }
+        setIsRecording(false);
     };
 
     const cancelRecording = () => {
-        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        if (mediaRecorderRef.current) {
             mediaRecorderRef.current.onstop = null;
-            mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            setIsRecording(false);
+            if (mediaRecorderRef.current.state !== "inactive") {
+                mediaRecorderRef.current.stop();
+            }
+            mediaRecorderRef.current.stream.getTracks().forEach(track => {
+                track.stop();
+                track.enabled = false;
+            });
         }
+        setIsRecording(false);
     };
 
     const handleTranscription = async (blob: Blob) => {
