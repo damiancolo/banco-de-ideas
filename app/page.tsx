@@ -159,13 +159,21 @@ export default function Home() {
         }
       } else if (awaitingDecision) {
         // Simple Intent Detection (Client-side)
-        const lowerText = userText.toLowerCase();
+        const lowerText = userText.toLowerCase().trim();
         let action = "";
 
-        if (lowerText.includes("similar") || lowerText.includes("ideas") || lowerText.includes("conectar") || lowerText.includes("dame") || lowerText.includes("generar") || lowerText === "si" || lowerText === "sí" || lowerText === "claro" || lowerText === "dale" || lowerText === "ok" || lowerText.includes("si")) {
-          action = "similar";
-        } else if (lowerText.includes("profundiz") || lowerText.includes("analiz") || lowerText.includes("criti")) {
+        // Verificamos primero "analysis" para darle prioridad
+        const analysisKeywords = ['profundiz', 'analizar', 'analíz', 'criti', 'críti', 'detalle', 'profundo'];
+        const similarKeywords = ['similar', 'ideas', 'conectar', 'dame', 'generar', 'otra', 'más', 'mas'];
+        const yesKeywords = ['si', 'sí', 'claro', 'dale', 'ok', 'va', 'venga'];
+
+        if (analysisKeywords.some(k => lowerText.includes(k))) {
           action = "analysis";
+        } else if (similarKeywords.some(k => lowerText.includes(k))) {
+          action = "similar";
+        } else if (yesKeywords.some(k => lowerText === k || lowerText.startsWith(k + " ") || lowerText.endsWith(" " + k) || lowerText.includes(" " + k + " "))) {
+          // Solo si es un "si" como palabra aislada
+          action = "similar";
         } else {
           // Fallback: Si no detectamos keywords claras, asumimos que es una continuación de la conversación (Chat Mode)
           action = "chat";
