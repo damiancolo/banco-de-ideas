@@ -8,6 +8,7 @@
  * 4. Ejecutar: migrateToMongoDB()
  */
 
+/* eslint-disable @typescript-eslint/no-unused-vars */
 async function migrateToMongoDB() {
     try {
         // Leer datos de LocalStorage
