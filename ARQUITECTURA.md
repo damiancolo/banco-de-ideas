@@ -2,15 +2,15 @@
 
 ## 📋 Resumen Ejecutivo
 
-**Banco de Ideas** es una aplicación web interactiva que permite a los usuarios capturar, explorar y expandir sus ideas mediante un asistente de IA conversacional. La aplicación combina un chat inteligente con capacidades de análisis y generación de ideas relacionadas (bisociaciones), todo almacenado de forma persistente.
+**Banco de Ideas** es una aplicación web interactiva que permite a los usuarios capturar, explorar y expandir sus ideas mediante un asistente de IA conversacional y entrada de voz. La aplicación utiliza **MongoDB** para la persistencia de datos y **OpenAI Whisper** para la transcripción de audio, permitiendo una experiencia fluida de captura de ideas.
 
 ## 🎯 Concepto Principal
 
 La aplicación funciona como un "banco" donde depositas ideas y la IA te ayuda a:
+- **Capturar ideas por voz** mediante Push-to-Talk (Whisper API)
 - **Analizar** ideas desde diferentes perspectivas (viabilidad, mercado, riesgos)
-- **Generar bisociaciones** (ideas similares o relacionadas)
+- **Generar bisociaciones** (ideas similares o relacionadas) que se guardan automáticamente
 - **Conversar** de forma natural para profundizar en conceptos
-- **Organizar** ideas propias vs. ideas generadas por IA
 
 ---
 
@@ -20,8 +20,8 @@ La aplicación funciona como un "banco" donde depositas ideas y la IA te ayuda a
 Frontend:  Next.js 16 (App Router) + React 19 + TypeScript
 Styling:   TailwindCSS 4
 Backend:   Next.js API Routes (Serverless)
-IA:        OpenAI GPT-4o-mini
-Storage:   LocalStorage (cliente) + JSON file (desarrollo)
+IA:        OpenAI GPT-4o-mini (Análisis) + Whisper-1 (Voz)
+Storage:   MongoDB Atlas + Mongoose (Persistencia real)
 Deploy:    Vercel (serverless)
 ```
 
@@ -35,84 +35,70 @@ Deploy:    Vercel (serverless)
 app/
 ├── page.tsx              → Página principal (Chat Interface)
 ├── banco/page.tsx        → Vista del banco de ideas
-├── layout.tsx            → Layout global
+├── about/page.tsx        → Página de filosofía y técnica
 └── api/
-    └── analyze/route.ts  → API endpoint para IA
+    ├── analyze/route.ts  → API endpoint para IA (GPT)
+    ├── transcribe/route.ts → API endpoint para Voz (Whisper)
+    └── ideas/route.ts    → API endpoint para CRUD de ideas
+
+hooks/
+└── useVoiceRecording.ts  → Hook personalizado para gestión de audio y Whisper
 
 components/
-├── IdeaInput.tsx         → Input para capturar ideas
+├── IdeaInput.tsx         → Input con capacidad dual (texto/voz)
 ├── ChatMessage.tsx       → Renderizado de mensajes del chat
-└── BancoView.tsx         → Vista de ideas guardadas (con filtros)
+└── BancoView.tsx         → Repositorio visual de ideas persistidas
 ```
 
 ### 🔄 Flujo de Datos
 
 ```mermaid
 graph TD
-    A[Usuario escribe idea] --> B[IdeaInput Component]
-    B --> C[page.tsx - handleSendMessage]
-    C --> D{Acción?}
+    A[Usuario habla/escribe] --> B[IdeaInput / useVoiceRecording]
+    B -->|Audio| C[POST /api/transcribe]
+    C -->|Whisper| D[Texto Transcrito]
+    D --> E[page.tsx - handleSendMessage]
+    B -->|Texto| E
     
-    D -->|Análisis| E[POST /api/analyze]
-    D -->|Bisociaciones| E
-    D -->|Chat| E
-    D -->|Guardar| F[LocalStorage]
+    E --> F{Acción IA?}
     
-    E --> G[OpenAI API]
-    G --> H[Respuesta IA]
-    H --> I[Actualizar UI]
+    F -->|Análisis/Similar/Chat| G[POST /api/analyze]
+    G --> H[OpenAI GPT-4o-mini]
+    H --> I[Respuesta IA]
     
-    I --> J[Guardar bisociaciones en LocalStorage]
+    F -->|Guardar| J[lib/db.ts]
+    I -->|Bisociaciones| J
     
-    F --> K[BancoView]
-    J --> K
-    K --> L[Renderizar ideas organizadas]
+    J --> K[MongoDB Atlas]
+    K --> L[BancoView / Dashboard]
 ```
 
 ---
 
 ## 🧩 Componentes Clave
 
-### 1. **`app/page.tsx`** - Chat Principal
+### 1. **`app/page.tsx`** - Orquestador de Chat
 
 **Responsabilidades:**
-- Gestión del estado conversacional (mensajes, historial)
-- Orquestación de acciones (análisis, bisociaciones, chat)
-- Persistencia en LocalStorage
-- Renderizado de la interfaz de chat
+- Gestión del estado conversacional y flujo de interacción.
+- Coordinación entre el input de usuario y las respuestas de la IA.
+- Control del estado de "primera interacción" para restringir el uso de voz.
 
-**Características destacadas:**
-- Sistema de mensajes con roles (`user` | `assistant`)
-- Botones de acción rápida (Analizar, Ideas Similares, Guardar)
-- Scroll automático al último mensaje
-- Manejo de estados de carga
+### 2. **`hooks/useVoiceRecording.ts`** - Gestión de Voz [NUEVO]
 
-```typescript
-// Estructura de mensaje
-type Message = {
-  id: number;
-  role: 'user' | 'assistant';
-  content: React.ReactNode | string;
-  plainText?: string; // Para enviar a la IA
-}
-```
+Hook especializado que encapsula toda la complejidad de la Web Media API y la integración con Whisper:
+- Gestión de permisos de micrófono.
+- Captura de buffers de audio y detección de duración mínima.
+- Comunicación con `/api/transcribe` para obtener el texto.
+- Lógica de cancelación (soltar fuera del área activa).
 
-### 2. **`app/api/analyze/route.ts`** - Backend IA
+### 3. **`app/api/analyze/route.ts`** - Motor de Inteligencia
 
-**Endpoint único** que maneja múltiples acciones mediante el parámetro `action`:
-
-| Acción | Descripción | Respuesta |
-|--------|-------------|-----------|
-| `save` | Guarda idea del usuario | Confirmación |
-| `similar` | Genera 3 ideas relacionadas | JSON con array de ideas |
-| `analysis` | Análisis crítico de negocio | Markdown con análisis |
-| `chat` | Conversación fluida | Texto natural |
-
-**Características:**
-- Manejo de contexto conversacional (historial completo)
-- Prompts especializados por tipo de acción
-- Formato JSON estructurado para bisociaciones
-- Manejo robusto de errores
+Endpoint multifunción que procesa las intenciones del usuario:
+- **similar**: Genera 3 ideas y las persiste automáticamente en MongoDB.
+- **analysis**: Devuelve un informe estructurado de la idea.
+- **chat**: Mantiene una conversación contextual libre.
+- **save**: Persiste manualmente una idea del usuario.
 
 ```typescript
 // Ejemplo de request
@@ -124,59 +110,48 @@ POST /api/analyze
 }
 ```
 
-### 3. **`components/BancoView.tsx`** - Repositorio de Ideas
+### 4. **`components/BancoView.tsx`** - Dashboard de Ideas
 
 **Funcionalidad:**
-- Carga ideas desde LocalStorage
-- Filtrado por categoría (`user` | `bisociation`)
-- Vista de carpetas (navegación visual)
-- Grid responsivo de tarjetas
+- Carga ideas en tiempo real desde MongoDB vía `/api/ideas`.
+- Filtrado dinámico por categoría (`user` | `bisociation`).
+- Gestión de eliminación de ideas.
+- Grid responsivo de tarjetas con diseño "glassmorphism".
 
-**Diseño UX:**
-- Vista inicial: "Mis Ideas" + carpeta "Bisociaciones"
-- Al hacer clic en carpeta → muestra solo bisociaciones
-- Breadcrumbs para navegación
-- Indicador visual "IA" en ideas generadas
+### 5. **`lib/db.ts`** - Capa de Datos (Mongoose)
 
-### 4. **`lib/db.ts`** - Capa de Persistencia
-
-**Estrategia híbrida:**
-- **Desarrollo local**: Escribe en `data/ideas.json`
-- **Producción (Vercel)**: Read-only, delega a LocalStorage
-
-```typescript
-export function saveIdea(text: string, category: 'user' | 'bisociation'): SavedIdea
-export function getIdeas(): SavedIdea[]
-```
-
-**Nota importante:** En Vercel, el filesystem es efímero, por lo que la persistencia real se hace en el cliente.
+Abstracción sobre el modelo `Idea` de Mongoose que proporciona métodos CRUD seguros y tipados:
+- `getIdeas()`: Recupera ideas ordenadas por fecha.
+- `saveIdea()`: Valida y persiste una idea individual.
+- `saveIdeas()`: Inserción por lotes para bisociaciones.
+- `deleteIdea()`: Eliminación física de registros.
 
 ---
 
 ## 💾 Modelo de Datos
 
-### SavedIdea (LocalStorage)
+### Idea Schema (MongoDB)
 
 ```typescript
 {
-  id: string;           // timestamp + random
-  text: string;         // Contenido de la idea
-  createdAt: string;    // ISO 8601
-  category: 'user' | 'bisociation';
-  date?: string;        // Compatibilidad legacy
+  text: { type: String, required: true },
+  category: { 
+    type: String, 
+    enum: ['user', 'bisociation'], 
+    default: 'user' 
+  },
+  createdAt: { type: Date, default: Date.now }
 }
 ```
 
-**Storage Key:** `ideas_bank_v1`
-
-### Message (Estado del Chat)
+La comunicación entre API y Cliente utiliza el tipo `SavedIdea` para garantizar serialización limpia:
 
 ```typescript
-{
-  id: number;
-  role: 'user' | 'assistant';
-  content: React.ReactNode | string;  // Puede ser JSX (botones, listas)
-  plainText?: string;                 // Versión texto para IA
+type SavedIdea = {
+  id: string;
+  text: string;
+  createdAt: string; // ISO String
+  category: 'user' | 'bisociation';
 }
 ```
 
@@ -185,174 +160,35 @@ export function getIdeas(): SavedIdea[]
 ## 🎨 Diseño Visual
 
 ### Paleta de Colores
-
-```css
---background: #F8F5F0    /* Beige cálido */
---card: #FFFFFF          /* Blanco */
---gold: #C5A47E          /* Dorado suave */
---foreground: #1A1A1A    /* Texto principal */
-```
-
-### Componentes UI Destacados
-
-- **Tarjetas de ideas**: Bordes sutiles, hover con sombra
-- **Botones de acción**: Gradiente dorado, micro-animaciones
-- **Input principal**: Minimalista, auto-focus, placeholder sutil
-- **Carpeta de bisociaciones**: Icono de folder, efecto hover scale
-
----
-
-## 🔐 Configuración y Deployment
-
-### Variables de Entorno
-
-```bash
-OPENAI_API_KEY=sk-...  # Requerida para funcionalidad IA
-```
-
-### Scripts NPM
-
-```json
-{
-  "dev": "next dev --webpack",
-  "build": "next build --webpack",
-  "start": "next start"
-}
-```
-
-### Deployment en Vercel
-
-- **Auto-deploy** desde Git
-- **Edge Functions** para API routes
-- **LocalStorage** como persistencia principal
-- Ver `DEPLOY.md` para detalles
-
----
-
-## 🚀 Flujos de Usuario Principales
-
-### 1️⃣ Capturar y Analizar Idea
-
-```
-Usuario escribe idea → Clic "Analizar" 
-→ IA devuelve análisis en Markdown 
-→ Se muestra en chat con formato
-→ Usuario puede hacer preguntas de seguimiento
-```
-
-### 2️⃣ Generar Bisociaciones
-
-```
-Usuario escribe idea → Clic "Ideas Similares"
-→ IA genera 3 ideas relacionadas
-→ Se muestran como lista interactiva
-→ Usuario puede guardar las que le interesen
-→ Se almacenan en LocalStorage con category='bisociation'
-```
-
-### 3️⃣ Guardar y Organizar
-
-```
-Usuario escribe idea → Clic "Guardar"
-→ Se guarda en LocalStorage con category='user'
-→ Visible en /banco en la sección "Mis Ideas"
-→ Bisociaciones aparecen en carpeta separada
-```
+- **Background**: `#F8F5F0` (Beige cálido que evoca papel/creatividad)
+- **Primary**: `#C5A47E` (Dorado táctica/premium)
+- **Accents**: `#1A1A1A` (Contraste elegante)
 
 ---
 
 ## 🧠 Decisiones de Diseño Clave
 
-### ¿Por qué LocalStorage?
+### Del Cliente al Servidor (MongoDB)
+Originalmente el proyecto usaba LocalStorage. Se migró a **MongoDB Atlas** para:
+- **Persistencia real**: Las ideas no se pierden al borrar caché o cambiar de navegador.
+- **Escalabilidad**: Permitir búsquedas complejas y análisis agregados en el futuro.
+- **Seguridad**: Los datos críticos residen en el servidor, no solo en el cliente.
 
-- **Vercel es serverless**: El filesystem es efímero entre invocaciones
-- **Inmediatez**: No requiere backend persistente
-- **Simplicidad**: Ideal para MVP y uso personal
-- **Migración futura**: Fácil de reemplazar por DB (Supabase, Firebase)
-
-### ¿Por qué un solo endpoint `/api/analyze`?
-
-- **Reutilización de contexto**: Todas las acciones comparten historial
-- **Simplicidad**: Un solo punto de integración con OpenAI
-- **Flexibilidad**: Fácil añadir nuevas acciones
-
-### ¿Por qué Next.js App Router?
-
-- **Server Components**: Optimización automática
-- **API Routes integradas**: Backend sin configuración extra
-- **File-based routing**: Estructura clara y escalable
-- **Vercel-optimized**: Deploy sin fricción
+### Push-to-Talk (Experiencia Pro)
+En lugar de una grabación toggle (on/off), se implementó **Mantener para Grabar** (PointerEvents):
+- **Menos errores**: El usuario es consciente de cuándo está capturando audio.
+- **Rapidez**: Envío automático al soltar, acelerando el flujo creativo.
 
 ---
 
-## 📊 Diagrama de Arquitectura Completo
-
-```mermaid
-graph TB
-    subgraph "Cliente (Browser)"
-        A[IdeaInput] --> B[page.tsx]
-        B --> C[ChatMessage]
-        B --> D[LocalStorage]
-        E[BancoView] --> D
-    end
-    
-    subgraph "Servidor (Vercel)"
-        F[/api/analyze] --> G[OpenAI API]
-        H[lib/db.ts] -.->|dev only| I[data/ideas.json]
-    end
-    
-    B -->|POST /api/analyze| F
-    G -->|respuesta| F
-    F -->|JSON/Markdown| B
-    
-    style A fill:#C5A47E,color:#fff
-    style E fill:#C5A47E,color:#fff
-    style G fill:#10a37f,color:#fff
-```
-
----
-
-## 🔮 Posibles Mejoras Futuras
-
-### Persistencia
-- [ ] Migrar a Supabase/Firebase para persistencia real
-- [ ] Sincronización multi-dispositivo
-- [ ] Export/Import de ideas (JSON, Markdown)
-
-### Funcionalidad
-- [ ] Etiquetas y categorías personalizadas
-- [ ] Búsqueda full-text
-- [ ] Relaciones entre ideas (grafo)
-- [ ] Modo colaborativo (compartir ideas)
-
-### IA
-- [ ] Generación de imágenes para ideas
-- [ ] Análisis de tendencias en el banco
-- [ ] Sugerencias proactivas basadas en historial
-
-### UX
-- [ ] Modo oscuro
-- [ ] Atajos de teclado
-- [ ] Arrastrar y soltar para organizar
-- [ ] Vista de timeline
-
----
-
-## 📚 Recursos y Referencias
-
-- [Next.js Documentation](https://nextjs.org/docs)
-- [OpenAI API Reference](https://platform.openai.com/docs)
-- [TailwindCSS](https://tailwindcss.com)
-- [Vercel Deployment](https://vercel.com/docs)
-
----
-
-## 👥 Contacto y Contribuciones
-
-Este proyecto es personal, pero abierto a sugerencias y mejoras. Si tienes ideas para expandir el concepto, ¡adelante!
+## 🔮 Roadmap
+- [ ] Búsqueda semántica por vectores (RAG).
+- [ ] Categorización automática por temas mediante IA.
+- [ ] Exportación a formato Notion / Markdown.
+- [ ] Autenticación de usuarios para bancos privados.
 
 ---
 
 **Última actualización:** Diciembre 2024  
-**Versión:** 1.0.0  
-**Estado:** ✅ Funcional en producción
+**Versión:** 1.1.0  
+**Estado:** ✅ Estable y en producción en [unbancodeideas.com](https://unbancodeideas.com)

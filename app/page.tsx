@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import Link from "next/link";
 import { logger } from "@/lib/logger";
+import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 type Message = {
   id: number;
@@ -21,10 +22,8 @@ type Idea = {
 const INITIAL_MESSAGE: Message = {
   id: 0,
   role: 'assistant',
-  content: "" // Empty initial message to keep the clean look
+  content: ""
 };
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export const _unused = INITIAL_MESSAGE;
 
 export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
@@ -35,13 +34,20 @@ export default function Home() {
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const [isRecording, setIsRecording] = useState(false);
-  const [isTranscribing, setIsTranscribing] = useState(false);
-
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-  const recordingStartTimeRef = useRef<number>(0);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  const {
+    isRecording,
+    isTranscribing,
+    startRecording,
+    handlePointerUp
+  } = useVoiceRecording({
+    onTranscription: (text) => handleSendMessage(undefined, text),
+    onTranscriptionError: (err) => {
+      logger.error("Voice Error:", err);
+      alert("Error con el audio o la transcripción.");
+    }
+  });
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -49,7 +55,7 @@ export default function Home() {
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, loading]);
+  }, [messages, loading, isTranscribing]);
 
   const handleSendMessage = async (e?: React.FormEvent, forcedText?: string) => {
     e?.preventDefault();
@@ -240,88 +246,9 @@ export default function Home() {
     }
   };
 
-  const startRecording = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      mediaRecorderRef.current = mediaRecorder;
-      chunksRef.current = [];
-      recordingStartTimeRef.current = Date.now();
-
-      mediaRecorder.ondataavailable = (e) => {
-        if (e.data.size > 0) chunksRef.current.push(e.data);
-      };
-
-      mediaRecorder.onstop = async () => {
-        const duration = Date.now() - recordingStartTimeRef.current;
-        if (duration < 500) {
-          logger.info("Recording too short");
-          return;
-        }
-        const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-        await handleTranscription(audioBlob);
-      };
-
-      mediaRecorder.start();
-      setIsRecording(true);
-    } catch (err) {
-      logger.error("Microphone error:", err);
-      alert("No se pudo acceder al micrófono.");
-    }
+  const handlePointerUpProxy = (e: React.PointerEvent) => {
+    handlePointerUp(e, buttonRef);
   };
-
-  const stopRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      setIsRecording(false);
-    }
-  };
-
-  const cancelRecording = () => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
-      mediaRecorderRef.current.onstop = null;
-      mediaRecorderRef.current.stop();
-      mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-      setIsRecording(false);
-    }
-  };
-
-  const handleTranscription = async (blob: Blob) => {
-    setIsTranscribing(true);
-    try {
-      const formData = new FormData();
-      formData.append("file", blob, "recording.webm");
-      const res = await fetch("/api/transcribe", { method: "POST", body: formData });
-      if (!res.ok) throw new Error("Transcription failed");
-      const data = await res.json();
-      if (data.text?.trim()) {
-        handleSendMessage(undefined, data.text);
-      }
-    } catch (err) {
-      logger.error("Transcription error:", err);
-      alert("Error al transcribir voz.");
-    } finally {
-      setIsTranscribing(false);
-    }
-  };
-
-  const handlePointerUp = (e: React.PointerEvent) => {
-    if (!isRecording) return;
-    const rect = buttonRef.current?.getBoundingClientRect();
-    if (rect) {
-      const isInside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-      if (!isInside) cancelRecording(); else stopRecording();
-    } else stopRecording();
-  };
-
-  useEffect(() => {
-    if (isRecording) {
-      const handler = () => stopRecording();
-      window.addEventListener('pointerup', handler);
-      return () => window.removeEventListener('pointerup', handler);
-    }
-  }, [isRecording]);
 
   return (
     <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
@@ -403,7 +330,7 @@ export default function Home() {
                   startRecording();
                 }
               }}
-              onPointerUp={handlePointerUp}
+              onPointerUp={handlePointerUpProxy}
               disabled={loading || isTranscribing}
               className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${inputValue.trim() || hasInteracted
                 ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
