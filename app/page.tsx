@@ -29,9 +29,11 @@ export default function Home() {
   const [hasInteracted, setHasInteracted] = useState(false);
 
   const [voiceEnabled, setVoiceEnabled] = useState(true);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const {
     isRecording,
@@ -39,7 +41,7 @@ export default function Home() {
     startRecording,
     handlePointerUp
   } = useVoiceRecording({
-    onTranscription: (text) => handleSendMessage(undefined, text),
+    onTranscription: (text) => handleSendMessage(undefined, text, true),
     onTranscriptionError: (err) => {
       logger.error("Voice Error:", err);
       alert("Error con el audio o la transcripción.");
@@ -55,16 +57,51 @@ export default function Home() {
   }, [messages, loading, isTranscribing]);
 
   const resetConversation = () => {
+    stopSpeaking();
     setCurrentIdea(null);
     setAwaitingDecision(false);
     setVoiceEnabled(true);
     setInputValue("");
-    setHasInteracted(false); // Opcional: ¿queremos que vuelva a la pantalla inicial? 
-    // Si queremos mantener el historial, no reseteamos hasInteracted.
-    // Pero si queremos que la "Big Card" vuelva a ser grande, entonces sí.
+    setHasInteracted(false);
   };
 
-  const handleSendMessage = async (e?: React.FormEvent, forcedText?: string) => {
+  const stopSpeaking = () => {
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
+    setIsSpeaking(false);
+  };
+
+  const handleTTS = async (text: string) => {
+    try {
+      setIsSpeaking(true);
+      const res = await fetch("/api/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+
+      if (!res.ok) throw new Error("TTS failed");
+
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const audio = new Audio(url);
+      audioRef.current = audio;
+
+      audio.onended = () => {
+        setIsSpeaking(false);
+        audioRef.current = null;
+      };
+
+      await audio.play();
+    } catch (err) {
+      logger.error("TTS Error:", err);
+      setIsSpeaking(false);
+    }
+  };
+
+  const handleSendMessage = async (e?: React.FormEvent, forcedText?: string, viaVoice = false) => {
     e?.preventDefault();
     const textToProcess = forcedText || inputValue.trim();
     if (!textToProcess || loading || isTranscribing) return;
@@ -106,17 +143,20 @@ export default function Home() {
           logger.error("Error de red al guardar:", err);
         });
 
-        setTimeout(() => {
-          const reply: Message = {
-            id: Date.now() + 1,
-            role: 'assistant',
-            content: `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`,
-            plainText: `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?` // Guardamos el texto plano
-          };
-          setMessages(prev => [...prev, reply]);
-          setLoading(false);
-          setAwaitingDecision(true);
-        }, 800);
+        const replyText = `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`;
+        const reply: Message = {
+          id: Date.now() + 1,
+          role: 'assistant',
+          content: replyText,
+          plainText: replyText // Guardamos el texto plano
+        };
+        setMessages(prev => [...prev, reply]);
+        setLoading(false);
+        setAwaitingDecision(true);
+
+        if (viaVoice) {
+          handleTTS(replyText);
+        }
       } else if (awaitingDecision) {
         // Simple Intent Detection (Client-side)
         const lowerText = userText.toLowerCase();
@@ -198,6 +238,10 @@ export default function Home() {
 
           setMessages(prev => [...prev, reply]);
 
+          if (viaVoice && plainTextForContext) {
+            handleTTS(plainTextForContext);
+          }
+
           if (action === "similar") {
             // Nuevo flujo: Preguntar sobre las similares o la original
             const followUpText = "¿Qué opinas? ¿Cuál te parece más interesante? ¿O prefieres profundizar en tu idea original?";
@@ -209,6 +253,7 @@ export default function Home() {
                 plainText: followUpText
               }]);
               setAwaitingDecision(true);
+              // No reproducimos audio para los follow-ups automáticos para no saturar
             }, 1500);
           } else {
             setAwaitingDecision(true);
@@ -220,15 +265,21 @@ export default function Home() {
         // Restarting loop (Default behavior when typing something out of order)
         setCurrentIdea(userText);
         setVoiceEnabled(true);
+        const replyText = `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`;
         setTimeout(() => {
           const reply: Message = {
             id: Date.now() + 1,
             role: 'assistant',
-            content: `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`
+            content: replyText,
+            plainText: replyText
           };
           setMessages(prev => [...prev, reply]);
           setLoading(false);
           setAwaitingDecision(true);
+
+          if (viaVoice) {
+            handleTTS(replyText);
+          }
         }, 800);
       }
 
@@ -275,9 +326,22 @@ export default function Home() {
             {messages.map((msg) => (
               <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
             ))}
-            {(loading || isTranscribing) && (
-              <div className="pl-4 text-sm text-gray-400 animate-pulse">
-                {isTranscribing ? "Transcribiendo audio..." : "Escribiendo..."}
+            {(loading || isTranscribing || isSpeaking) && (
+              <div className="pl-4 text-sm text-gray-400 flex items-center gap-3">
+                {isTranscribing ? (
+                  <span className="animate-pulse">Transcribiendo audio...</span>
+                ) : isSpeaking ? (
+                  <div className="flex items-center gap-2 text-[#C5A47E] font-medium">
+                    <span className="flex gap-1 items-end h-3">
+                      <span className="w-1 bg-current animate-[sound_0.5s_ease-in-out_infinite]"></span>
+                      <span className="w-1 bg-current animate-[sound_0.8s_ease-in-out_infinite]"></span>
+                      <span className="w-1 bg-current animate-[sound_0.6s_ease-in-out_infinite]"></span>
+                    </span>
+                    La IA está hablando...
+                  </div>
+                ) : (
+                  <span className="animate-pulse">Escribiendo...</span>
+                )}
               </div>
             )}
             <div ref={messagesEndRef} />
@@ -336,6 +400,15 @@ export default function Home() {
             >
               {(loading || isTranscribing) ? (
                 <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+              ) : isSpeaking ? (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); stopSpeaking(); }}
+                  className="w-full h-full flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
+                  title="Detener audio"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
+                </button>
               ) : isRecording ? (
                 <div className="relative">
                   <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75" />
