@@ -324,7 +324,13 @@ export default function Home() {
         {hasInteracted && (
           <div className="w-full flex-1 overflow-y-auto max-h-[40vh] space-y-4 px-2 scroll-smooth mask-fade-top mb-4">
             {messages.map((msg) => (
-              <ChatMessage key={msg.id} role={msg.role} content={msg.content} />
+              <ChatMessage
+                key={msg.id}
+                role={msg.role}
+                content={msg.content}
+                plainText={msg.plainText}
+                onSpeak={msg.role === 'assistant' ? handleTTS : undefined}
+              />
             ))}
             {(loading || isTranscribing || isSpeaking) && (
               <div className="pl-4 text-sm text-gray-400 flex items-center gap-3">
