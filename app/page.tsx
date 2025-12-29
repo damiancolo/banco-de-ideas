@@ -28,6 +28,8 @@ export default function Home() {
   const [awaitingDecision, setAwaitingDecision] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
+  const [voiceEnabled, setVoiceEnabled] = useState(true);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
 
@@ -77,6 +79,7 @@ export default function Home() {
       if (!currentIdea) {
         // Step 1: User submitted an idea
         setCurrentIdea(userText);
+        setVoiceEnabled(true); // Siempre habilitar voz para la primera fase de una nueva idea
 
         // Intentar persistencia en servidor (MongoDB)
         fetch("/api/analyze", {
@@ -131,16 +134,13 @@ export default function Home() {
           const data = await response.json();
           const result = data.result;
 
-          // 🔥 DEBUG ALERT (Temporal para el usuario)
-          if (action === "similar" && (!result || !Array.isArray(result))) {
-            // alert("DEBUG: La IA no devolvió una lista válida. Intenta de nuevo."); 
-            // Comentado para no ser intrusivo, pero lógica mejorada abajo
-          }
-
           let content: React.ReactNode;
           let plainTextForContext = "";
 
           if (action === "similar" && Array.isArray(result)) {
+            // BLOQUEO DE VOZ: Una vez que se proponen similares, se acaba la voz
+            setVoiceEnabled(false);
+
             // Construir representación visual
             content = (
               <div className="flex flex-col gap-4 mt-2">
@@ -154,17 +154,9 @@ export default function Home() {
               </div>
             );
 
-            // DEBUG LOGS
-            logger.debug("Action:", action);
-            logger.debug("Result received:", result);
-            logger.debug("Is Array?", Array.isArray(result));
-
             // Construir representación textual para la memoria
             plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
               result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
-
-            // Las bisociaciones ya se guardan en el servidor (action: similar las guarda automáticamente)
-            logger.debug("Bisociaciones recibidas:", result);
 
           } else if (typeof result === 'string' && (result.includes("⚠️") || result.includes("Error"))) {
             // Error de Configuración del Backend (ej. Falta API Key)
@@ -206,15 +198,9 @@ export default function Home() {
                 content: followUpText,
                 plainText: followUpText
               }]);
-              // Mantenemos currentIdea y awaitingDecision (o un flag similar) para procesar la siguiente respuesta
-              // Reusemos awaitingDecision pero sabiendo que el contexto ha cambiado ligeramente.
-              // Lo más simple es dejar awaitingDecision = true. 
-              // Si el usuario dice "profundizar en la mía", el detector de keywords de "analysis" lo captará.
               setAwaitingDecision(true);
             }, 1500);
           } else {
-            // Si es Chat o Analysis, nos quedamos en el estado conversacional
-            // No reseteamos currentIdea para permitir que siga el hilo sobre "la idea actual"
             setAwaitingDecision(true);
           }
 
@@ -223,6 +209,7 @@ export default function Home() {
       } else {
         // Restarting loop
         setCurrentIdea(userText);
+        setVoiceEnabled(true); // Rehabilitar voz para nueva idea
         setTimeout(() => {
           const reply: Message = {
             id: Date.now() + 1,
@@ -309,7 +296,7 @@ export default function Home() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={isRecording ? "Grabando..." : inputValue.trim() ? "Escribe aquí..." : "idea..."}
+              placeholder={isRecording ? "Grabando..." : (inputValue.trim() || !voiceEnabled) ? "Escribe aquí..." : "idea..."}
               className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
               disabled={loading || isTranscribing}
               autoFocus={!hasInteracted}
@@ -318,22 +305,22 @@ export default function Home() {
             {/* Send / Mic Button */}
             <button
               ref={buttonRef}
-              type={inputValue.trim() ? "submit" : "button"}
+              type={(inputValue.trim() || !voiceEnabled) ? "submit" : "button"}
               onPointerDown={(e) => {
-                if (!inputValue.trim() && !loading && !isTranscribing) {
+                if (voiceEnabled && !inputValue.trim() && !loading && !isTranscribing) {
                   e.preventDefault();
                   startRecording();
                 }
               }}
               onPointerUp={handlePointerUpProxy}
               disabled={loading || isTranscribing}
-              className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${inputValue.trim()
+              className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${(inputValue.trim() || !voiceEnabled)
                 ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
                 : isRecording
                   ? "bg-red-500 text-white scale-110 shadow-lg"
                   : "bg-gray-100 text-gray-300"
                 }`}
-              title={inputValue.trim() ? "Enviar" : "Mantener para grabar"}
+              title={(inputValue.trim() || !voiceEnabled) ? "Enviar" : "Mantener para grabar"}
             >
               {(loading || isTranscribing) ? (
                 <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
@@ -342,7 +329,7 @@ export default function Home() {
                   <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75" />
                   <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
                 </div>
-              ) : inputValue.trim() ? (
+              ) : (inputValue.trim() || !voiceEnabled) ? (
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
               ) : (
                 <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>

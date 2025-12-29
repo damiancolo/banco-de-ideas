@@ -28,6 +28,7 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
             };
 
             mediaRecorder.onstop = async () => {
+                setIsRecording(false);
                 const duration = Date.now() - recordingStartTimeRef.current;
                 if (duration < 500) {
                     logger.info("Recording too short");
@@ -40,6 +41,7 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
             mediaRecorder.start();
             setIsRecording(true);
         } catch (err) {
+            setIsRecording(false);
             logger.error("Microphone error:", err);
             if (onTranscriptionError) {
                 onTranscriptionError(err);
@@ -58,6 +60,7 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
                 track.stop();
                 track.enabled = false;
             });
+            mediaRecorderRef.current = null;
         }
         setIsRecording(false);
     };
@@ -72,6 +75,7 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
                 track.stop();
                 track.enabled = false;
             });
+            mediaRecorderRef.current = null;
         }
         setIsRecording(false);
     };
