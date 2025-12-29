@@ -387,7 +387,7 @@ export default function Home() {
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={isRecording ? "Grabando..." : hasInteracted ? "Escribe aquí..." : "Cuenta tu idea (o mantén para grabar)..."}
+              placeholder={isRecording ? "Grabando..." : hasInteracted ? "Escribe aquí..." : "idea..."}
               className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
               disabled={loading || isTranscribing}
               autoFocus={!hasInteracted}
