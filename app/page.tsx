@@ -108,7 +108,7 @@ export default function Home() {
 
       if (!res.ok) {
         const errorText = await res.text();
-        logger.error("TTS API error:", res.status, errorText);
+        logger.error(`TTS API error: ${res.status} - ${errorText}`);
         throw new Error(`TTS failed: ${res.status}`);
       }
 
