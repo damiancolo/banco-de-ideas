@@ -94,6 +94,17 @@ export default function Home() {
     try {
       setIsSpeaking(true);
 
+      // Silent Unlock: Create audio element and play silent audio immediately
+      // This unlocks audio playback on iOS within user interaction context
+      const SILENT_MP3 = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAADFMYXZjNTguNTQuMTAwAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA";
+
+      if (!audioRef.current) {
+        audioRef.current = new Audio();
+      }
+      audioRef.current.src = SILENT_MP3;
+      await audioRef.current.play();
+
+      // Now fetch the real audio (audio context is already unlocked)
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -109,17 +120,17 @@ export default function Home() {
       if (blob.size === 0) throw new Error("Audio recibido vacío");
 
       const url = URL.createObjectURL(blob);
-      const audio = new Audio();
-      audio.src = url;
-      audioRef.current = audio;
 
-      audio.onended = () => {
+      // Reuse the same audio element (already unlocked)
+      audioRef.current.src = url;
+
+      audioRef.current.onended = () => {
         URL.revokeObjectURL(url);
         setIsSpeaking(false);
         audioRef.current = null;
       };
 
-      audio.onerror = (e) => {
+      audioRef.current.onerror = (e) => {
         URL.revokeObjectURL(url);
         setIsSpeaking(false);
         audioRef.current = null;
@@ -127,9 +138,7 @@ export default function Home() {
         alert("Error de reproducción: El formato de audio no es compatible o el navegador bloqueó la salida.");
       };
 
-      // iOS requires user interaction context for play()
-      // Here it's called after an async fetch, which can be tricky.
-      await audio.play();
+      await audioRef.current.play();
     } catch (err) {
       logger.error("TTS Error:", err);
       setIsSpeaking(false);
