@@ -14,9 +14,11 @@ export default function IdeaInput({ onSubmit, isLoading = false }: IdeaInputProp
     const [isTranscribing, setIsTranscribing] = useState(false);
 
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const recordingStartTimeRef = useRef<number>(0);
     const buttonRef = useRef<HTMLButtonElement>(null);
+    const isPressingRef = useRef<boolean>(false);
 
     const handleSubmit = (e?: React.FormEvent) => {
         e?.preventDefault();
@@ -28,7 +30,18 @@ export default function IdeaInput({ onSubmit, isLoading = false }: IdeaInputProp
 
     const startRecording = async () => {
         try {
+            isPressingRef.current = true;
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+
+            // If user released the button while we were getting permissions/stream
+            if (!isPressingRef.current) {
+                logger.info("Recording cancelled before start");
+                stream.getTracks().forEach(track => track.stop());
+                streamRef.current = null;
+                return;
+            }
+
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
@@ -43,6 +56,12 @@ export default function IdeaInput({ onSubmit, isLoading = false }: IdeaInputProp
             mediaRecorder.onstop = async () => {
                 const duration = Date.now() - recordingStartTimeRef.current;
 
+                // Cleanup tracks when stopped
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                    streamRef.current = null;
+                }
+
                 // Minimum duration check: 500ms
                 if (duration < 500) {
                     logger.info("Recording too short, ignoring.");
@@ -56,27 +75,37 @@ export default function IdeaInput({ onSubmit, isLoading = false }: IdeaInputProp
             mediaRecorder.start();
             setIsRecording(true);
         } catch (err) {
+            isPressingRef.current = false;
             logger.error("Error accessing microphone:", err);
             alert("No se pudo acceder al micrófono. Por favor, verifica los permisos.");
         }
     };
 
     const stopRecording = () => {
+        isPressingRef.current = false;
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
             mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            setIsRecording(false);
+        } else if (streamRef.current) {
+            // Fallback if recorder wasn't started yet
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
         }
+        setIsRecording(false);
     };
 
     const cancelRecording = () => {
+        isPressingRef.current = false;
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
             mediaRecorderRef.current.onstop = null; // Prevent transcription
             mediaRecorderRef.current.stop();
-            mediaRecorderRef.current.stream.getTracks().forEach(track => track.stop());
-            setIsRecording(false);
-            logger.info("Recording cancelled by user.");
         }
+
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
+        }
+        setIsRecording(false);
+        logger.info("Recording cancelled by user.");
     };
 
     const handleTranscription = async (blob: Blob) => {

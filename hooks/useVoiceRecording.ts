@@ -12,12 +12,25 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
     const [isRecording, setIsRecording] = useState(false);
     const [isTranscribing, setIsTranscribing] = useState(false);
     const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
     const chunksRef = useRef<Blob[]>([]);
     const recordingStartTimeRef = useRef<number>(0);
+    const isPressingRef = useRef<boolean>(false);
 
     const startRecording = async () => {
         try {
+            isPressingRef.current = true;
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+
+            // If user released the button while we were getting permissions/stream
+            if (!isPressingRef.current) {
+                logger.info("Recording cancelled before start");
+                stream.getTracks().forEach(track => track.stop());
+                streamRef.current = null;
+                return;
+            }
+
             const mediaRecorder = new MediaRecorder(stream);
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
@@ -30,6 +43,13 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
             mediaRecorder.onstop = async () => {
                 setIsRecording(false);
                 const duration = Date.now() - recordingStartTimeRef.current;
+
+                // Cleanup tracks when stopped
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(track => track.stop());
+                    streamRef.current = null;
+                }
+
                 if (duration < 500) {
                     logger.info("Recording too short");
                     return;
@@ -41,6 +61,7 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
             mediaRecorder.start();
             setIsRecording(true);
         } catch (err) {
+            isPressingRef.current = false;
             setIsRecording(false);
             logger.error("Microphone error:", err);
             if (onTranscriptionError) {
@@ -52,30 +73,29 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
     };
 
     const stopRecording = () => {
-        if (mediaRecorderRef.current) {
-            if (mediaRecorderRef.current.state !== "inactive") {
-                mediaRecorderRef.current.stop();
-            }
-            mediaRecorderRef.current.stream.getTracks().forEach(track => {
-                track.stop();
-                track.enabled = false;
-            });
-            mediaRecorderRef.current = null;
+        isPressingRef.current = false;
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+            mediaRecorderRef.current.stop();
+        } else if (streamRef.current) {
+            // Fallback if recorder wasn't started yet
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
         }
         setIsRecording(false);
     };
 
     const cancelRecording = () => {
+        isPressingRef.current = false;
         if (mediaRecorderRef.current) {
             mediaRecorderRef.current.onstop = null;
             if (mediaRecorderRef.current.state !== "inactive") {
                 mediaRecorderRef.current.stop();
             }
-            mediaRecorderRef.current.stream.getTracks().forEach(track => {
-                track.stop();
-                track.enabled = false;
-            });
-            mediaRecorderRef.current = null;
+        }
+
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(track => track.stop());
+            streamRef.current = null;
         }
         setIsRecording(false);
     };
