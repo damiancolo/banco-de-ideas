@@ -37,6 +37,7 @@ export default function Home() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   const {
     isRecording,
@@ -91,30 +92,24 @@ export default function Home() {
 
     stopSpeaking();
 
-    let blobUrl: string | null = null;
+    // CRITICAL: Create/resume AudioContext IMMEDIATELY in user gesture
+    // This must happen synchronously before any await
+    if (!audioContextRef.current) {
+      audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+    }
 
-    // Create audio element IMMEDIATELY in user interaction context
-    // This is critical for iOS - must happen synchronously in click handler
-    const audio = new Audio();
-    audioRef.current = audio;
+    // Resume AudioContext if suspended (required for iOS after page load)
+    if (audioContextRef.current.state === 'suspended') {
+      audioContextRef.current.resume();
+    }
 
-    // iOS requires we start playback immediately in user gesture
-    // Use a tiny silent audio inline to "unlock" the audio element
-    const SILENT_MP3 = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAADFMYXZjNTguNTQuMTAwAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA";
-    audio.src = SILENT_MP3;
-
-    // Start play immediately (don't await) - this unlocks audio on iOS
-    const unlockPromise = audio.play().catch(err => {
-      logger.warn("Silent audio unlock failed (may be expected on some browsers):", err.message);
-    });
+    const audioContext = audioContextRef.current;
+    let sourceNode: AudioBufferSourceNode | null = null;
 
     try {
       setIsSpeaking(true);
 
-      // Wait for unlock attempt to complete
-      await unlockPromise;
-
-      // Now fetch the real audio (audio context should be unlocked)
+      // Fetch audio
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
@@ -131,37 +126,29 @@ export default function Home() {
         throw new Error(errorData.error || `Error API: ${res.status}`);
       }
 
-      const blob = await res.blob();
-      if (blob.size === 0) throw new Error("Audio recibido vacío");
+      const arrayBuffer = await res.arrayBuffer();
+      if (arrayBuffer.byteLength === 0) throw new Error("Audio recibido vacío");
 
-      blobUrl = URL.createObjectURL(blob);
+      // Decode audio data
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
 
-      // Check if audio was stopped during fetch
-      if (audioRef.current !== audio) {
-        URL.revokeObjectURL(blobUrl);
-        return;
-      }
+      // Create source and play
+      sourceNode = audioContext.createBufferSource();
+      sourceNode.buffer = audioBuffer;
+      sourceNode.connect(audioContext.destination);
 
-      audio.src = blobUrl;
-
-      audio.onended = () => {
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
+      sourceNode.onended = () => {
         setIsSpeaking(false);
-        if (audioRef.current === audio) audioRef.current = null;
       };
 
-      audio.onerror = (e) => {
-        if (blobUrl) URL.revokeObjectURL(blobUrl);
-        setIsSpeaking(false);
-        if (audioRef.current === audio) audioRef.current = null;
-        logger.error("Audio playback error:", e);
-        alert("Error de reproducción: El formato de audio no es compatible o el navegador bloqueó la salida.");
-      };
+      sourceNode.start(0);
 
-      await audio.play();
+      // Store reference for stop functionality
+      audioRef.current = {
+        pause: () => sourceNode?.stop(),
+      } as HTMLAudioElement;
+
     } catch (err) {
-      // Cleanup blob URL on error
-      if (blobUrl) URL.revokeObjectURL(blobUrl);
       logger.error("TTS Error:", err);
       setIsSpeaking(false);
       let errorMsg = 'Error desconocido';
