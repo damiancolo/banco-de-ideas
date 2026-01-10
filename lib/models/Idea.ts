@@ -9,6 +9,8 @@ export interface IIdea extends Document {
     text: string;
     /** Categoría: 'user' para ideas del usuario, 'bisociation' para ideas generadas por IA */
     category: 'user' | 'bisociation';
+    /** Vector embedding para búsqueda semántica (generado por OpenAI text-embedding-3-small) */
+    embedding?: number[];
     /** Fecha de creación (auto-generada por timestamps) */
     createdAt: Date;
     /** Fecha de última actualización (auto-generada por timestamps) */
@@ -37,6 +39,11 @@ const IdeaSchema = new Schema<IIdea>(
             default: 'user',
             required: true,
             index: true // Índice simple para filtrado rápido
+        },
+        embedding: {
+            type: [Number],
+            required: false,
+            select: false // No incluir por defecto en queries para ahorrar memoria
         }
     },
     {
