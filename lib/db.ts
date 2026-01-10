@@ -14,6 +14,8 @@ export type SavedIdea = {
     createdAt: string;
     /** Categoría de la idea */
     category: 'user' | 'bisociation';
+    /** Número de intentos de borrado */
+    deletionAttempts: number;
 };
 
 /**
@@ -28,7 +30,8 @@ function toSavedIdea(doc: IIdea | Record<string, unknown>): SavedIdea {
         createdAt: d.createdAt instanceof Date
             ? d.createdAt.toISOString()
             : d.createdAt as string,
-        category: d.category as 'user' | 'bisociation'
+        category: d.category as 'user' | 'bisociation',
+        deletionAttempts: (d.deletionAttempts as number) || 0
     };
 }
 
@@ -225,10 +228,15 @@ export async function deleteIdea(id: string): Promise<boolean> {
 
     try {
         await connectDB();
-        const result = await Idea.findByIdAndDelete(id);
+        // En lugar de borrar, incrementamos el contador de intentos
+        const result = await Idea.findByIdAndUpdate(
+            id,
+            { $inc: { deletionAttempts: 1 } },
+            { new: true }
+        );
         return !!result;
     } catch (error) {
-        console.error('Error deleting idea:', error);
+        console.error('Error recording deletion attempt:', error);
         return false;
     }
 }

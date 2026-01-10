@@ -11,6 +11,8 @@ export interface IIdea extends Document {
     category: 'user' | 'bisociation';
     /** Vector embedding para búsqueda semántica (generado por OpenAI text-embedding-3-small) */
     embedding?: number[];
+    /** Contador de intentos de borrado (en lugar de eliminación real) */
+    deletionAttempts: number;
     /** Fecha de creación (auto-generada por timestamps) */
     createdAt: Date;
     /** Fecha de última actualización (auto-generada por timestamps) */
@@ -44,6 +46,11 @@ const IdeaSchema = new Schema<IIdea>(
             type: [Number],
             required: false,
             select: false // No incluir por defecto en queries para ahorrar memoria
+        },
+        deletionAttempts: {
+            type: Number,
+            default: 0,
+            required: true
         }
     },
     {

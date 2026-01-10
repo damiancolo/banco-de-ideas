@@ -9,6 +9,7 @@ type SavedIdea = {
     text: string;
     createdAt: string;
     category?: 'user' | 'bisociation';
+    deletionAttempts: number;
 };
 
 export default function BancoView({
@@ -39,7 +40,15 @@ export default function BancoView({
             });
 
             if (response.ok) {
-                setIdeas(prev => prev.filter(idea => idea.id !== id));
+                setIdeas(prev => prev.map(idea =>
+                    idea.id === id
+                        ? { ...idea, deletionAttempts: (idea.deletionAttempts || 0) + 1 }
+                        : idea
+                ));
+                // Si la idea estaba seleccionada en el modal, actualizarla ahí también
+                if (selectedIdea && selectedIdea.id === id) {
+                    setSelectedIdea(prev => prev ? { ...prev, deletionAttempts: (prev.deletionAttempts || 0) + 1 } : null);
+                }
             } else {
                 const data = await response.json();
                 alert(`Error al eliminar: ${data.error || 'Desconocido'}`);
@@ -150,6 +159,35 @@ export default function BancoView({
                             </p>
                         </div>
                     ))
+                )}
+
+                {/* Tarjeta Sepia: Intentos de Borrado */}
+                {ideas.some(idea => idea.deletionAttempts > 0) && (
+                    <div className="bg-[#EBE0D0] p-6 rounded-2xl shadow-sm border border-[#D9C4A9] transition-all h-full flex flex-col relative animate-in zoom-in-95 duration-500">
+                        <div className="flex items-center gap-2 mb-4 text-[#8C7A65]">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></svg>
+                            <h3 className="font-bold text-sm uppercase tracking-wider">Ideas Resistentes</h3>
+                        </div>
+                        <h2 className="text-xl font-bold text-[#594A3A] mb-4">Intentos de Borrado</h2>
+                        <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+                            {ideas
+                                .filter(idea => idea.deletionAttempts > 0)
+                                .sort((a, b) => b.deletionAttempts - a.deletionAttempts)
+                                .map(idea => (
+                                    <div key={idea.id} className="flex justify-between items-start gap-4 p-2 rounded-lg hover:bg-black/5 transition-colors">
+                                        <p className="text-sm text-[#736352] line-clamp-2 italic leading-snug">
+                                            "{idea.text}"
+                                        </p>
+                                        <span className="shrink-0 bg-[#D9C4A9] text-[#594A3A] text-xs font-bold px-2 py-1 rounded-md">
+                                            {idea.deletionAttempts}
+                                        </span>
+                                    </div>
+                                ))}
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-[#D9C4A9]/50 text-[10px] text-[#8C7A65] font-medium text-center italic">
+                            "Lo que no se borra, se hace más fuerte."
+                        </div>
+                    </div>
                 )}
             </div>
 

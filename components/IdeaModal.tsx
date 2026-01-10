@@ -7,6 +7,7 @@ type SavedIdea = {
     text: string;
     createdAt: string;
     category?: 'user' | 'bisociation';
+    deletionAttempts: number;
 };
 
 interface IdeaModalProps {
@@ -89,11 +90,10 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
                     <div className="flex items-center gap-3">
                         {/* Category Badge */}
-                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                            idea.category === 'bisociation'
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${idea.category === 'bisociation'
                                 ? 'bg-[#C5A47E]/10 text-[#C5A47E]'
                                 : 'bg-gray-100 text-gray-600'
-                        }`}>
+                            }`}>
                             {idea.category === 'bisociation' ? 'IA (Bisociación)' : 'Propia'}
                         </span>
                         {/* Date */}
@@ -139,11 +139,10 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
                     {/* Copy Button */}
                     <button
                         onClick={handleCopy}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${
-                            copied
+                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${copied
                                 ? 'bg-green-100 text-green-600'
                                 : 'bg-[#C5A47E] text-white hover:bg-[#b08e68]'
-                        }`}
+                            }`}
                     >
                         {copied ? (
                             <>
