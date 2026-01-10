@@ -165,20 +165,8 @@ export default function BancoView({
             {ideas.some(idea => (idea.deletionAttempts || 0) > 0) && (
                 <div className="mt-12 mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
                     <div className="bg-[#EBE0D0] p-8 rounded-[2.5rem] shadow-lg border border-[#D9C4A9] flex flex-col md:flex-row gap-8 items-center relative overflow-hidden">
-                        {/* Decorative background element */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#D9C4A9]/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
-
                         <div className="flex-1 relative z-10">
-                            <div className="flex items-center gap-3 mb-4 text-[#8C7A65]">
-                                <div className="p-2 bg-[#D9C4A9]/30 rounded-full">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></svg>
-                                </div>
-                                <h3 className="font-bold text-xs uppercase tracking-[0.2em] opacity-70">Log de Resistencia</h3>
-                            </div>
-                            <h2 className="text-3xl font-serif italic text-[#594A3A] mb-4">Intentos de Borrado</h2>
-                            <p className="text-[#8C7A65] text-sm leading-relaxed max-w-sm italic opacity-80">
-                                "Lo que no se borra, se hace más fuerte. Estas ideas han resistido el pulso de la eliminación y permanecen aquí, latentes."
-                            </p>
+                            <h2 className="text-2xl font-bold text-[#594A3A]">Intentos de Borrado</h2>
                         </div>
 
                         <div className="w-full md:w-80 space-y-2 overflow-y-auto max-h-[300px] pr-4 custom-scrollbar relative z-10">
@@ -187,12 +175,11 @@ export default function BancoView({
                                 .sort((a, b) => b.deletionAttempts - a.deletionAttempts)
                                 .map(idea => (
                                     <div key={idea.id} className="flex justify-between items-center gap-4 p-3 rounded-2xl bg-white/40 border border-[#D9C4A9]/40 hover:bg-white/60 transition-all group backdrop-blur-sm">
-                                        <p className="text-sm text-[#594A3A] line-clamp-1 font-medium italic">
+                                        <p className="text-sm text-[#594A3A] line-clamp-1 font-medium">
                                             {idea.text.substring(0, 40)}{idea.text.length > 40 ? '...' : ''}
                                         </p>
-                                        <div className="shrink-0 flex items-center gap-1 bg-[#D9C4A9] text-[#594A3A] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                                        <div className="shrink-0 flex items-center gap-1 bg-[#D9C4A9] text-[#594A3A] text-xs font-bold px-2.5 py-1 rounded-full shadow-sm">
                                             <span>{idea.deletionAttempts}</span>
-                                            <span className="opacity-60">×</span>
                                         </div>
                                     </div>
                                 ))}
