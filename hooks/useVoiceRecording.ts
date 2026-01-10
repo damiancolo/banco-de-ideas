@@ -1,11 +1,34 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { logger } from "@/lib/logger";
 
 interface UseVoiceRecordingProps {
     onTranscription: (text: string) => void;
     onTranscriptionError?: (error: unknown) => void;
+}
+
+// Detect supported audio mimeType for MediaRecorder
+function getSupportedMimeType(): { mimeType: string; extension: string } {
+    const types = [
+        { mimeType: 'audio/webm;codecs=opus', extension: 'webm' },
+        { mimeType: 'audio/webm', extension: 'webm' },
+        { mimeType: 'audio/mp4', extension: 'mp4' },
+        { mimeType: 'audio/aac', extension: 'aac' },
+        { mimeType: 'audio/ogg;codecs=opus', extension: 'ogg' },
+        { mimeType: 'audio/wav', extension: 'wav' },
+    ];
+
+    for (const type of types) {
+        if (typeof MediaRecorder !== 'undefined' && MediaRecorder.isTypeSupported(type.mimeType)) {
+            logger.info(`Using audio mimeType: ${type.mimeType}`);
+            return type;
+        }
+    }
+
+    // Fallback - let browser decide
+    logger.warn("No supported mimeType found, using browser default");
+    return { mimeType: '', extension: 'webm' };
 }
 
 export function useVoiceRecording({ onTranscription, onTranscriptionError }: UseVoiceRecordingProps) {
@@ -16,10 +39,17 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
     const chunksRef = useRef<Blob[]>([]);
     const recordingStartTimeRef = useRef<number>(0);
     const isPressingRef = useRef<boolean>(false);
+    const audioFormatRef = useRef<{ mimeType: string; extension: string } | null>(null);
 
     const startRecording = async () => {
         try {
             isPressingRef.current = true;
+
+            // Detect supported format on first use
+            if (!audioFormatRef.current) {
+                audioFormatRef.current = getSupportedMimeType();
+            }
+
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
 
@@ -31,10 +61,18 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
                 return;
             }
 
-            const mediaRecorder = new MediaRecorder(stream);
+            // Create MediaRecorder with supported mimeType
+            const options: MediaRecorderOptions = {};
+            if (audioFormatRef.current.mimeType) {
+                options.mimeType = audioFormatRef.current.mimeType;
+            }
+
+            const mediaRecorder = new MediaRecorder(stream, options);
             mediaRecorderRef.current = mediaRecorder;
             chunksRef.current = [];
             recordingStartTimeRef.current = Date.now();
+
+            logger.info(`MediaRecorder created with mimeType: ${mediaRecorder.mimeType}`);
 
             mediaRecorder.ondataavailable = (e) => {
                 if (e.data.size > 0) chunksRef.current.push(e.data);
@@ -54,8 +92,13 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
                     logger.info("Recording too short");
                     return;
                 }
-                const audioBlob = new Blob(chunksRef.current, { type: "audio/webm" });
-                await handleTranscription(audioBlob);
+
+                // Use the actual mimeType from the recorder
+                const mimeType = mediaRecorder.mimeType || audioFormatRef.current?.mimeType || 'audio/webm';
+                const extension = audioFormatRef.current?.extension || 'webm';
+                const audioBlob = new Blob(chunksRef.current, { type: mimeType });
+                logger.info(`Audio blob created: ${audioBlob.size} bytes, type: ${mimeType}`);
+                await handleTranscription(audioBlob, extension);
             };
 
             mediaRecorder.start();
@@ -100,11 +143,11 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
         setIsRecording(false);
     };
 
-    const handleTranscription = async (blob: Blob) => {
+    const handleTranscription = async (blob: Blob, extension: string = 'webm') => {
         setIsTranscribing(true);
         try {
             const formData = new FormData();
-            formData.append("file", blob, "recording.webm");
+            formData.append("file", blob, `recording.${extension}`);
             const res = await fetch("/api/transcribe", { method: "POST", body: formData });
             if (!res.ok) throw new Error("Transcription failed");
             const data = await res.json();

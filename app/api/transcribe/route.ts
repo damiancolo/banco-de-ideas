@@ -15,14 +15,18 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: "No se proporcionó ningún archivo de audio" }, { status: 400 });
         }
 
-        logger.info(`Transcribing audio file: ${file.name}, size: ${file.size} bytes`);
+        logger.info(`Transcribing audio file: ${file.name}, size: ${file.size} bytes, type: ${file.type}`);
 
         // Convert File to a readable format for OpenAI
         const buffer = Buffer.from(await file.arrayBuffer());
 
+        // Extract extension from filename or default to webm
+        const extension = file.name.split('.').pop() || 'webm';
+        const filename = `audio.${extension}`;
+
         // Use OpenAI Whisper API
         const transcription = await openai.audio.transcriptions.create({
-            file: await OpenAI.toFile(buffer, "audio.webm"),
+            file: await OpenAI.toFile(buffer, filename),
             model: "whisper-1",
             language: "es", // Specify Spanish for better accuracy as per plan
         });
