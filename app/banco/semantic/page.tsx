@@ -59,7 +59,7 @@ export default function SemanticSearchPage() {
             {/* Header */}
             <div className="max-w-4xl mx-auto flex items-center justify-between mb-8">
                 <div>
-                    <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Búsqueda Semántica</h1>
+                    <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Búsqueda por esencia</h1>
                     <p className="text-gray-500 mt-2">Encuentra ideas por su esencia, no solo por palabras.</p>
                 </div>
                 <Link
@@ -118,7 +118,7 @@ export default function SemanticSearchPage() {
                     <div className="text-center py-12">
                         <div className="inline-flex items-center gap-3 text-gray-500">
                             <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin" />
-                            Buscando conexiones semánticas...
+                            Buscando conexiones por esencia...
                         </div>
                     </div>
                 ) : hasSearched && results.length === 0 ? (
@@ -166,7 +166,7 @@ export default function SemanticSearchPage() {
                             Escribe una idea o concepto para buscar
                         </p>
                         <p className="text-gray-400 mt-2 text-sm">
-                            La búsqueda semántica encuentra ideas relacionadas por significado, no solo por palabras exactas.
+                            La búsqueda por esencia encuentra ideas relacionadas por significado, no solo por palabras exactas.
                         </p>
                     </div>
                 )}
