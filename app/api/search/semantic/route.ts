@@ -34,7 +34,21 @@ export async function POST(req: Request) {
 
         // Generate embedding for the query
         logger.info(`Generating embedding for query: "${query.substring(0, 50)}..."`);
-        const queryEmbedding = await generateEmbedding(query);
+        const queryEmbedding = await generateEmbedding(query.trim());
+
+        // Auto-save: Store the search query as a new idea with its embedding
+        // This saves computation for future searches and builds the idea bank
+        try {
+            await Idea.create({
+                text: query.trim(),
+                category: 'user',
+                embedding: queryEmbedding,
+            });
+            logger.info(`Auto-saved search query as new idea`);
+        } catch (saveError) {
+            // Don't fail the search if save fails, just log it
+            logger.warn('Failed to auto-save search query:', saveError);
+        }
 
         // Fetch all ideas that have embeddings
         const ideas = await Idea.find({ embedding: { $exists: true, $ne: [] } })
