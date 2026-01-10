@@ -93,22 +93,30 @@ export default function Home() {
 
     let blobUrl: string | null = null;
 
+    // Create audio element IMMEDIATELY in user interaction context
+    // This is critical for iOS - must happen synchronously in click handler
+    const audio = new Audio();
+    audioRef.current = audio;
+
+    // iOS requires we start playback immediately in user gesture
+    // Use a tiny silent audio inline to "unlock" the audio element
+    const SILENT_MP3 = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAADFMYXZjNTguNTQuMTAwAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA";
+    audio.src = SILENT_MP3;
+
+    // Start play immediately (don't await) - this unlocks audio on iOS
+    const unlockPromise = audio.play().catch(err => {
+      logger.warn("Silent audio unlock failed (may be expected on some browsers):", err.message);
+    });
+
     try {
       setIsSpeaking(true);
 
-      // Silent Unlock: Create audio element and play silent audio immediately
-      // This unlocks audio playback on iOS within user interaction context
-      const SILENT_MP3 = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAADFMYXZjNTguNTQuMTAwAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA";
+      // Wait for unlock attempt to complete
+      await unlockPromise;
 
-      // Create audio element and keep local reference to avoid race conditions
-      const audio = new Audio();
-      audioRef.current = audio;
-      audio.src = SILENT_MP3;
-      await audio.play();
-
-      // Now fetch the real audio (audio context is already unlocked)
+      // Now fetch the real audio (audio context should be unlocked)
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
 
       const res = await fetch("/api/speak", {
         method: "POST",
