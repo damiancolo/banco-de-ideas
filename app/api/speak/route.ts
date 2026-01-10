@@ -6,7 +6,8 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
 });
 
-export const runtime = "edge";
+// Node.js runtime for better compatibility with OpenAI SDK and buffers
+export const runtime = "nodejs";
 
 export async function POST(req: Request) {
     try {

@@ -77,28 +77,22 @@ export default function Home() {
   };
 
   const handleTTS = async (text: string) => {
-    logger.info("handleTTS called with text:", text?.substring(0, 100));
+    logger.info("handleTTS called with text length:", text?.length);
 
-    // Validation: check text exists
     if (!text || text.trim().length === 0) {
-      logger.error("TTS Error: No text provided");
       alert("No hay texto para leer.");
       return;
     }
 
-    // Validation: check text length
     if (text.length > 4000) {
-      logger.warn("TTS Error: Text too long", text.length);
-      alert(`El texto es demasiado largo para leer en voz alta (${text.length} caracteres, máximo 4000).`);
+      alert(`El texto es demasiado largo para leer (${text.length} caracteres).`);
       return;
     }
 
-    // Prevent audio overlap: stop any previous audio
     stopSpeaking();
 
     try {
       setIsSpeaking(true);
-      logger.info("Fetching TTS audio...");
 
       const res = await fetch("/api/speak", {
         method: "POST",
@@ -107,39 +101,39 @@ export default function Home() {
       });
 
       if (!res.ok) {
-        const errorText = await res.text();
-        logger.error(`TTS API error: ${res.status} - ${errorText}`);
-        throw new Error(`TTS failed: ${res.status}`);
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.error || `Error API: ${res.status}`);
       }
 
       const blob = await res.blob();
-      logger.info("TTS audio received, size:", blob.size);
+      if (blob.size === 0) throw new Error("Audio recibido vacío");
 
       const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
+      const audio = new Audio();
+      audio.src = url;
       audioRef.current = audio;
 
       audio.onended = () => {
         URL.revokeObjectURL(url);
         setIsSpeaking(false);
         audioRef.current = null;
-        logger.info("TTS playback ended");
       };
 
       audio.onerror = (e) => {
         URL.revokeObjectURL(url);
         setIsSpeaking(false);
         audioRef.current = null;
-        logger.error("TTS playback error:", e);
-        alert("Error al reproducir el audio.");
+        logger.error("Audio playback error:", e);
+        alert("Error de reproducción: El formato de audio no es compatible o el navegador bloqueó la salida.");
       };
 
+      // iOS requires user interaction context for play()
+      // Here it's called after an async fetch, which can be tricky.
       await audio.play();
-      logger.info("TTS playback started");
     } catch (err) {
       logger.error("TTS Error:", err);
       setIsSpeaking(false);
-      alert("Error al generar el audio. Por favor, intenta de nuevo.");
+      alert(`Error al generar audio: ${err instanceof Error ? err.message : 'Error desconocido'}`);
     }
   };
 
