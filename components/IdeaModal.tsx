@@ -57,9 +57,8 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
     };
 
     const handleDelete = () => {
-        if (confirm('¿Estás seguro de que quieres eliminar esta idea?')) {
-            onDelete(idea.id);
-        }
+        // No confirm needed for "soft-delete" logging
+        onDelete(idea.id);
     };
 
     const formatDate = (dateString: string) => {
@@ -91,8 +90,8 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
                     <div className="flex items-center gap-3">
                         {/* Category Badge */}
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${idea.category === 'bisociation'
-                                ? 'bg-[#C5A47E]/10 text-[#C5A47E]'
-                                : 'bg-gray-100 text-gray-600'
+                            ? 'bg-[#C5A47E]/10 text-[#C5A47E]'
+                            : 'bg-gray-100 text-gray-600'
                             }`}>
                             {idea.category === 'bisociation' ? 'IA (Bisociación)' : 'Propia'}
                         </span>
@@ -140,8 +139,8 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
                     <button
                         onClick={handleCopy}
                         className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${copied
-                                ? 'bg-green-100 text-green-600'
-                                : 'bg-[#C5A47E] text-white hover:bg-[#b08e68]'
+                            ? 'bg-green-100 text-green-600'
+                            : 'bg-[#C5A47E] text-white hover:bg-[#b08e68]'
                             }`}
                     >
                         {copied ? (

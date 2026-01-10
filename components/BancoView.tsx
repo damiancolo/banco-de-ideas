@@ -31,8 +31,7 @@ export default function BancoView({
     });
 
     const handleDelete = async (id: string) => {
-        if (!confirm('¿Estás seguro de que quieres eliminar esta idea?')) return;
-
+        // No confirm for deletion attempts tracking
         setDeletingId(id);
         try {
             const response = await fetch(`/api/ideas?id=${id}`, {
@@ -160,36 +159,47 @@ export default function BancoView({
                         </div>
                     ))
                 )}
+            </div>
 
-                {/* Tarjeta Sepia: Intentos de Borrado */}
-                {ideas.some(idea => idea.deletionAttempts > 0) && (
-                    <div className="bg-[#EBE0D0] p-6 rounded-2xl shadow-sm border border-[#D9C4A9] transition-all h-full flex flex-col relative animate-in zoom-in-95 duration-500">
-                        <div className="flex items-center gap-2 mb-4 text-[#8C7A65]">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></svg>
-                            <h3 className="font-bold text-sm uppercase tracking-wider">Ideas Resistentes</h3>
+            {/* Tarjeta Sepia: Intentos de Borrado */}
+            {ideas.some(idea => (idea.deletionAttempts || 0) > 0) && (
+                <div className="mt-12 mb-12 animate-in fade-in slide-in-from-bottom-8 duration-1000">
+                    <div className="bg-[#EBE0D0] p-8 rounded-[2.5rem] shadow-lg border border-[#D9C4A9] flex flex-col md:flex-row gap-8 items-center relative overflow-hidden">
+                        {/* Decorative background element */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-[#D9C4A9]/10 rounded-full blur-3xl -mr-16 -mt-16"></div>
+
+                        <div className="flex-1 relative z-10">
+                            <div className="flex items-center gap-3 mb-4 text-[#8C7A65]">
+                                <div className="p-2 bg-[#D9C4A9]/30 rounded-full">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z" /><path d="m9 12 2 2 4-4" /></svg>
+                                </div>
+                                <h3 className="font-bold text-xs uppercase tracking-[0.2em] opacity-70">Log de Resistencia</h3>
+                            </div>
+                            <h2 className="text-3xl font-serif italic text-[#594A3A] mb-4">Intentos de Borrado</h2>
+                            <p className="text-[#8C7A65] text-sm leading-relaxed max-w-sm italic opacity-80">
+                                "Lo que no se borra, se hace más fuerte. Estas ideas han resistido el pulso de la eliminación y permanecen aquí, latentes."
+                            </p>
                         </div>
-                        <h2 className="text-xl font-bold text-[#594A3A] mb-4">Intentos de Borrado</h2>
-                        <div className="space-y-3 flex-1 overflow-y-auto max-h-[300px] pr-2 custom-scrollbar">
+
+                        <div className="w-full md:w-80 space-y-2 overflow-y-auto max-h-[300px] pr-4 custom-scrollbar relative z-10">
                             {ideas
-                                .filter(idea => idea.deletionAttempts > 0)
+                                .filter(idea => (idea.deletionAttempts || 0) > 0)
                                 .sort((a, b) => b.deletionAttempts - a.deletionAttempts)
                                 .map(idea => (
-                                    <div key={idea.id} className="flex justify-between items-start gap-4 p-2 rounded-lg hover:bg-black/5 transition-colors">
-                                        <p className="text-sm text-[#736352] line-clamp-2 italic leading-snug">
-                                            "{idea.text}"
+                                    <div key={idea.id} className="flex justify-between items-center gap-4 p-3 rounded-2xl bg-white/40 border border-[#D9C4A9]/40 hover:bg-white/60 transition-all group backdrop-blur-sm">
+                                        <p className="text-sm text-[#594A3A] line-clamp-1 font-medium italic">
+                                            {idea.text.substring(0, 40)}{idea.text.length > 40 ? '...' : ''}
                                         </p>
-                                        <span className="shrink-0 bg-[#D9C4A9] text-[#594A3A] text-xs font-bold px-2 py-1 rounded-md">
-                                            {idea.deletionAttempts}
-                                        </span>
+                                        <div className="shrink-0 flex items-center gap-1 bg-[#D9C4A9] text-[#594A3A] text-[10px] font-bold px-2 py-1 rounded-full shadow-sm">
+                                            <span>{idea.deletionAttempts}</span>
+                                            <span className="opacity-60">×</span>
+                                        </div>
                                     </div>
                                 ))}
                         </div>
-                        <div className="mt-4 pt-4 border-t border-[#D9C4A9]/50 text-[10px] text-[#8C7A65] font-medium text-center italic">
-                            "Lo que no se borra, se hace más fuerte."
-                        </div>
                     </div>
-                )}
-            </div>
+                </div>
+            )}
 
             {/* Modal de Detalles */}
             {selectedIdea && (
@@ -199,7 +209,6 @@ export default function BancoView({
                     onClose={() => setSelectedIdea(null)}
                     onDelete={(id) => {
                         handleDelete(id);
-                        setSelectedIdea(null);
                     }}
                 />
             )}
