@@ -133,7 +133,11 @@ export async function POST(request: Request) {
                     response_format: { type: "json_object" },
                 });
 
-                const content = completion.choices[0].message.content;
+                const content = completion.choices?.[0]?.message?.content;
+                if (!content) {
+                    logger.error("OpenAI returned empty response for similar action");
+                    return NextResponse.json({ result: [] });
+                }
                 logger.debug("OpenAI raw response content:", content);
 
                 let result = [];
@@ -202,7 +206,12 @@ export async function POST(request: Request) {
                 model: "gpt-4o-mini",
                 messages: messages,
             });
-            return NextResponse.json({ result: completion.choices[0].message.content });
+            const analysisContent = completion.choices?.[0]?.message?.content;
+            if (!analysisContent) {
+                logger.error("OpenAI returned empty response for analysis action");
+                return NextResponse.json({ error: "La IA no pudo generar un análisis" }, { status: 500 });
+            }
+            return NextResponse.json({ result: analysisContent });
 
         } else if (action === "chat") {
             // Conversación General / Fluida
@@ -220,7 +229,12 @@ export async function POST(request: Request) {
                 messages: messages,
             });
 
-            return NextResponse.json({ result: completion.choices[0].message.content });
+            const chatContent = completion.choices?.[0]?.message?.content;
+            if (!chatContent) {
+                logger.error("OpenAI returned empty response for chat action");
+                return NextResponse.json({ error: "La IA no pudo generar una respuesta" }, { status: 500 });
+            }
+            return NextResponse.json({ result: chatContent });
         }
 
         return NextResponse.json({ error: "Acción no válida o flujo no soportado" }, { status: 400 });

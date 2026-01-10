@@ -91,6 +91,8 @@ export default function Home() {
 
     stopSpeaking();
 
+    let blobUrl: string | null = null;
+
     try {
       setIsSpeaking(true);
 
@@ -98,18 +100,23 @@ export default function Home() {
       // This unlocks audio playback on iOS within user interaction context
       const SILENT_MP3 = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjIwLjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAAEAAABIADAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMD//////////////////////////////////////////////////////////////////wAAADFMYXZjNTguNTQuMTAwAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA//OEAAAAAAAAAAAAAAAAAAAAAAAATGF2YzU4LjU0LjEwMAAAAAAAAAAAAAAA";
 
-      if (!audioRef.current) {
-        audioRef.current = new Audio();
-      }
-      audioRef.current.src = SILENT_MP3;
-      await audioRef.current.play();
+      // Create audio element and keep local reference to avoid race conditions
+      const audio = new Audio();
+      audioRef.current = audio;
+      audio.src = SILENT_MP3;
+      await audio.play();
 
       // Now fetch the real audio (audio context is already unlocked)
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30s timeout
+
       const res = await fetch("/api/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
@@ -119,30 +126,43 @@ export default function Home() {
       const blob = await res.blob();
       if (blob.size === 0) throw new Error("Audio recibido vacío");
 
-      const url = URL.createObjectURL(blob);
+      blobUrl = URL.createObjectURL(blob);
 
-      // Reuse the same audio element (already unlocked)
-      audioRef.current.src = url;
+      // Check if audio was stopped during fetch
+      if (audioRef.current !== audio) {
+        URL.revokeObjectURL(blobUrl);
+        return;
+      }
 
-      audioRef.current.onended = () => {
-        URL.revokeObjectURL(url);
+      audio.src = blobUrl;
+
+      audio.onended = () => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
         setIsSpeaking(false);
-        audioRef.current = null;
+        if (audioRef.current === audio) audioRef.current = null;
       };
 
-      audioRef.current.onerror = (e) => {
-        URL.revokeObjectURL(url);
+      audio.onerror = (e) => {
+        if (blobUrl) URL.revokeObjectURL(blobUrl);
         setIsSpeaking(false);
-        audioRef.current = null;
+        if (audioRef.current === audio) audioRef.current = null;
         logger.error("Audio playback error:", e);
         alert("Error de reproducción: El formato de audio no es compatible o el navegador bloqueó la salida.");
       };
 
-      await audioRef.current.play();
+      await audio.play();
     } catch (err) {
+      // Cleanup blob URL on error
+      if (blobUrl) URL.revokeObjectURL(blobUrl);
       logger.error("TTS Error:", err);
       setIsSpeaking(false);
-      alert(`Error al generar audio: ${err instanceof Error ? err.message : 'Error desconocido'}`);
+      let errorMsg = 'Error desconocido';
+      if (err instanceof Error) {
+        errorMsg = err.name === 'AbortError'
+          ? 'La generación de audio tardó demasiado'
+          : err.message;
+      }
+      alert(`Error al generar audio: ${errorMsg}`);
     }
   };
 
@@ -225,6 +245,9 @@ export default function Home() {
         }
 
         if (action) {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 60000); // 60s timeout for AI responses
+
           const response = await fetch("/api/analyze", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -233,9 +256,23 @@ export default function Home() {
               idea: action === 'chat' ? userText : (currentIdea || messages.findLast(m => m.role === 'user')?.plainText || messages.findLast(m => m.role === 'user')?.content || userText),
               history: messages
             }),
+            signal: controller.signal,
           });
-          const data = await response.json();
-          const result = data.result;
+          clearTimeout(timeoutId);
+
+          // Validate response
+          let data;
+          try {
+            data = await response.json();
+          } catch {
+            throw new Error("Error al procesar la respuesta del servidor");
+          }
+
+          if (!response.ok) {
+            throw new Error(data?.error || `Error del servidor: ${response.status}`);
+          }
+
+          const result = data?.result;
 
           let content: React.ReactNode;
           let plainTextForContext = "";
@@ -267,7 +304,7 @@ export default function Home() {
             content = (
               <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700 mt-2">
                 <p><strong>Error del Sistema:</strong></p>
-                <div dangerouslySetInnerHTML={{ __html: result.replace(/\*\*/g, '') }} />
+                <div className="whitespace-pre-wrap">{result.replace(/\*\*/g, '')}</div>
               </div>
             );
             plainTextForContext = result;
@@ -338,6 +375,23 @@ export default function Home() {
 
     } catch (error) {
       logger.error("Error in handleSendMessage:", error);
+      let errorMessage = "Error desconocido";
+      if (error instanceof Error) {
+        errorMessage = error.name === 'AbortError'
+          ? "La solicitud tardó demasiado. Por favor, intenta de nuevo."
+          : error.message;
+      }
+      const errorReply: Message = {
+        id: generateMessageId(),
+        role: 'assistant',
+        content: (
+          <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700">
+            <p><strong>Error:</strong> {errorMessage}</p>
+          </div>
+        ),
+        plainText: `Error: ${errorMessage}`
+      };
+      setMessages(prev => [...prev, errorReply]);
     } finally {
       setLoading(false);
     }
