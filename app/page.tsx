@@ -93,23 +93,32 @@ export default function Home() {
     stopSpeaking();
 
     // CRITICAL: Create/resume AudioContext IMMEDIATELY in user gesture
-    // This must happen synchronously before any await
     if (!audioContextRef.current) {
       audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     }
 
-    // Resume AudioContext if suspended (required for iOS after page load)
-    if (audioContextRef.current.state === 'suspended') {
-      audioContextRef.current.resume();
+    const audioContext = audioContextRef.current;
+
+    // Resume if suspended
+    if (audioContext.state === 'suspended') {
+      await audioContext.resume();
     }
 
-    const audioContext = audioContextRef.current;
+    // iOS 17/18 FIX: Keep audio session alive with silent oscillator during fetch
+    // This prevents Safari from "forgetting" the user gesture
+    const keepAliveOscillator = audioContext.createOscillator();
+    const keepAliveGain = audioContext.createGain();
+    keepAliveGain.gain.value = 0.001; // Nearly silent but keeps session active
+    keepAliveOscillator.connect(keepAliveGain);
+    keepAliveGain.connect(audioContext.destination);
+    keepAliveOscillator.start();
+
     let sourceNode: AudioBufferSourceNode | null = null;
 
     try {
       setIsSpeaking(true);
 
-      // Fetch audio
+      // Fetch audio while keep-alive is running
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000);
 
@@ -129,10 +138,11 @@ export default function Home() {
       const arrayBuffer = await res.arrayBuffer();
       if (arrayBuffer.byteLength === 0) throw new Error("Audio recibido vacío");
 
-      // Decode audio data
-      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+      // Stop keep-alive before playing real audio
+      keepAliveOscillator.stop();
 
-      // Create source and play
+      // Decode and play
+      const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
       sourceNode = audioContext.createBufferSource();
       sourceNode.buffer = audioBuffer;
       sourceNode.connect(audioContext.destination);
@@ -145,10 +155,15 @@ export default function Home() {
 
       // Store reference for stop functionality
       audioRef.current = {
-        pause: () => sourceNode?.stop(),
+        pause: () => {
+          try { sourceNode?.stop(); } catch {}
+        },
       } as HTMLAudioElement;
 
     } catch (err) {
+      // Stop keep-alive on error
+      try { keepAliveOscillator.stop(); } catch {}
+
       logger.error("TTS Error:", err);
       setIsSpeaking(false);
       let errorMsg = 'Error desconocido';
