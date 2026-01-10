@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { logger } from '@/lib/logger';
+import IdeaModal from './IdeaModal';
 
 type SavedIdea = {
     id: string;
@@ -20,6 +21,7 @@ export default function BancoView({
     const [view, setView] = useState<'user' | 'bisociation'>('user');
     const [ideas, setIdeas] = useState<SavedIdea[]>(initialIdeas);
     const [deletingId, setDeletingId] = useState<string | null>(null);
+    const [selectedIdea, setSelectedIdea] = useState<SavedIdea | null>(null);
 
     // Filtrar ideas según la vista
     const visibleIdeas = ideas.filter(idea => {
@@ -121,13 +123,20 @@ export default function BancoView({
                     </div>
                 ) : (
                     visibleIdeas.map((idea) => (
-                        <div key={idea.id} className={`bg-white p-6 rounded-2xl shadow-sm border border-black/5 hover:shadow-md transition-all group h-full flex flex-col relative ${deletingId === idea.id ? 'opacity-50 scale-[0.98]' : ''}`}>
+                        <div
+                            key={idea.id}
+                            onClick={() => setSelectedIdea(idea)}
+                            className={`bg-white p-6 rounded-2xl shadow-sm border border-black/5 hover:shadow-md transition-all group h-full flex flex-col relative cursor-pointer ${deletingId === idea.id ? 'opacity-50 scale-[0.98]' : ''}`}
+                        >
                             <div className="text-xs text-gray-400 mb-3 font-mono flex justify-between items-center">
                                 <span>{new Date(idea.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
                                 <div className="flex items-center gap-2">
                                     {idea.category === 'bisociation' && <span className="text-[#C5A47E] font-bold">IA</span>}
                                     <button
-                                        onClick={() => handleDelete(idea.id)}
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDelete(idea.id);
+                                        }}
                                         disabled={deletingId !== null}
                                         className="opacity-0 group-hover:opacity-100 p-1.5 text-gray-300 hover:text-red-400 transition-all rounded-md hover:bg-red-50"
                                         title="Eliminar idea"
@@ -143,6 +152,19 @@ export default function BancoView({
                     ))
                 )}
             </div>
+
+            {/* Modal de Detalles */}
+            {selectedIdea && (
+                <IdeaModal
+                    idea={selectedIdea}
+                    isOpen={!!selectedIdea}
+                    onClose={() => setSelectedIdea(null)}
+                    onDelete={(id) => {
+                        handleDelete(id);
+                        setSelectedIdea(null);
+                    }}
+                />
+            )}
         </div>
     );
 }
