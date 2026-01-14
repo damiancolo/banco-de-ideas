@@ -26,8 +26,25 @@ Una aplicación web moderna para gestionar y expandir tus ideas usando Inteligen
 - **Lenguaje:** TypeScript
 - **Base de Datos:** MongoDB Atlas (Mongoose)
 - **IA:** OpenAI GPT-4o-mini
+- **IA:** OpenAI GPT-4o-mini
 - **Estilos:** Tailwind CSS
 - **Deploy:** Vercel
+
+## 🌍 Entornos y Flujo de Trabajo
+
+Mantenemos dos entornos sincronizados automáticamente con GitHub:
+
+### 🧪 Entorno de Pruebas (Staging)
+- **Rama:** `develop`
+- **Proyecto Vercel:** `banco-de-ideas-pruebas`
+- **Objetivo:** Validar cambios antes de que lleguen a los usuarios finales.
+
+### 🚀 Entorno Principal (Producción)
+- **Rama:** `main`
+- **Proyecto Vercel:** `banco-de-ideas`
+- **Objetivo:** Versión estable y pública de la aplicación.
+
+**Regla de Oro:** Nunca hacemos push directo a `main`. Todo pasa primero por `develop` y se prueba.
 
 ## 📋 Requisitos Previos
 
