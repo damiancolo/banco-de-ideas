@@ -38,20 +38,27 @@ export async function POST(req: Request) {
 
         // Auto-save: Store the search query as a new idea with its embedding
         // This saves computation for future searches and builds the idea bank
+        let savedIdeaId: string | null = null;
         try {
-            await Idea.create({
+            const savedIdea = await Idea.create({
                 text: query.trim(),
                 category: 'user',
                 embedding: queryEmbedding,
             });
-            logger.info(`Auto-saved search query as new idea`);
+            savedIdeaId = savedIdea._id.toString();
+            logger.info(`Auto-saved search query as new idea with ID: ${savedIdeaId}`);
         } catch (saveError) {
             // Don't fail the search if save fails, just log it
             logger.warn('Failed to auto-save search query:', saveError);
         }
 
-        // Fetch all ideas that have embeddings
-        const ideas = await Idea.find({ embedding: { $exists: true, $ne: [] } })
+        // Fetch all ideas that have embeddings, excluding the one we just saved
+        const queryFilter: any = { embedding: { $exists: true, $ne: [] } };
+        if (savedIdeaId) {
+            queryFilter._id = { $ne: savedIdeaId };
+        }
+
+        const ideas = await Idea.find(queryFilter)
             .select('+embedding') // Include embedding field (excluded by default)
             .lean() as unknown as IdeaWithEmbedding[];
 
