@@ -261,6 +261,53 @@ export default function Home() {
           };
           setMessages(prev => [...prev, reply]);
 
+        } else if (searchMode === 'essence') {
+          // Semantic Search
+          const response = await fetch('/api/search/semantic', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: userText }),
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Error en la búsqueda');
+          }
+
+          const results = data.result || [];
+          const content = (
+            <div className="flex flex-col gap-4 mt-2">
+              <p className="font-medium text-gray-800">
+                {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}:
+              </p>
+              {results.length > 0 ? (
+                results.map((result: any) => (
+                  <div key={result.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="font-bold text-gray-800">{result.title}</div>
+                      {result.similarity && (
+                        <span className="text-xs px-2 py-1 rounded-lg bg-green-50 text-green-600">
+                          {Math.round(result.similarity * 100)}% coincidencia
+                        </span>
+                      )}
+                    </div>
+                    <div className="text-gray-600 text-sm leading-relaxed">{result.summary}</div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No se encontraron ideas similares. Asegúrate de que se hayan generado embeddings.</p>
+              )}
+            </div>
+          );
+
+          const reply: Message = {
+            id: generateMessageId(),
+            role: 'assistant',
+            content: content,
+            plainText: `Búsqueda por esencia: ${results.length} resultados`
+          };
+          setMessages(prev => [...prev, reply]);
+
         } else if (searchMode === 'similar' || searchMode === 'analysis') {
           // Direct AI Action
           const action = searchMode;
