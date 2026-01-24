@@ -22,13 +22,17 @@ export default function AboutPageCA() {
 
                 {/* Header */}
                 <div className="text-center mb-16 animate-in fade-in slide-in-from-top duration-700">
-                    <div className="inline-block p-4 bg-gradient-to-br from-[#C5A47E] to-[#b08e68] rounded-2xl mb-6 shadow-lg">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-white">
+                    <Link
+                        href="/"
+                        className="inline-block p-4 bg-gradient-to-br from-[#C5A47E] to-[#b08e68] rounded-2xl mb-6 shadow-lg hover:scale-110 transition-transform cursor-pointer group"
+                        title="Tornar a l'inici"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" className="text-white group-hover:drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">
                             <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 18h6"></path>
                             <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 22h4"></path>
                             <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
                         </svg>
-                    </div>
+                    </Link>
                     <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">Banc d&apos;Idees</h1>
                     <p className="text-xl text-gray-600 font-light">Solstici d&apos;Hivern 2025</p>
                 </div>
