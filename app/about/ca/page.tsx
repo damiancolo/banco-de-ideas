@@ -1,16 +1,16 @@
 import Link from 'next/link';
 
-export default function AboutPage() {
+export default function AboutPageCA() {
     return (
         <main className="min-h-screen bg-gradient-to-br from-[#F8F5F0] via-white to-[#EBE8E0] p-6 md:p-12">
             <div className="max-w-4xl mx-auto">
                 {/* Language Switcher */}
                 <div className="flex justify-center gap-4 mb-8 text-sm font-medium text-gray-500">
-                    <Link href="/about" className="text-[#C5A47E] font-bold">ES</Link>
+                    <Link href="/about" className="hover:text-[#C5A47E] transition-colors">ES</Link>
                     <span className="text-gray-300">|</span>
                     <Link href="/about/en" className="hover:text-[#C5A47E] transition-colors">EN</Link>
                     <span className="text-gray-300">|</span>
-                    <Link href="/about/ca" className="hover:text-[#C5A47E] transition-colors">CA</Link>
+                    <Link href="/about/ca" className="text-[#C5A47E] font-bold">CA</Link>
                 </div>
 
                 {/* Main Title */}
@@ -29,70 +29,70 @@ export default function AboutPage() {
                             <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
                         </svg>
                     </div>
-                    <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">Banco de Ideas</h1>
-                    <p className="text-xl text-gray-600 font-light">Solsticio de Invierno 2025</p>
+                    <h1 className="text-5xl md:text-6xl font-bold text-gray-900 mb-4">Banc d&apos;Idees</h1>
+                    <p className="text-xl text-gray-600 font-light">Solstici d&apos;Hivern 2025</p>
                 </div>
 
                 {/* El Banco de Ideas - Introduction */}
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">El Banco de Ideas</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">El Banc d&apos;Idees</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-4">
-                        Creemos que las ideas son la capital más importante de la humanidad y que la inteligencia artificial es un catalizador de su potencial. Es urgente y necesario comenzar a explorar este maridaje por lo que proponemos un espacio para experimentar con las posibilidades. Este espacio se llama <span className="font-semibold text-[#C5A47E]">unban code Ideas.com</span>
+                        Creiem que les idees són el capital més important de la humanitat i que la intel·ligència artificial és un catalitzador del seu potencial. És urgent i necessari començar a explorar aquest maridatge, per la qual cosa proposem un espai per experimentar amb les possibilitats. Aquest espai es diu <span className="font-semibold text-[#C5A47E]">unban code Ideas.com</span>
                     </p>
                 </div>
 
                 {/* Description */}
                 <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Descripción del Banco de Ideas</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Descripció del Banc d&apos;Idees</h2>
                     <p className="text-lg text-gray-700 leading-relaxed">
-                        El Banco de Ideas es un espacio diseñado para facilitar la generación y desarrollo de ideas individuales y colectivas. Utiliza tecnologías avanzadas de inteligencia artificial para asistir a los usuarios en la creación, co-creación, refinamiento, expansión y colectivización de las Ideas.
+                        El Banc d&apos;Idees és un espai dissenyat per facilitar la generació i el desenvolupament d&apos;idees individuals i col·lectives. Utilitza tecnologies avançades d&apos;intel·ligència artificial per assistir els usuaris en la creació, co-creació, refinament, expansió i col·lectivització de les Idees.
                     </p>
                 </div>
 
                 {/* Justification */}
                 <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificación</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificació</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        Esta herramienta viene a solucionar un problema concreto, ¿donde guardar las ideas?, generalmente la gente guarda sus ideas en un cuaderno, una agenda, un bloc de notas en el móvil, un .doc, un grupo de whatsapp con sigo mismo; <span className="font-semibold">unbancodeideas.com</span> busca ser la herramienta para guardar ideas.
+                        Aquesta eina ve a solucionar un problema concret: on guardar les idees? Generalment, la gent guarda les seves idees en un quadern, una agenda, un bloc de notes al mòbil, un .doc, o un grup de WhatsApp amb si mateix; <span className="font-semibold">unbancodeideas.com</span> busca ser l&apos;eina per guardar idees.
                     </p>
                     <p className="text-lg text-gray-700 leading-relaxed">
-                        Queremos que las ideas tengan acción directa, así que también la aplicamos como metaidea, por lo que el banco de ideas tiene funcionalidades que alguna vez fueron ideas, el banco de ideas evoluciona y tiene funcionalidades.
+                        Volem que les idees tinguin acció directa, així que també l&apos;apliquem com a meta-idea, per la qual cosa el banc d&apos;idees té funcionalitats que algun cop van ser idees; el banc d&apos;idees evoluciona i té funcionalitats.
                     </p>
                 </div>
 
                 {/* Key Functionalities */}
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-250">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Funcionalidades Clave</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Funcionalitats Clau</h2>
                     <div className="space-y-12">
                         <div className="border-l-4 border-[#C5A47E] pl-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Guardar Ideas</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-3">Guardar Idees</h3>
                             <p className="text-gray-700 leading-relaxed">
-                                El sistema implementa un flux de entrada optimizado para reducir la carga cognitiva. Permite el registro de conceptos de forma ágil mediante interfaces de texto o comandos de voz procesados por modelos de transcripción neuronal (OpenAI Whisper), garantizando una captura inmediata de datos.
+                                El sistema implementa un flux d&apos;entrada optimitzat per reduir la càrrega cognitiva. Permet el registre de conceptes de forma àgil mitjançant interfícies de text o comandes de veu processades per models de transcripció neuronal (OpenAI Whisper), garantint una captura immediata de dades.
                             </p>
                         </div>
 
                         <div className="border-l-4 border-blue-500 pl-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Analizar Ideas</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-3">Analitzar Idees</h3>
                             <p className="text-gray-700 leading-relaxed">
-                                La plataforma integra un motor de procesamiento de lenguaje natural (LLM) que actúa como capa analítica. Este motor evalúa la viabilidad de las propuestas, genera críticas constructivas y sugiere iteraciones técnicas, transformando el repositorio en un sistema activo de asesoría.
+                                La plataforma integra un motor de processament de llenguatge natural (LLM) que actua com a capa analítica. Aquest motor avalua la viabilitat de les propostes, genera crítiques constructives i suggereix iteracions tècniques, transformant el repositori en un sistema actiu d&apos;assessoria.
                             </p>
                         </div>
 
                         <div className="border-l-4 border-green-500 pl-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Generar Ideas</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-3">Generar Idees</h3>
                             <p className="text-gray-700 leading-relaxed">
-                                Basado en principios de bisociación, el sistema automatiza la generación de ideas sintéticas que complementan la base de datos del usuario. Esto funciona como un motor de inspiración que expande el dominio de búsqueda y fomenta la creación de nuevas clínicas lógicas.
+                                Basat en principis de bisociació, el sistema automatitza la generació d&apos;idees sintètiques que complementen la base de dades de l&apos;usuari. Això funciona com un motor d&apos;inspiració que expandeix el domini de cerca i fomenta la creació de noves connexions lògiques.
                             </p>
                         </div>
 
                         <div className="border-l-4 border-purple-500 pl-6">
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Buscar Ideas</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-3">Buscar Idees</h3>
                             <div className="text-gray-700 leading-relaxed space-y-4">
-                                <p>La recuperación de información se aleja del modelo tradicional de coincidencia de palabras clave. Se utiliza una arquitectura de búsqueda por vectores de embedding:</p>
+                                <p>La recuperació d&apos;informació s&apos;allunya del model tradicional de coincidència de paraules clau. S&apos;utilitza una arquitectura de cerca per vectors d&apos;embedding:</p>
                                 <ul className="list-disc ml-6 space-y-2">
-                                    <li><span className="font-semibold">Vectorización:</span> Cada idea se convierte en un vector denso de alta dimensionalidad mediante modelos de embedding de OpenAI.</li>
-                                    <li><span className="font-semibold">Similitud del Coseno:</span> El buscador calcula la proximidad matemática entre vectores para encontrar ideas con estructuras conceptuales similares, independientemente del léxico utilizado.</li>
-                                    <li><span className="font-semibold">Cuantificación de Coincidencia:</span> Se provee un porcentaje de similitud semántica, permitiendo identificar duplicados conceptuales o relaciones profundas entre ideas dispersas en el tiempo.</li>
+                                    <li><span className="font-semibold">Vectorització:</span> Cada idea es converteix en un vector dens d&apos;alta dimensionalitat mitjançant models d&apos;embedding d&apos;OpenAI.</li>
+                                    <li><span className="font-semibold">Similitud del Cosenus:</span> El cercador calcula la proximitat matemàtica entre vectors per trobar idees amb estructures conceptuals similars, independentment del lèxic utilitzat.</li>
+                                    <li><span className="font-semibold">Quantificació de Coincidència:</span> Es proveeix un percentatge de similitud semàntica, permetent identificar duplicats conceptuals o relacions profundes entre idees disperses en el temps.</li>
                                 </ul>
                             </div>
                         </div>
@@ -101,44 +101,44 @@ export default function AboutPage() {
 
                 {/* Technical Architecture Deep Dive */}
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 shadow-2xl text-white mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
-                    <h2 className="text-3xl font-bold mb-8">Arquitectura Técnica y Stack</h2>
+                    <h2 className="text-3xl font-bold mb-8">Arquitectura Tècnica i Stack</h2>
 
                     <div className="space-y-8">
                         <div>
                             <h3 className="text-xl font-bold text-[#C5A47E] mb-4 flex items-center gap-2">
-                                <span>🧠</span> Motor de IA, Multimodalidad y Vectorización
+                                <span>🧠</span> Motor d&apos;IA, Multimodalitat i Vectorització
                             </h3>
                             <div className="space-y-4 text-gray-300 text-sm leading-relaxed">
-                                <p><span className="text-white font-medium">Procesamiento Lógico:</span> Empleo de GPT-4o-mini para la inferencia, análisis de viabilidad y generación de ideas bisociativas.</p>
+                                <p><span className="text-white font-medium">Processament Lògic:</span> Ús de GPT-4o-mini per a la inferencia, anàlisi de viabilitat i generació d&apos;idees bisociatives.</p>
                                 <div className="pl-4 border-l border-gray-700">
-                                    <p className="font-medium text-white mb-1">Interacción por Voz (STT/TTS):</p>
+                                    <p className="font-medium text-white mb-1">Interacció per Veu (STT/TTS):</p>
                                     <ul className="space-y-2">
-                                        <li>• <span className="text-white">Speech-to-Text (STT):</span> Integración de la API OpenAI Whisper para la transcripción precisa de ideas mediante entrada de audio.</li>
-                                        <li>• <span className="text-white">Text-to-Speech (TTS):</span> Uso de modelos de síntesis de voz (OpenAI TTS-1) para la lectura de respuestas.</li>
+                                        <li>• <span className="text-white">Speech-to-Text (STT):</span> Integració de l&apos;API OpenAI Whisper per a la transcripció precisa d&apos;idees mitjançant entrada d&apos;àudio.</li>
+                                        <li>• <span className="text-white">Text-to-Speech (TTS):</span> Ús de models de síntesi de veu (OpenAI TTS-1) per a la lectura de respostes.</li>
                                     </ul>
                                 </div>
-                                <p><span className="text-white font-medium">API de Embeddings:</span> Implementación de modelos de vectorización para transformar cada idea en un vector numérico, permitiendo el cálculo de similitud según la esencia estructural.</p>
+                                <p><span className="text-white font-medium">API d&apos;Embeddings:</span> Implementació de models de vectorització per transformar cada idea en un vector numèric, permetent el càlcul de la similitud segons l&apos;essència estructural.</p>
                             </div>
                         </div>
 
                         <div>
                             <h3 className="text-xl font-bold text-blue-400 mb-4 flex items-center gap-2">
-                                <span>☁️</span> Persistencia de Datos y Búsqueda Vectorial
+                                <span>☁️</span> Persistència de Dades i Cerca Vectorial
                             </h3>
                             <div className="space-y-4 text-gray-300 text-sm leading-relaxed">
-                                <p><span className="text-white font-medium">Base de Datos:</span> Uso de MongoDB Atlas como capa de persistencia distribuida.</p>
-                                <p><span className="text-white font-medium">Atlas Vector Search:</span> Configuración de índices vectoriales para consultas semánticas de alta velocidad directamente en la base de datos.</p>
+                                <p><span className="text-white font-medium">Base de Dades:</span> Ús de MongoDB Atlas com a capa de persistència distribuïda.</p>
+                                <p><span className="text-white font-medium">Atlas Vector Search:</span> Configuració d&apos;índexs vectorials per a consultes semàntiques d&apos;alta velocitat directament a la base de dades.</p>
                             </div>
                         </div>
 
                         <div>
                             <h3 className="text-xl font-bold text-green-400 mb-4 flex items-center gap-2">
-                                <span>⚡</span> Stack Moderno y Escalable
+                                <span>⚡</span> Stack Modern i Escalable
                             </h3>
                             <div className="grid md:grid-cols-2 gap-4 text-gray-300 text-sm">
-                                <p><span className="text-white font-medium">Framework:</span> Next.js 16 con SSR y Server Components.</p>
-                                <p><span className="text-white font-medium">Lenguaje:</span> TypeScript para arquitectura type-safe.</p>
-                                <p className="md:col-span-2"><span className="text-white font-medium">Infraestructura:</span> Diseño modular con logging y error handling de producción.</p>
+                                <p><span className="text-white font-medium">Framework:</span> Next.js 16 amb SSR i Server Components.</p>
+                                <p><span className="text-white font-medium">Llenguatge:</span> TypeScript per a una arquitectura type-safe.</p>
+                                <p className="md:col-span-2"><span className="text-white font-medium">Infraestructura:</span> Disseny modular amb logging i gestió d&apos;errors de producció.</p>
                             </div>
                         </div>
                     </div>
@@ -146,21 +146,21 @@ export default function AboutPage() {
 
                 {/* Objectives */}
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-350">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-8">Objetivos del Banco de Ideas</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-8">Objectius del Banc d&apos;Idees</h2>
                     <div className="grid md:grid-cols-2 gap-8">
                         <div className="flex flex-col items-center text-center">
                             <div className="text-4xl mb-4">🎯</div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Optimizar la Innovación</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-3">Optimitzar la Innovació</h3>
                             <p className="text-gray-600 leading-relaxed text-sm">
-                                Mejorar la eficiencia en el proceso de generación de ideas, evitando duplicaciones y promoviendo un uso más efectivo de los recursos creativos disponibles.
+                                Millorar l&apos;eficiència en el procés de generació d&apos;idees, evitant duplicacions i promovent un ús més efectiu dels recursos creatius disponibles.
                             </p>
                         </div>
 
                         <div className="flex flex-col items-center text-center">
                             <div className="text-4xl mb-4">🌍</div>
-                            <h3 className="text-xl font-bold text-gray-800 mb-3">Fomentar la Colaboración Global</h3>
+                            <h3 className="text-xl font-bold text-gray-800 mb-3">Fomentar la Col·laboració Global</h3>
                             <p className="text-gray-600 leading-relaxed text-sm">
-                                Eliminar barreras para la colaboración, permitiendo que ideas de diversas partes del mundo sean compartidas y desarrolladas en conjunto.
+                                Eliminar barreres per a la col·laboració, permetent que idees de diverses parts del món siguin compartides i desenvolupades en conjunt.
                             </p>
                         </div>
                     </div>
@@ -168,34 +168,34 @@ export default function AboutPage() {
 
                 {/* Impact Potential */}
                 <div className="bg-gradient-to-br from-[#C5A47E]/10 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/20 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-400">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-8">Potencial de Impacto</h2>
+                    <h2 className="text-3xl font-bold text-gray-900 mb-8">Potencial d&apos;Impacte</h2>
                     <div className="grid md:grid-cols-2 gap-6">
                         <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100 shadow-sm">
                             <div className="text-3xl mb-3">🚀</div>
-                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Emprendedores</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Per a Emprenedors</h3>
                             <p className="text-gray-700 text-sm leading-relaxed">
-                                Transforma conceptos vagos en propuestas de negocio estructuradas. La IA actúa como co-founder que nunca duerme.
+                                Transforma conceptes vagues en propostes de negoci estructurades. L&apos;IA actua com a co-founder que mai dorm.
                             </p>
                         </div>
                         <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100 shadow-sm">
                             <div className="text-3xl mb-3">🔬</div>
-                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Investigadores</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Per a Investigadors</h3>
                             <p className="text-gray-700 text-sm leading-relaxed">
-                                Captura hipótesis emergentes y explora conexiones interdisciplinarias.
+                                Capta hipòtesis emergents i explora connexions interdisciplinàries.
                             </p>
                         </div>
                         <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100 shadow-sm">
                             <div className="text-3xl mb-3">🎨</div>
-                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Creativos</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Per a Creatius</h3>
                             <p className="text-gray-700 text-sm leading-relaxed">
-                                Rompe bloqueos creativos con bisociaciones inesperadas que tu mente consciente nunca consideraría.
+                                Trenca bloquejos creatius amb bisociacions inesperades que la teva ment conscient mai consideraria.
                             </p>
                         </div>
                         <div className="bg-white/80 backdrop-blur rounded-2xl p-6 border border-gray-100 shadow-sm">
                             <div className="text-3xl mb-3">🌍</div>
-                            <h3 className="text-lg font-bold text-gray-800 mb-2">Para Changemakers</h3>
+                            <h3 className="text-lg font-bold text-gray-800 mb-2">Per a Changemakers</h3>
                             <p className="text-gray-700 text-sm leading-relaxed">
-                                Desarrolla soluciones a problemas sociales complejos. Cada idea es una semilla para impacto sistémico.
+                                Desenvolupa solucions a problemes socials complexos. Cada idea és una llavor per a un impacte sistèmic.
                             </p>
                         </div>
                     </div>
@@ -204,28 +204,28 @@ export default function AboutPage() {
                 {/* Philosophy */}
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-450">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-                        Filosofía del Proyecto
+                        Filosofia del Projecte
                     </h2>
                     <blockquote className="border-l-4 border-[#C5A47E] pl-6 italic text-xl text-gray-700 mb-8 leading-relaxed">
-                        &quot;Las mejores ideas no nacen completamente formadas. Emergen de la colisión de conceptos, la iteración constante y la voluntad de explorar lo desconocido.&quot;
+                        &quot;Les millors idees no neixen completament formades. Emergeixen de la colisió de conceptes, la iteració constant i la voluntat d&apos;explorar el desconegut.&quot;
                     </blockquote>
                     <p className="text-gray-700 leading-relaxed">
-                        Cada línea de código está escrita con la intención de que esta herramienta sea <span className="font-semibold text-[#C5A47E]">open source, escalable y accesible</span>—porque las mejores ideas para cambiar el mundo pueden venir de cualquier persona, en cualquier lugar.
+                        Cada línia de codi està escrita amb la intenció que aquesta eina sigui <span className="font-semibold text-[#C5A47E]">open source, escalable i accessible</span>—perquè les millors idees per canviar el món poden venir de qualsevol persona, a qualsevol lloc.
                     </p>
                 </div>
 
                 {/* CTA */}
                 <div className="text-center bg-gradient-to-r from-[#C5A47E] to-[#b08e68] rounded-3xl p-8 md:p-12 shadow-2xl animate-in fade-in slide-in-from-bottom duration-700 delay-500">
-                    <h2 className="text-3xl font-bold text-white mb-4">¿Listo para Amplificar tus Ideas?</h2>
+                    <h2 className="text-3xl font-bold text-white mb-4">Llest per Amplificar les teves Idees?</h2>
                     <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto">
-                        Únete al experimento. Guarda tu primera idea. Deja que la IA te sorprenda con conexiones que nunca imaginaste.
+                        Uneix-te a l&apos;experiment. Guarda la teva primera idea. Deixa que l&apos;IA et sorprengui amb connexions que mai vas imaginar.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
                         <Link
                             href="/"
                             className="px-8 py-4 bg-white text-[#C5A47E] rounded-xl font-bold text-lg hover:bg-gray-100 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
                         >
-                            Empezar Ahora →
+                            Començar Ara →
                         </Link>
                         <a
                             href="https://estudioprompt.com/banco-de-ideas/"
@@ -233,7 +233,7 @@ export default function AboutPage() {
                             rel="noopener noreferrer"
                             className="px-8 py-4 bg-transparent border-2 border-white text-white rounded-xl font-bold text-lg hover:bg-white/10 transition-all"
                         >
-                            Leer Más
+                            Llegir Més
                         </a>
                     </div>
 
@@ -245,17 +245,17 @@ export default function AboutPage() {
                             className="inline-flex items-center gap-2 px-6 py-3 bg-white/20 hover:bg-white/30 text-white rounded-lg font-medium transition-all text-sm backdrop-blur-sm"
                         >
                             <span>🚀</span>
-                            Futuras funcionalidades previstas (se aceptan ideas)
+                            Futures funcionalitats previstes (s&apos;accepten idees)
                         </a>
                     </div>
                 </div>
 
                 {/* Footer */}
                 <div className="text-center mt-12 text-gray-500 text-sm space-y-2">
-                    <p>Desarrollado con 💡 por Damián Lafferranderie</p>
+                    <p>Desenvolupat amb 💡 per Damián Lafferranderie</p>
                     <p>
                         <a href="https://github.com/damiancolo/banco-de-ideas" target="_blank" rel="noopener noreferrer" className="hover:text-[#C5A47E] transition-colors">
-                            Ver en GitHub
+                            Veure a GitHub
                         </a>
                     </p>
                 </div>

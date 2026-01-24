@@ -1,6 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getIdeas, getIdeasByCategory, deleteIdea, saveIdea } from '@/lib/db';
+import { getIdeas, getIdeasByCategory, highlightIdea, saveIdea } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
+
+/**
+ * Helper to get IP from request
+ */
+function getIp(request: Request): string {
+    const forwardedFor = request.headers.get('x-forwarded-for');
+    return forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
+}
 
 /**
  * GET /api/ideas?category=user|bisociation
@@ -50,7 +59,7 @@ export async function GET(request: Request) {
 
 /**
  * DELETE /api/ideas?id=xxx
- * Elimina una idea por ID
+ * Elimina (Resalta) una idea por ID
  * 
  * @param request - Request object de Next.js
  * @returns JSON con resultado de la operación
@@ -62,6 +71,16 @@ export async function DELETE(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
+        const ip = getIp(request);
+
+        // Rate Limiting para Highlights: 10 por minuto
+        const rateLimit = await checkRateLimit(ip, 'highlight', 10, 60);
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: 'Demasiados resaltados por ahora. Intenta de nuevo en un minuto.' },
+                { status: 429 }
+            );
+        }
 
         // Validar que se proporcionó un ID
         if (!id) {
@@ -79,12 +98,12 @@ export async function DELETE(request: Request) {
             );
         }
 
-        const deleted = await deleteIdea(id);
+        const deleted = await highlightIdea(id);
 
         if (deleted) {
             return NextResponse.json({
                 success: true,
-                message: 'Idea eliminada exitosamente',
+                message: 'Idea resaltada exitosamente',
                 id
             });
         } else {
@@ -118,6 +137,24 @@ export async function DELETE(request: Request) {
 export async function POST(request: Request) {
     try {
         const { text, category } = await request.json();
+        const ip = getIp(request);
+
+        // Rate Limiting para Nuevas Ideas: 5 por minuto
+        // Es un límite estricto para evitar spam de base de datos
+        const rateLimit = await checkRateLimit(ip, 'new-idea', 5, 60);
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: 'Estás creando ideas muy rápido. Tómate un respiro de un minuto.' },
+                { status: 429 }
+            );
+        }
+
+        if (text && text.length > 1500) {
+            return NextResponse.json(
+                { error: 'La idea excede el límite de 1500 caracteres.' },
+                { status: 400 }
+            );
+        }
 
         if (!text) {
             return NextResponse.json(

@@ -6,16 +6,16 @@ import Idea, { IIdea } from './models/Idea';
  * Usado para transferir datos entre servidor y cliente
  */
 export type SavedIdea = {
-    /** ID único de MongoDB convertido a string */
     id: string;
-    /** Contenido textual de la idea */
     text: string;
-    /** Fecha de creación en formato ISO 8601 */
     createdAt: string;
-    /** Categoría de la idea */
     category: 'user' | 'bisociation';
-    /** Número de intentos de borrado */
-    deletionAttempts: number;
+    /** En la DB es deletionAttempts, pero en la App lo llamamos highlightCount */
+    highlightCount: number;
+    comments: Array<{
+        text: string;
+        createdAt: string;
+    }>;
 };
 
 /**
@@ -24,6 +24,14 @@ export type SavedIdea = {
 function toSavedIdea(doc: IIdea | Record<string, unknown>): SavedIdea {
     const d = doc as Record<string, unknown>;
     const id = (d._id as { toString(): string }).toString();
+
+    const comments = Array.isArray(d.comments)
+        ? d.comments.map((c: any) => ({
+            text: c.text,
+            createdAt: c.createdAt instanceof Date ? c.createdAt.toISOString() : c.createdAt
+        }))
+        : [];
+
     return {
         id,
         text: d.text as string,
@@ -31,7 +39,8 @@ function toSavedIdea(doc: IIdea | Record<string, unknown>): SavedIdea {
             ? d.createdAt.toISOString()
             : d.createdAt as string,
         category: d.category as 'user' | 'bisociation',
-        deletionAttempts: (d.deletionAttempts as number) || 0
+        highlightCount: (d.deletionAttempts as number) || 0,
+        comments
     };
 }
 
@@ -122,8 +131,8 @@ export async function saveIdea(
         throw new Error('La idea no puede estar vacía');
     }
 
-    if (trimmedText.length > 2000) {
-        throw new Error('La idea no puede exceder 2000 caracteres');
+    if (trimmedText.length > 1500) {
+        throw new Error('La idea no puede exceder 1500 caracteres');
     }
 
     try {
@@ -200,35 +209,15 @@ export async function saveIdeas(
 }
 
 /**
- * Elimina una idea por su ID
- * 
- * @param id - ID de MongoDB de la idea a eliminar
- * @returns Promise<boolean> - true si se eliminó, false si no se encontró
- * 
- * @example
- * ```typescript
- * const deleted = await deleteIdea('507f1f77bcf86cd799439011');
- * if (deleted) {
- *   console.log('Idea eliminada');
- * }
- * ```
+ * Registra un resaltado para una idea (incrementa contador)
  */
-export async function deleteIdea(id: string): Promise<boolean> {
-    // Validación de entrada
-    if (!id || typeof id !== 'string') {
-        console.error('deleteIdea: ID inválido');
-        return false;
-    }
-
-    // Validar que sea un ObjectId válido de MongoDB
-    if (!/^[0-9a-fA-F]{24}$/.test(id)) {
-        console.error('deleteIdea: ID no es un ObjectId válido de MongoDB');
+export async function highlightIdea(id: string): Promise<boolean> {
+    if (!id || typeof id !== 'string' || !/^[0-9a-fA-F]{24}$/.test(id)) {
         return false;
     }
 
     try {
         await connectDB();
-        // En lugar de borrar, incrementamos el contador de intentos
         const result = await Idea.findByIdAndUpdate(
             id,
             { $inc: { deletionAttempts: 1 } },
@@ -236,7 +225,34 @@ export async function deleteIdea(id: string): Promise<boolean> {
         );
         return !!result;
     } catch (error) {
-        console.error('Error recording deletion attempt:', error);
+        console.error('Error recording highlight:', error);
+        return false;
+    }
+}
+
+/**
+ * Añade un comentario a una idea
+ */
+export async function addComment(id: string, text: string): Promise<boolean> {
+    if (!id || !text || !/^[0-9a-fA-F]{24}$/.test(id)) return false;
+
+    try {
+        await connectDB();
+        const result = await Idea.findByIdAndUpdate(
+            id,
+            {
+                $push: {
+                    comments: {
+                        text: text.trim(),
+                        createdAt: new Date()
+                    }
+                }
+            },
+            { new: true }
+        );
+        return !!result;
+    } catch (error) {
+        console.error('Error adding comment:', error);
         return false;
     }
 }
@@ -263,5 +279,52 @@ export async function countIdeas(
     } catch (error) {
         console.error('Error counting ideas:', error);
         return 0;
+    }
+}
+
+/**
+ * Busca ideas por palabras clave usando regex case-insensitive
+ * 
+ * @param query - Texto a buscar en el campo text
+ * @returns Promise con array de ideas que coinciden
+ * 
+ * @example
+ * ```typescript
+ * const results = await searchIdeasByKeywords('blockchain');
+ * console.log(results.length); // Número de ideas que contienen "blockchain"
+ * ```
+ */
+export async function searchIdeasByKeywords(query: string): Promise<SavedIdea[]> {
+    if (!query || typeof query !== 'string') {
+        throw new Error('El query es requerido y debe ser un string');
+    }
+
+    const trimmed = query.trim();
+
+    if (trimmed.length === 0) {
+        throw new Error('El query no puede estar vacío');
+    }
+
+    if (trimmed.length > 200) {
+        throw new Error('El query no puede exceder 200 caracteres');
+    }
+
+    try {
+        await connectDB();
+
+        // Búsqueda case-insensitive con regex
+        const ideas = await Idea.find({
+            text: { $regex: trimmed, $options: 'i' }
+        })
+            .sort({ createdAt: -1 })
+            .limit(10) // Limitar a 10 resultados
+            .lean()
+            .exec();
+
+        return ideas.map(idea => toSavedIdea(idea));
+
+    } catch (error) {
+        console.error('Error searching ideas by keywords:', error);
+        return [];
     }
 }

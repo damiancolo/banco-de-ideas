@@ -19,6 +19,8 @@ type Idea = {
   summary: string;
 };
 
+type SearchMode = 'essence' | 'keywords' | 'similar' | 'analysis' | null;
+
 // ID generator to avoid race conditions
 let messageIdCounter = 0;
 const generateMessageId = () => `msg-${Date.now()}-${++messageIdCounter}`;
@@ -34,10 +36,15 @@ export default function Home() {
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
+  const [searchMode, setSearchMode] = useState<SearchMode>(null);
+  const [showModeMenu, setShowModeMenu] = useState(false);
+
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
+  const menuEnterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const menuLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const {
     isRecording,
@@ -59,6 +66,14 @@ export default function Home() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading, isTranscribing]);
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (menuEnterTimeoutRef.current) clearTimeout(menuEnterTimeoutRef.current);
+      if (menuLeaveTimeoutRef.current) clearTimeout(menuLeaveTimeoutRef.current);
+    };
+  }, []);
 
   const resetConversation = () => {
     stopSpeaking();
@@ -156,13 +171,13 @@ export default function Home() {
       // Store reference for stop functionality
       audioRef.current = {
         pause: () => {
-          try { sourceNode?.stop(); } catch {}
+          try { sourceNode?.stop(); } catch { }
         },
       } as HTMLAudioElement;
 
     } catch (err) {
       // Stop keep-alive on error
-      try { keepAliveOscillator.stop(); } catch {}
+      try { keepAliveOscillator.stop(); } catch { }
 
       logger.error("TTS Error:", err);
       setIsSpeaking(false);
@@ -179,7 +194,14 @@ export default function Home() {
   const handleSendMessage = async (e?: React.FormEvent, forcedText?: string, viaVoice = false) => {
     e?.preventDefault();
     const textToProcess = forcedText || inputValue.trim();
-    if (!textToProcess || loading || isTranscribing) return;
+    if (!textToProcess) return;
+
+    if (textToProcess.length > 1500) {
+      alert("Resume por que es mucha letra");
+      return;
+    }
+
+    if (loading || isTranscribing) return;
 
     if (!hasInteracted) setHasInteracted(true);
 
@@ -196,7 +218,137 @@ export default function Home() {
     setMessages(prev => [...prev, userMsg]);
     setLoading(true);
 
-    // Process Logic
+    // MODE HANDLING: Process based on selected mode
+    if (searchMode !== null) {
+      try {
+        if (searchMode === 'keywords') {
+          // Keyword Search
+          const response = await fetch('/api/search/keywords', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ query: userText }),
+          });
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || 'Error en la búsqueda');
+          }
+
+          const results = data.result || [];
+          const content = (
+            <div className="flex flex-col gap-4 mt-2">
+              <p className="font-medium text-gray-800">
+                {results.length} resultado{results.length !== 1 ? 's' : ''} encontrado{results.length !== 1 ? 's' : ''}:
+              </p>
+              {results.length > 0 ? (
+                results.map((result: any) => (
+                  <div key={result.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="font-bold text-gray-800 mb-1">{result.title}</div>
+                    <div className="text-gray-600 text-sm leading-relaxed">{result.summary}</div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-gray-500 text-sm">No se encontraron ideas con esas palabras.</p>
+              )}
+            </div>
+          );
+
+          const reply: Message = {
+            id: generateMessageId(),
+            role: 'assistant',
+            content: content,
+            plainText: `Búsqueda por palabras: ${results.length} resultados`
+          };
+          setMessages(prev => [...prev, reply]);
+
+        } else if (searchMode === 'similar' || searchMode === 'analysis') {
+          // Direct AI Action
+          const action = searchMode;
+          const response = await fetch('/api/analyze', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              action,
+              idea: userText,
+              history: messages
+            }),
+          });
+
+          const data = await response.json();
+
+          if (!response.ok) {
+            throw new Error(data.error || `Error del servidor: ${response.status}`);
+          }
+
+          const result = data?.result;
+          let content: React.ReactNode;
+          let plainTextForContext = "";
+
+          if (action === "similar" && Array.isArray(result)) {
+            // Similar ideas rendering
+            content = (
+              <div className="flex flex-col gap-4 mt-2">
+                <p className="font-medium text-gray-800">Aquí tienes 3 ideas similares:</p>
+                {result.map((idea: Idea) => (
+                  <div key={idea.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                    <div className="font-bold text-gray-800 mb-1">{idea.title}</div>
+                    <div className="text-gray-600 text-sm leading-relaxed">{idea.summary}</div>
+                  </div>
+                ))}
+              </div>
+            );
+            plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
+              result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
+          } else {
+            // Analysis result rendering
+            content = (
+              <div className="prose prose-sm prose-stone max-w-none text-gray-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
+                <div className="whitespace-pre-wrap">{typeof result === 'string' ? result : JSON.stringify(result)}</div>
+              </div>
+            );
+            plainTextForContext = typeof result === 'string' ? result : "Respuesta completada.";
+          }
+
+          const reply: Message = {
+            id: generateMessageId(),
+            role: 'assistant',
+            content: content,
+            plainText: plainTextForContext
+          };
+          setMessages(prev => [...prev, reply]);
+
+          if (viaVoice && plainTextForContext) {
+            handleTTS(plainTextForContext);
+          }
+        }
+
+        // Reset mode to essence after execution
+        setSearchMode(null);
+        setLoading(false);
+        return;
+
+      } catch (error) {
+        logger.error(`Error in ${searchMode} mode:`, error);
+        const errorMessage = error instanceof Error ? error.message : "Error desconocido";
+        const errorReply: Message = {
+          id: generateMessageId(),
+          role: 'assistant',
+          content: (
+            <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700">
+              <p><strong>Error:</strong> {errorMessage}</p>
+            </div>
+          ),
+          plainText: `Error: ${errorMessage}`
+        };
+        setMessages(prev => [...prev, errorReply]);
+        setSearchMode(null);
+        setLoading(false);
+        return;
+      }
+    }
+
+    // Process Logic (DEFAULT FLOW for 'essence' mode or continuation)
+
     try {
       if (!currentIdea) {
         // Step 1: User submitted an idea
@@ -481,15 +633,84 @@ export default function Home() {
             `}
         >
           <div className="flex items-center gap-2 md:gap-4 w-full">
-            {/* Plus Button */}
-            <button
-              type="button"
-              onClick={resetConversation}
-              className="w-10 h-10 md:w-12 md:h-12 flex-none rounded-xl border border-gray-100 bg-white hover:bg-gray-50 text-gray-400 flex items-center justify-center transition-colors"
-              title="Nueva idea"
+            {/* Mode Selector Button */}
+            <div
+              className="relative"
+              onMouseEnter={() => {
+                // Cancel any pending leave timeout
+                if (menuLeaveTimeoutRef.current) {
+                  clearTimeout(menuLeaveTimeoutRef.current);
+                  menuLeaveTimeoutRef.current = null;
+                }
+                // Set enter timeout
+                menuEnterTimeoutRef.current = setTimeout(() => {
+                  setShowModeMenu(true);
+                }, 300);
+              }}
+              onMouseLeave={() => {
+                // Cancel any pending enter timeout
+                if (menuEnterTimeoutRef.current) {
+                  clearTimeout(menuEnterTimeoutRef.current);
+                  menuEnterTimeoutRef.current = null;
+                }
+                // Set leave timeout
+                menuLeaveTimeoutRef.current = setTimeout(() => {
+                  setShowModeMenu(false);
+                }, 200);
+              }}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-            </button>
+              <button
+                type="button"
+                onClick={() => setShowModeMenu(!showModeMenu)}
+                className={`w-10 h-10 md:w-12 md:h-12 flex-none rounded-xl border border-gray-100 bg-white hover:bg-gray-50 flex items-center justify-center transition-all relative ${searchMode === null ? 'text-gray-400' : 'text-2xl'}`}
+                title="Selecciona el modo"
+              >
+                {searchMode === null ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                ) : (
+                  <>
+                    {searchMode === 'essence' && '🧴'}
+                    {searchMode === 'keywords' && '🔍'}
+                    {searchMode === 'similar' && '✨'}
+                    {searchMode === 'analysis' && '🧠'}
+                  </>
+                )}
+              </button>
+
+              {/* Dropdown Menu */}
+              {showModeMenu && (
+                <div className="absolute top-full mt-2 left-0 bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden z-50 min-w-[240px] animate-in fade-in slide-in-from-top-2 duration-200">
+                  <button
+                    onClick={() => { setSearchMode('essence'); setShowModeMenu(false); }}
+                    className={`w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-colors ${searchMode === 'essence' ? 'bg-blue-50 text-blue-700' : 'text-gray-700'}`}
+                  >
+                    <span className="text-xl">🧴</span>
+                    <span className="font-medium">Búsqueda por esencia</span>
+                  </button>
+                  <button
+                    onClick={() => { setSearchMode('keywords'); setShowModeMenu(false); }}
+                    className={`w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-colors ${searchMode === 'keywords' ? 'bg-green-50 text-green-700' : 'text-gray-700'}`}
+                  >
+                    <span className="text-xl">🔍</span>
+                    <span className="font-medium">Búsqueda por palabras</span>
+                  </button>
+                  <button
+                    onClick={() => { setSearchMode('similar'); setShowModeMenu(false); }}
+                    className={`w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-colors ${searchMode === 'similar' ? 'bg-purple-50 text-purple-700' : 'text-gray-700'}`}
+                  >
+                    <span className="text-xl">✨</span>
+                    <span className="font-medium">Ideas similares</span>
+                  </button>
+                  <button
+                    onClick={() => { setSearchMode('analysis'); setShowModeMenu(false); }}
+                    className={`w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-colors ${searchMode === 'analysis' ? 'bg-orange-50 text-orange-700' : 'text-gray-700'}`}
+                  >
+                    <span className="text-xl">🧠</span>
+                    <span className="font-medium">Espíritu crítico</span>
+                  </button>
+                </div>
+              )}
+            </div>
 
             {/* Input */}
             <input

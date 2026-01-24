@@ -13,10 +13,7 @@ export default async function BancoPage() {
     return (
         <main className="min-h-screen bg-[#F8F5F0] p-6 md:p-12 relative">
             <div className="max-w-4xl mx-auto flex items-center justify-between mb-12">
-                <div>
-                    <h1 className="text-3xl font-bold text-gray-800 tracking-tight">Banco de Ideas</h1>
-                    <p className="text-gray-500 mt-2">Tu colección personal de conceptos.</p>
-                </div>
+                <div />
                 <div className="flex items-center gap-3">
                     <Link
                         href="/banco/semantic"

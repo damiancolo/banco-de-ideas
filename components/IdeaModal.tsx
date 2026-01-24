@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from 'react';
+import { logger } from '@/lib/logger';
 
 type SavedIdea = {
     id: string;
     text: string;
     createdAt: string;
     category?: 'user' | 'bisociation';
-    deletionAttempts: number;
+    highlightCount: number;
+    comments: { text: string; createdAt: string }[];
 };
 
 interface IdeaModalProps {
@@ -15,11 +17,14 @@ interface IdeaModalProps {
     isOpen: boolean;
     onClose: () => void;
     onDelete: (id: string) => void;
+    onCommentAdded: (comment: { text: string, createdAt: string }) => void;
 }
 
-export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModalProps) {
+export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAdded }: IdeaModalProps) {
     const [copied, setCopied] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
+    const [commentText, setCommentText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     // Handle escape key
     useEffect(() => {
@@ -56,9 +61,53 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
         }
     };
 
-    const handleDelete = () => {
-        // No confirm needed for "soft-delete" logging
+    const handleHighlight = () => {
         onDelete(idea.id);
+    };
+
+    const handleAddComment = async (e: React.FormEvent) => {
+        e.preventDefault();
+
+        if (!commentText.trim()) return;
+
+        if (commentText.length > 1500) {
+            alert("Resume por que es mucha letra");
+            return;
+        }
+
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
+        try {
+            const response = await fetch('/api/ideas/comments', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id: idea.id, text: commentText.trim() }),
+            });
+
+            if (response.ok) {
+                const newComment = {
+                    text: commentText.trim(),
+                    createdAt: new Date().toISOString()
+                };
+                onCommentAdded(newComment);
+                setCommentText('');
+            } else {
+                const data = await response.json();
+                if (response.status === 400 && data.error && data.error.includes('1500')) {
+                    alert("Resume por que es mucha letra");
+                } else if (response.status === 429) {
+                    alert(data.error || 'Estás comentando muy rápido');
+                } else {
+                    alert('No se pudo guardar el comentario');
+                }
+            }
+        } catch (error) {
+            logger.error('Error adding comment:', error);
+            alert('Error al conectar con el servidor');
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     const formatDate = (dateString: string) => {
@@ -88,20 +137,17 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-gray-100">
                     <div className="flex items-center gap-3">
-                        {/* Category Badge */}
                         <span className={`px-3 py-1 rounded-full text-xs font-medium ${idea.category === 'bisociation'
                             ? 'bg-[#C5A47E]/10 text-[#C5A47E]'
                             : 'bg-gray-100 text-gray-600'
                             }`}>
-                            {idea.category === 'bisociation' ? 'IA (Bisociación)' : 'Propia'}
+                            {idea.category === 'bisociation' ? 'IA (Bisociación)' : 'Inteligencia Artesanal'}
                         </span>
-                        {/* Date */}
                         <span className="text-sm text-gray-400">
                             {formatDate(idea.createdAt)}
                         </span>
                     </div>
 
-                    {/* Close Button */}
                     <button
                         onClick={handleClose}
                         className="w-10 h-10 flex items-center justify-center rounded-full text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all"
@@ -114,50 +160,79 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete }: IdeaModal
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6">
-                    <p className="text-lg text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
-                        {idea.text}
-                    </p>
+                <div className="flex-1 overflow-y-auto">
+                    <div className="p-6 border-b border-gray-100 bg-gray-50/30">
+                        <p className="text-lg text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
+                            {idea.text}
+                        </p>
+                    </div>
+
+                    <div className="p-6">
+                        <div className="space-y-4 mb-6">
+                            {idea.comments && idea.comments.length > 0 &&
+                                idea.comments.map((comment, index) => (
+                                    <div key={index} className="bg-gray-50 p-4 rounded-2xl animate-in slide-in-from-left-2 duration-300">
+                                        <p className="text-gray-700 text-sm">{comment.text}</p>
+                                        <p className="text-[10px] text-gray-400 mt-2">
+                                            {new Date(comment.createdAt).toLocaleString('es-ES', {
+                                                day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit'
+                                            })}
+                                        </p>
+                                    </div>
+                                ))
+                            }
+                        </div>
+
+                        <form onSubmit={handleAddComment} className="relative">
+                            <input
+                                type="text"
+                                value={commentText}
+                                onChange={(e) => setCommentText(e.target.value)}
+                                placeholder="Feedback.."
+                                className="w-full bg-white border border-gray-200 rounded-2xl px-5 py-4 text-sm focus:outline-none focus:ring-2 focus:ring-[#C5A47E]/30 focus:border-[#C5A47E] transition-all pr-12"
+                                disabled={isSubmitting}
+                            />
+                            <button
+                                type="submit"
+                                disabled={!commentText.trim() || isSubmitting}
+                                className="absolute right-2 top-2 bottom-2 w-10 bg-[#C5A47E] text-white rounded-xl flex items-center justify-center hover:bg-[#b08e68] transition-all disabled:opacity-50 disabled:grayscale"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="5" y1="12" x2="19" y2="12"></line>
+                                    <polyline points="12 5 19 12 12 19"></polyline>
+                                </svg>
+                            </button>
+                        </form>
+                    </div>
                 </div>
 
                 {/* Footer Actions */}
                 <div className="flex items-center justify-between p-6 border-t border-gray-100 bg-gray-50/50">
-                    {/* Delete Button */}
                     <button
-                        onClick={handleDelete}
-                        className="flex items-center gap-2 px-4 py-2 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+                        onClick={handleHighlight}
+                        className="flex items-center justify-center w-10 h-10 text-amber-500 hover:text-amber-600 hover:bg-amber-50 rounded-xl transition-all"
+                        title={`Resaltar (${idea.highlightCount || 0})`}
                     >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                            <path d="M3 6h18"></path>
-                            <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
-                            <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
-                        </svg>
-                        Eliminar
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg>
                     </button>
 
-                    {/* Copy Button */}
                     <button
                         onClick={handleCopy}
-                        className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-medium transition-all ${copied
+                        className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${copied
                             ? 'bg-green-100 text-green-600'
                             : 'bg-[#C5A47E] text-white hover:bg-[#b08e68]'
                             }`}
+                        title={copied ? "Copiado" : "Copiar texto"}
                     >
                         {copied ? (
-                            <>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <polyline points="20 6 9 17 4 12"></polyline>
-                                </svg>
-                                Copiado
-                            </>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <polyline points="20 6 9 17 4 12"></polyline>
+                            </svg>
                         ) : (
-                            <>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
-                                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
-                                </svg>
-                                Copiar texto
-                            </>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                            </svg>
                         )}
                     </button>
                 </div>

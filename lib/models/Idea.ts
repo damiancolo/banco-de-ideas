@@ -4,18 +4,21 @@ import mongoose, { Schema, Document, Model } from 'mongoose';
  * Interfaz que define la estructura de una Idea en la base de datos
  * Extiende Document de Mongoose para incluir métodos y propiedades de MongoDB
  */
-export interface IIdea extends Document {
-    /** Contenido textual de la idea */
+export interface IComment {
     text: string;
-    /** Categoría: 'user' para ideas del usuario, 'bisociation' para ideas generadas por IA */
-    category: 'user' | 'bisociation';
-    /** Vector embedding para búsqueda semántica (generado por OpenAI text-embedding-3-small) */
-    embedding?: number[];
-    /** Contador de intentos de borrado (en lugar de eliminación real) */
-    deletionAttempts: number;
-    /** Fecha de creación (auto-generada por timestamps) */
     createdAt: Date;
-    /** Fecha de última actualización (auto-generada por timestamps) */
+}
+
+/**
+ * Interfaz que define la estructura de una Idea en la base de datos
+ */
+export interface IIdea extends Document {
+    text: string;
+    category: 'user' | 'bisociation';
+    embedding?: number[];
+    deletionAttempts: number;
+    comments: IComment[];
+    createdAt: Date;
     updatedAt: Date;
 }
 
@@ -30,7 +33,7 @@ const IdeaSchema = new Schema<IIdea>(
             required: [true, 'El texto de la idea es requerido'],
             trim: true, // Eliminar espacios al inicio y final
             minlength: [1, 'La idea no puede estar vacía'],
-            maxlength: [2000, 'La idea no puede exceder 2000 caracteres']
+            maxlength: [1500, 'La idea no puede exceder 1500 caracteres']
         },
         category: {
             type: String,
@@ -51,7 +54,11 @@ const IdeaSchema = new Schema<IIdea>(
             type: Number,
             default: 0,
             required: true
-        }
+        },
+        comments: [{
+            text: { type: String, required: true },
+            createdAt: { type: Date, default: Date.now }
+        }]
     },
     {
         timestamps: true, // Añade createdAt y updatedAt automáticamente
