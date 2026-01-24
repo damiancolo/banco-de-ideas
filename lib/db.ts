@@ -312,9 +312,19 @@ export async function searchIdeasByKeywords(query: string): Promise<SavedIdea[]>
     try {
         await connectDB();
 
-        // Búsqueda case-insensitive con regex
+        // Dividir el query en palabras y limpiar espacios
+        const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+
+        if (words.length === 0) return [];
+
+        // Escapar caracteres especiales de regex y unir con | (OR)
+        const regexPattern = words
+            .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('|');
+
+        // Búsqueda case-insensitive con regex (OR logic)
         const ideas = await Idea.find({
-            text: { $regex: trimmed, $options: 'i' }
+            text: { $regex: regexPattern, $options: 'i' }
         })
             .sort({ createdAt: -1 })
             .limit(10) // Limitar a 10 resultados
