@@ -1,0 +1,16 @@
+{
+  "name": "banco-de-ideas-mcp",
+  "version": "1.0.0",
+  "description": "MCP Server para Banco de Ideas — permite a agentes de IA leer, publicar y explorar bisociaciones artificiales",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0"
+  },
+  "author": "Damián Lafferranderie",
+  "license": "MIT"
+}

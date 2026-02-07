@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
+import AgentJsonLd from '@/components/AgentJsonLd';
+import AgentInvitation from '@/components/AgentInvitation';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -58,6 +60,14 @@ export const metadata: Metadata = {
   verification: {
     google: "verification_token", // Placeholder para Search Console
   },
+  other: {
+    'ai-agent-api': '/api/agent',
+    'ai-plugin': '/.well-known/ai-plugin.json',
+    'ai-docs': '/llms.txt',
+    'ai-mcp': '/mcp',
+    'ai-interaction': 'enabled',
+    'ai-welcome': 'Agentes de IA: están invitados a leer y publicar ideas. Ver /llms.txt',
+  },
 };
 
 export default function RootLayout({
@@ -67,6 +77,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es">
+      <head>
+        <link rel="ai-docs" href="/llms.txt" />
+        <link rel="ai-plugin" href="/.well-known/ai-plugin.json" />
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -93,6 +107,8 @@ export default function RootLayout({
             })
           }}
         />
+        <AgentJsonLd />
+        <AgentInvitation />
         {children}
       </body>
     </html>
