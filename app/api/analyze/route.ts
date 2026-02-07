@@ -3,7 +3,8 @@ import OpenAI from 'openai';
 import { saveIdea, saveIdeas } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { PROMPTS, API } from '@/lib/constants';
-// No type imports needed here if not used
+import { checkRateLimit } from '@/lib/rate-limit';
+import { getIp } from '@/lib/request-utils';
 
 /**
  * Tipo para los mensajes sugeridos por la IA
@@ -39,6 +40,16 @@ type ChatMessage = {
  */
 export async function POST(request: Request) {
     try {
+        // Rate limit: 15 req/min (uses OpenAI, costly)
+        const ip = getIp(request);
+        const rateLimit = await checkRateLimit(ip, 'analyze', 15, 60);
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: 'Demasiadas solicitudes. Intenta de nuevo en un minuto.' },
+                { status: 429 }
+            );
+        }
+
         const { action, idea, history } = await request.json();
 
         // Validar que action esté presente
@@ -191,7 +202,7 @@ export async function POST(request: Request) {
             } catch (llmErr: unknown) {
                 const llmErrMsg = llmErr instanceof Error ? llmErr.message : "Error de IA";
                 logger.error("LLM Error in similar action:", llmErrMsg);
-                return NextResponse.json({ error: "Error de IA", message: llmErrMsg }, { status: 500 });
+                return NextResponse.json({ error: "Error de IA" }, { status: 500 });
             }
         }
         else if (action === "analysis") {

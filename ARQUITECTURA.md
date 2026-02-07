@@ -250,7 +250,7 @@ PROMPTS = {
 ### 4. `app/api/speak/route.ts` - Text-to-Speech [NEW]
 
 **Configuración:**
-- Runtime: `edge` (respuesta más rápida)
+- Runtime: `nodejs` (compatibilidad con OpenAI SDK y buffers)
 - Modelo: `tts-1`
 - Voz: `shimmer` (voz femenina agradable)
 - Formato: `audio/mpeg` (MP3)

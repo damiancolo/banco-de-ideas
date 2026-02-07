@@ -2,11 +2,7 @@ import { NextResponse } from 'next/server';
 import { addComment } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
-
-function getIp(request: Request): string {
-    const forwardedFor = request.headers.get('x-forwarded-for');
-    return forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
-}
+import { getIp } from '@/lib/request-utils';
 
 export async function POST(request: Request) {
     try {

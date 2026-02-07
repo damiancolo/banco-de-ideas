@@ -3,6 +3,8 @@ import { connectDB } from '@/lib/mongodb';
 import Idea from '@/lib/models/Idea';
 import { generateEmbedding, cosineSimilarity } from '@/lib/utils/embeddings';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { getIp } from '@/lib/request-utils';
 
 interface IdeaWithEmbedding {
     _id: string;
@@ -21,6 +23,16 @@ interface SearchResult {
 
 export async function POST(req: Request) {
     try {
+        // Rate limit: 15 req/min (uses embeddings, costly)
+        const ip = getIp(req);
+        const rateLimit = await checkRateLimit(ip, 'semantic-search', 15, 60);
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: 'Demasiadas búsquedas. Intenta de nuevo en un minuto.' },
+                { status: 429 }
+            );
+        }
+
         const { query } = await req.json();
 
         if (!query || typeof query !== 'string' || query.trim().length === 0) {
@@ -92,7 +104,7 @@ export async function POST(req: Request) {
     } catch (error) {
         logger.error('Semantic search error:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Error en la búsqueda semántica' },
+            { error: 'Error en la búsqueda semántica' },
             { status: 500 }
         );
     }

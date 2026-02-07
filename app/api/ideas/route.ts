@@ -2,14 +2,7 @@ import { NextResponse } from 'next/server';
 import { getIdeas, getIdeasByCategory, highlightIdea, saveIdea } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
-
-/**
- * Helper to get IP from request
- */
-function getIp(request: Request): string {
-    const forwardedFor = request.headers.get('x-forwarded-for');
-    return forwardedFor ? forwardedFor.split(',')[0] : '127.0.0.1';
-}
+import { getIp } from '@/lib/request-utils';
 
 /**
  * GET /api/ideas?category=user|bisociation
@@ -48,10 +41,7 @@ export async function GET(request: Request) {
     } catch (error) {
         logger.error('Error fetching ideas:', error);
         return NextResponse.json(
-            {
-                error: 'Error al obtener ideas',
-                message: error instanceof Error ? error.message : 'Error desconocido'
-            },
+            { error: 'Error al obtener ideas' },
             { status: 500 }
         );
     }
@@ -118,10 +108,7 @@ export async function DELETE(request: Request) {
     } catch (error) {
         logger.error('Error deleting idea:', error);
         return NextResponse.json(
-            {
-                error: 'Error al eliminar idea',
-                message: error instanceof Error ? error.message : 'Error desconocido'
-            },
+            { error: 'Error al eliminar idea' },
             { status: 500 }
         );
     }
@@ -172,10 +159,7 @@ export async function POST(request: Request) {
     } catch (error) {
         logger.error('Error saving idea via API:', error);
         return NextResponse.json(
-            {
-                error: 'Error al guardar la idea',
-                message: error instanceof Error ? error.message : 'Error desconocido'
-            },
+            { error: 'Error al guardar la idea' },
             { status: 500 }
         );
     }

@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import OpenAI from "openai";
 import { logger } from "@/lib/logger";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getIp } from "@/lib/request-utils";
 
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY,
@@ -8,6 +10,16 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
     try {
+        // Rate limit: 10 req/min (uses Whisper, costly)
+        const ip = getIp(req);
+        const rateLimit = await checkRateLimit(ip, 'transcribe', 10, 60);
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: 'Demasiadas solicitudes de transcripción. Intenta de nuevo en un minuto.' },
+                { status: 429 }
+            );
+        }
+
         const formData = await req.formData();
         const file = formData.get("file") as File;
 
@@ -37,7 +49,7 @@ export async function POST(req: Request) {
     } catch (error: unknown) { // Explicitly type error as unknown
         logger.error("Transcription error:", error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : "Error al transcribir el audio" },
+            { error: "Error al transcribir el audio" },
             { status: 500 }
         );
     }

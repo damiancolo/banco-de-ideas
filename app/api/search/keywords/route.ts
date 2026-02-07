@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import { searchIdeasByKeywords } from '@/lib/db';
 import { logger } from '@/lib/logger';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { getIp } from '@/lib/request-utils';
 
 /**
  * POST /api/search/keywords
@@ -11,6 +13,16 @@ import { logger } from '@/lib/logger';
  */
 export async function POST(req: Request) {
     try {
+        // Rate limit: 20 req/min (DB only, cheaper)
+        const ip = getIp(req);
+        const rateLimit = await checkRateLimit(ip, 'keyword-search', 20, 60);
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: 'Demasiadas búsquedas. Intenta de nuevo en un minuto.' },
+                { status: 429 }
+            );
+        }
+
         const { query } = await req.json();
 
         if (!query || typeof query !== 'string' || query.trim().length === 0) {
@@ -43,7 +55,7 @@ export async function POST(req: Request) {
     } catch (error) {
         logger.error('Keyword search error:', error);
         return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Error en la búsqueda' },
+            { error: 'Error en la búsqueda' },
             { status: 500 }
         );
     }

@@ -58,7 +58,7 @@ export async function checkRateLimit(
 
     } catch (error) {
         logger.error('Rate limit check error:', error);
-        // Fail open to avoid blocking legit users on DB error, but log it
-        return { success: true, remaining: 1 };
+        // Fail closed: reject requests when rate limit DB is unavailable
+        return { success: false, remaining: 0 };
     }
 }
