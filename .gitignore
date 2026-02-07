@@ -23,6 +23,12 @@ node_modules/
 # misc
 .DS_Store
 *.pem
+*.png
+*.jpg
+*.jpeg
+
+# legacy backend (unused, kept locally)
+/backend/
 
 # debug
 npm-debug.log*
