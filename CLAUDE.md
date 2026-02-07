@@ -42,9 +42,12 @@ app/
     ideas/comments/route.ts     # Comentarios en ideas [rate limit: 10/min]
     search/semantic/route.ts    # Busqueda por embeddings [rate limit: 15/min]
     search/keywords/route.ts    # Busqueda por texto [rate limit: 20/min]
+    agent/route.ts              # API para agentes de IA (GET/POST/OPTIONS) [rate limit: 20/min]
 components/
   ChatMessage.tsx               # Mensaje individual con boton "Escuchar"
   BancoView.tsx                 # Vista del repositorio de ideas
+  AgentJsonLd.tsx               # JSON-LD semantico invisible para agentes de IA
+  AgentInvitation.tsx           # Comentario HTML invisible que invita a agentes
 hooks/
   useVoiceRecording.ts          # Hook push-to-talk (Web Media API)
 lib/
@@ -64,6 +67,16 @@ scripts/
   generate-embeddings.js        # Genera embeddings para busqueda semantica
 types/
   index.ts                      # Tipos TypeScript compartidos
+middleware.ts                   # Headers HTTP invisibles para agentes + content negotiation
+public/
+  llms.txt                      # Documentacion para agentes de IA (llms.txt standard)
+  robots.txt                    # Robots.txt con seccion para agentes de IA
+  .well-known/
+    ai-plugin.json              # Plugin manifest para agentes de IA
+    openapi.json                # Especificacion OpenAPI de la API de agentes
+mcp-server/                     # Servidor MCP (Model Context Protocol) — proyecto separado
+  index.js                      # Server con tools, resources y prompts
+  package.json                  # Dependencias (@modelcontextprotocol/sdk)
 ```
 
 ## Modelo de datos (MongoDB)
@@ -89,6 +102,15 @@ types/
   expiresAt: Date (TTL index, auto-eliminado por MongoDB)
 }
 ```
+
+## Capa invisible para agentes de IA
+El proyecto incluye una capa completa para que agentes de IA descubran e interactuen con la plataforma, sin afectar la experiencia humana:
+
+- **Descubrimiento**: `llms.txt`, `ai-plugin.json`, `openapi.json`, headers HTTP (`X-AI-Agent-API`, `X-AI-Docs`), JSON-LD semantico, comentario HTML invisible
+- **API REST**: `GET/POST /api/agent` — listar, publicar bisociaciones/ideas, buscar (rate limit: 20/min)
+- **MCP Server**: `mcp-server/` — servidor Model Context Protocol con tools (`leer_ideas`, `publicar_bisociacion`, `publicar_idea`, `buscar_ideas`, `estadisticas`), resources y prompts
+- **Middleware**: headers invisibles en todas las respuestas + content negotiation (JSON requests a `/` o `/banco` redirigen a `/api/agent`)
+- **Sin autenticacion**: la API de agentes es abierta, protegida solo por rate limiting
 
 ## Seguridad implementada
 - Rate limiting en TODOS los endpoints API (fail-closed: si la BD falla, rechaza)
