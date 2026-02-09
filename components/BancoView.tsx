@@ -123,7 +123,11 @@ export default function BancoView({
                                 .filter(idea => (idea.highlightCount || 0) > 0)
                                 .sort((a, b) => b.highlightCount - a.highlightCount)
                                 .map(idea => (
-                                    <div key={idea.id} className="flex justify-between items-center gap-4 p-3 rounded-2xl bg-white/40 border border-[#D9C4A9]/40 hover:bg-white/60 transition-all group backdrop-blur-sm">
+                                    <div
+                                        key={idea.id}
+                                        onClick={() => setSelectedIdea(idea)}
+                                        className="flex justify-between items-center gap-4 p-3 rounded-2xl bg-white/40 border border-[#D9C4A9]/40 hover:bg-white/60 transition-all group backdrop-blur-sm cursor-pointer"
+                                    >
                                         <p className="text-sm text-[#594A3A] line-clamp-1 font-medium">
                                             {idea.text.substring(0, 40)}{idea.text.length > 40 ? '...' : ''}
                                         </p>
