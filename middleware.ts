@@ -15,8 +15,55 @@ import type { NextRequest } from 'next/server';
  * ============================================================
  */
 
+// ─── AI Bot patterns ───
+const AI_BOTS: Record<string, string> = {
+    'GPTBot': 'OpenAI (ChatGPT)',
+    'ChatGPT-User': 'ChatGPT User Browse',
+    'OAI-SearchBot': 'OpenAI SearchBot',
+    'ClaudeBot': 'Anthropic (Claude)',
+    'Claude-Web': 'Claude Web',
+    'anthropic-ai': 'Anthropic AI',
+    'Google-Extended': 'Google AI (Gemini)',
+    'PerplexityBot': 'Perplexity AI',
+    'cohere-ai': 'Cohere AI',
+    'meta-externalagent': 'Meta AI',
+    'Bytespider': 'ByteDance AI',
+    'YouBot': 'You.com AI',
+    'DeepSeekBot': 'DeepSeek AI',
+    'Applebot-Extended': 'Apple (Siri)',
+};
+
+function detectAiBot(ua: string): { pattern: string; name: string } | null {
+    for (const [pattern, name] of Object.entries(AI_BOTS)) {
+        if (ua.toLowerCase().includes(pattern.toLowerCase())) {
+            return { pattern, name };
+        }
+    }
+    return null;
+}
+
 export function middleware(request: NextRequest) {
     const response = NextResponse.next();
+
+    // ─── AI Bot Tracking ───
+    const userAgent = request.headers.get('user-agent') || '';
+    const bot = detectAiBot(userAgent);
+    if (bot) {
+        // Fire-and-forget: send to estudioprompt tracker
+        try {
+            fetch('https://estudioprompt.com/wp-json/ai-tracker/v1/visit', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    bot_name: bot.name,
+                    user_agent: userAgent.substring(0, 500),
+                    url: request.url,
+                    site: 'unbancodeideas.com',
+                    secret: 'ep_aibt_2026_key',
+                }),
+            }).catch(() => {}); // silently fail
+        } catch {}
+    }
 
     // ─── Headers invisibles para agentes de IA ───
     response.headers.set('X-AI-Agent-API', '/api/agent');
