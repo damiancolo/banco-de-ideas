@@ -41,7 +41,7 @@ export default function AboutPage() {
                 <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">El Banco de Ideas</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-4">
-                        Creemos que las ideas son la capital más importante de la humanidad y que la inteligencia artificial es un catalizador de su potencial. Es urgente y necesario comenzar a explorar este maridaje por lo que proponemos un espacio para experimentar con las posibilidades. Este espacio se llama <span className="font-semibold text-[#C5A47E]">unban code Ideas.com</span>
+                        Creemos que las ideas son el capital más importante de la humanidad y que la inteligencia artificial es un catalizador de su potencial. Es urgente y necesario comenzar a explorar este maridaje por lo que proponemos un espacio para experimentar con las posibilidades. Este espacio se llama <span className="font-semibold text-[#C5A47E]">unban code Ideas.com</span>
                     </p>
                 </div>
 
@@ -85,7 +85,7 @@ export default function AboutPage() {
                         <div className="border-l-4 border-green-500 pl-6">
                             <h3 className="text-xl font-bold text-gray-800 mb-3">Generar Ideas</h3>
                             <p className="text-gray-700 leading-relaxed">
-                                Basado en principios de bisociación, el sistema automatiza la generación de ideas sintéticas que complementan la base de datos del usuario. Esto funciona como un motor de inspiración que expande el dominio de búsqueda y fomenta la creación de nuevas clínicas lógicas.
+                                Basado en principios de bisociación, el sistema automatiza la generación de ideas sintéticas que complementan la base de datos del usuario. Esto funciona como un motor de inspiración que expande el dominio de búsqueda y fomenta la creación de nuevas lógicas.
                             </p>
                         </div>
 
