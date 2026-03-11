@@ -824,11 +824,16 @@ export default function Home() {
 
       </div>
 
-      {/* Bottom Icon: Folder */}
-      <div className="pb-8 opacity-80 text-gray-700 hover:text-[#C5A47E] transition-colors cursor-pointer">
-        <Link href="/banco">
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor" className="text-[#333] hover:text-[#C5A47E]">
+      {/* Bottom Icons: Folder + Analytics */}
+      <div className="pb-8 flex items-center gap-4">
+        <Link href="/banco" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
             <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path>
+          </svg>
+        </Link>
+        <Link href="/tracker" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
           </svg>
         </Link>
       </div>

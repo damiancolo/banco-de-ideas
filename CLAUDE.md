@@ -24,6 +24,7 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 OPENAI_API_KEY=sk-proj-...
 MONGODB_URI=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
 MONGODB_URI_PRUEBAS=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas-pruebas?retryWrites=true&w=majority&appName=bancodeideas
+TRACK_SECRET=internal_track_2026_banco
 ```
 
 Las mismas variables estan configuradas en Vercel para cada proyecto. Para probar localmente contra la BD de pruebas, se cambia `MONGODB_URI` para que apunte a `banco-ideas-pruebas`.
@@ -34,6 +35,7 @@ app/
   page.tsx                      # Orquestador principal (chat)
   banco/page.tsx                # Dashboard visual de ideas
   about/page.tsx                # Pagina sobre el proyecto
+  tracker/page.tsx              # Dashboard de analytics (recharts, visitas humanos/bots)
   api/
     analyze/route.ts            # Chat/bisociaciones/analisis (OpenAI) [rate limit: 15/min]
     transcribe/route.ts         # Speech-to-text (Whisper) [rate limit: 10/min]
@@ -43,6 +45,8 @@ app/
     search/semantic/route.ts    # Busqueda por embeddings [rate limit: 15/min]
     search/keywords/route.ts    # Busqueda por texto [rate limit: 20/min]
     agent/route.ts              # API para agentes de IA (GET/POST/OPTIONS) [rate limit: 20/min]
+    track/route.ts              # POST interno para guardar visitas (protegido con TRACK_SECRET)
+    tracker/route.ts            # GET con agregaciones MongoDB para dashboard analytics [rate limit: 30/min]
 components/
   ChatMessage.tsx               # Mensaje individual con boton "Escuchar"
   BancoView.tsx                 # Vista del repositorio de ideas
@@ -55,6 +59,7 @@ lib/
   mongodb.ts                    # Conexion singleton a MongoDB
   models/Idea.ts                # Schema Mongoose (text, category, embedding, createdAt)
   models/RateLimit.ts           # Schema para rate limiting por IP
+  models/Visit.ts               # Schema para visitas (TTL 90 dias, privacy-friendly sin IP)
   rate-limit.ts                 # Rate limiter con sliding window via MongoDB (fail-closed)
   request-utils.ts              # getIp() centralizado con validacion anti-spoofing
   logger.ts                     # Logger (info/warn/error)
@@ -67,7 +72,7 @@ scripts/
   generate-embeddings.js        # Genera embeddings para busqueda semantica
 types/
   index.ts                      # Tipos TypeScript compartidos
-middleware.ts                   # Headers HTTP invisibles para agentes + content negotiation
+middleware.ts                   # Headers para agentes + content negotiation + visitor tracking (POST a /api/track)
 public/
   llms.txt                      # Documentacion para agentes de IA (llms.txt standard)
   robots.txt                    # Robots.txt con seccion para agentes de IA
@@ -102,6 +107,21 @@ mcp-server/                     # Servidor MCP (Model Context Protocol) — proy
   expiresAt: Date (TTL index, auto-eliminado por MongoDB)
 }
 ```
+
+### Visit
+```
+{
+  timestamp: Date (TTL index 90 dias, auto-eliminado),
+  path: String,
+  visitorType: "human" | "bot" (indexed),
+  botName: String | null,
+  browser: String | null,
+  deviceType: "desktop" | "mobile" | "tablet",
+  country: String | null,
+  referrer: String | null
+}
+```
+Privacy-friendly: no almacena IPs. Los datos se envian desde el middleware (Edge) via POST fire-and-forget a `/api/track` (Node.js).
 
 ## Capa invisible para agentes de IA
 El proyecto incluye una capa completa para que agentes de IA descubran e interactuen con la plataforma, sin afectar la experiencia humana:
@@ -148,4 +168,6 @@ npm run map-project  # Genera esquema visual del proyecto
 - Nunca hacer push directo a `main`
 - Los logs detallados se mantienen internamente via `logger.error()`, pero las respuestas HTTP solo muestran mensajes genericos
 - La coleccion `ratelimits` se auto-limpia via TTL index de MongoDB
+- La coleccion `visits` se auto-limpia via TTL index de 90 dias
+- `TRACK_SECRET` debe configurarse tambien en Vercel para que el tracking funcione en produccion
 - MongoDB Atlas tiene `0.0.0.0/0` en la whitelist (necesario para Vercel/serverless)

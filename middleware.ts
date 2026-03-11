@@ -3,15 +3,17 @@ import type { NextRequest } from 'next/server';
 
 /**
  * ============================================================
- * 🤖 Middleware: Capa Invisible para Agentes de IA
+ * Middleware: Capa Invisible para Agentes de IA + Visitor Tracking
  * ============================================================
- * 
- * Este middleware añade headers HTTP que los agentes de IA detectan
- * pero que son completamente invisibles para usuarios humanos.
- * 
- * También implementa content negotiation básico:
- * si un agente pide JSON en rutas principales, le devolvemos JSON.
- * 
+ *
+ * Este middleware:
+ * 1. Detecta bots de IA y humanos
+ * 2. Envía datos de visita a /api/track (MongoDB) via fire-and-forget
+ * 3. Añade headers HTTP para agentes de IA
+ * 4. Content negotiation para agentes que piden JSON
+ *
+ * Nota: Edge Runtime — no puede usar Mongoose directamente,
+ * por eso envía POST a /api/track que corre en Node.js.
  * ============================================================
  */
 
@@ -42,14 +44,43 @@ function detectAiBot(ua: string): { pattern: string; name: string } | null {
     return null;
 }
 
+// ─── Browser detection ───
+function detectBrowser(ua: string): string | null {
+    const lower = ua.toLowerCase();
+    if (lower.includes('edg/') || lower.includes('edge/')) return 'Edge';
+    if (lower.includes('opr/') || lower.includes('opera')) return 'Opera';
+    if (lower.includes('chrome') && !lower.includes('edg')) return 'Chrome';
+    if (lower.includes('firefox')) return 'Firefox';
+    if (lower.includes('safari') && !lower.includes('chrome')) return 'Safari';
+    return null;
+}
+
+// ─── Device type detection ───
+function detectDeviceType(ua: string): 'mobile' | 'tablet' | 'desktop' {
+    const lower = ua.toLowerCase();
+    if (/tablet|ipad|playbook|silk/.test(lower)) return 'tablet';
+    if (/mobile|iphone|ipod|android.*mobile|windows phone|blackberry/.test(lower)) return 'mobile';
+    return 'desktop';
+}
+
+// ─── Should track this path? ───
+function shouldTrack(path: string): boolean {
+    if (path.startsWith('/api/')) return false;
+    if (path.startsWith('/_next/')) return false;
+    if (path.includes('.')) return false; // static files
+    return true;
+}
+
 export function middleware(request: NextRequest) {
     const response = NextResponse.next();
-
-    // ─── AI Bot Tracking ───
     const userAgent = request.headers.get('user-agent') || '';
+    const path = request.nextUrl.pathname;
+
+    // ─── AI Bot Detection ───
     const bot = detectAiBot(userAgent);
+
+    // ─── AI Bot Tracking (WordPress - existing) ───
     if (bot) {
-        // Fire-and-forget: send to estudioprompt tracker
         try {
             fetch('https://estudioprompt.com/wp-json/ai-tracker/v1/visit', {
                 method: 'POST',
@@ -61,7 +92,31 @@ export function middleware(request: NextRequest) {
                     site: 'unbancodeideas.com',
                     secret: 'ep_aibt_2026_key',
                 }),
-            }).catch(() => {}); // silently fail
+            }).catch(() => {});
+        } catch {}
+    }
+
+    // ─── Local Visit Tracking (MongoDB via /api/track) ───
+    if (shouldTrack(path)) {
+        const country = request.headers.get('x-vercel-ip-country') || null;
+        const referrer = request.headers.get('referer') || null;
+
+        try {
+            const origin = request.nextUrl.origin;
+            fetch(`${origin}/api/track`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    secret: process.env.TRACK_SECRET || '',
+                    path,
+                    visitorType: bot ? 'bot' : 'human',
+                    botName: bot?.name || null,
+                    browser: bot ? null : detectBrowser(userAgent),
+                    deviceType: bot ? 'desktop' : detectDeviceType(userAgent),
+                    country,
+                    referrer,
+                }),
+            }).catch(() => {});
         } catch {}
     }
 
@@ -73,11 +128,8 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-AI-Plugin', '/.well-known/ai-plugin.json');
 
     // ─── Content Negotiation ───
-    // Si un agente pide application/json en la ruta raíz o /banco,
-    // redirigirlo a la API de agentes
     const accept = request.headers.get('accept') || '';
     const isJsonRequest = accept.includes('application/json') && !accept.includes('text/html');
-    const path = request.nextUrl.pathname;
 
     if (isJsonRequest && (path === '/' || path === '/banco')) {
         const agentUrl = new URL('/api/agent?action=list', request.url);
