@@ -67,6 +67,7 @@ function detectDeviceType(ua: string): 'mobile' | 'tablet' | 'desktop' {
 function shouldTrack(path: string): boolean {
     if (path.startsWith('/api/')) return false;
     if (path.startsWith('/_next/')) return false;
+    if (path === '/tracker') return false; // don't track the dashboard itself
     if (path.includes('.')) return false; // static files
     return true;
 }
@@ -79,25 +80,11 @@ export function middleware(request: NextRequest) {
     // ─── AI Bot Detection ───
     const bot = detectAiBot(userAgent);
 
-    // ─── AI Bot Tracking (WordPress - existing) ───
-    if (bot) {
-        try {
-            fetch('https://estudioprompt.com/wp-json/ai-tracker/v1/visit', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    bot_name: bot.name,
-                    user_agent: userAgent.substring(0, 500),
-                    url: request.url,
-                    site: 'unbancodeideas.com',
-                    secret: 'ep_aibt_2026_key',
-                }),
-            }).catch(() => {});
-        } catch {}
-    }
+    // ─── Visit Tracking (MongoDB via /api/track) ───
+    const purpose = request.headers.get('purpose') || request.headers.get('sec-fetch-purpose') || '';
+    const isPrefetch = purpose === 'prefetch';
 
-    // ─── Local Visit Tracking (MongoDB via /api/track) ───
-    if (shouldTrack(path)) {
+    if (shouldTrack(path) && !isPrefetch) {
         const country = request.headers.get('x-vercel-ip-country') || null;
         const referrer = request.headers.get('referer') || null;
 
@@ -115,6 +102,7 @@ export function middleware(request: NextRequest) {
                     deviceType: bot ? 'desktop' : detectDeviceType(userAgent),
                     country,
                     referrer,
+                    site: 'unbancodeideas',
                 }),
             }).catch(() => {});
         } catch {}

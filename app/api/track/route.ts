@@ -24,6 +24,7 @@ export async function POST(request: Request) {
             deviceType: body.deviceType || 'desktop',
             country: body.country || null,
             referrer: body.referrer || null,
+            site: body.site || null,
         });
 
         return NextResponse.json({ ok: true }, { status: 201 });

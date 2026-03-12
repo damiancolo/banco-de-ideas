@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
     AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -87,6 +88,16 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 }
 
 export default function TrackerPage() {
+    return (
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: "#F8F5F0" }}><div className="w-8 h-8 border-2 border-[#C5A47E] border-t-transparent rounded-full animate-spin" /></div>}>
+            <TrackerContent />
+        </Suspense>
+    );
+}
+
+function TrackerContent() {
+    const searchParams = useSearchParams();
+    const site = searchParams.get("site") || "unbancodeideas";
     const [data, setData] = useState<TrackerData | null>(null);
     const [range, setRange] = useState("7d");
     const [loading, setLoading] = useState(true);
@@ -95,7 +106,7 @@ export default function TrackerPage() {
     const fetchData = useCallback(async () => {
         try {
             setError(null);
-            const res = await fetch(`/api/tracker?range=${range}`);
+            const res = await fetch(`/api/tracker?range=${range}&site=${site}`);
             if (!res.ok) throw new Error("Failed to fetch");
             const json = await res.json();
             setData(json);
@@ -104,7 +115,7 @@ export default function TrackerPage() {
         } finally {
             setLoading(false);
         }
-    }, [range]);
+    }, [range, site]);
 
     useEffect(() => {
         setLoading(true);
