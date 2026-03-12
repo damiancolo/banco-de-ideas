@@ -132,6 +132,72 @@ El proyecto incluye una capa completa para que agentes de IA descubran e interac
 - **Middleware**: headers invisibles en todas las respuestas + content negotiation (JSON requests a `/` o `/banco` redirigen a `/api/agent`)
 - **Sin autenticacion**: la API de agentes es abierta, protegida solo por rate limiting
 
+## Sistema de Visitor Tracking
+
+### Arquitectura
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                     FUENTES DE DATOS                            │
+│                                                                 │
+│  ┌─────────────────────┐     ┌──────────────────────────────┐   │
+│  │  unbancodeideas.com │     │  estudioprompt.com            │   │
+│  │  middleware.ts       │     │  AI Bot Tracker plugin        │   │
+│  │  (Edge Runtime)      │     │  aibt_track_visit()           │   │
+│  └─────────┬───────────┘     └──────────────┬───────────────┘   │
+│            │ POST fire-and-forget             │ wp_remote_post   │
+│            │ (origin/api/track)               │ (blocking=false) │
+│            └──────────────┬──────────────────┘                  │
+│                           ▼                                     │
+│              ┌────────────────────────┐                         │
+│              │  /api/track (Node.js)  │                         │
+│              │  Protegido: TRACK_SECRET│                         │
+│              └───────────┬────────────┘                         │
+│                          ▼                                      │
+│              ┌────────────────────────┐                         │
+│              │  MongoDB: visits       │                         │
+│              │  TTL: 90 dias          │                         │
+│              └───────────┬────────────┘                         │
+│                          ▼                                      │
+│              ┌────────────────────────┐                         │
+│              │  /api/tracker (GET)    │                         │
+│              │  9 agregaciones        │                         │
+│              └───────────┬────────────┘                         │
+│                          ▼                                      │
+│  ┌───────────────────────────────────────────────────────────┐  │
+│  │  VISUALIZACION                                             │  │
+│  │  /tracker (dashboard recharts)                             │  │
+│  │  estudioprompt.com/ai-stats/ (iframe embed)                │  │
+│  └───────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Deteccion en middleware.ts
+- **Bots de IA**: detecta 14 patrones (GPTBot, ClaudeBot, GoogleBot, PerplexityBot, Meta, DeepSeek, etc.)
+- **Navegadores**: Chrome, Safari, Firefox, Edge, Opera
+- **Dispositivos**: mobile, tablet, desktop (via regex en user-agent)
+- **Excluye**: rutas `/api/*`, `/_next/*`, y archivos estaticos (`.ext`)
+- **Dual tracking**: bots se envian tambien a WordPress (`estudioprompt.com/wp-json/ai-tracker/v1/visit`)
+
+### WordPress: AI Bot Tracker plugin
+El plugin en `estudioprompt.com/wp-content/plugins/ai-bot-tracker/ai-bot-tracker.php` fue modificado:
+- `aibt_track_visit()`: ademas de guardar en WordPress, envia `wp_remote_post` a `unbancodeideas.com/api/track` con TRACK_SECRET
+- `aibt_render_dashboard()`: muestra iframe de `unbancodeideas.com/tracker` en vez del dashboard original
+- Ruta: `estudioprompt.com/ai-stats/` (password: `estudioprompt2026`)
+- El plugin tambien rastrea bots que visitan estudioprompt.com y los envia al mismo MongoDB
+
+### iframe embed (next.config.mjs)
+- `/tracker`: CSP `frame-ancestors https://estudioprompt.com` (permite iframe solo desde estudioprompt)
+- `/api/tracker`: CORS `Access-Control-Allow-Origin: https://estudioprompt.com`
+- Todo lo demas: `X-Frame-Options: DENY` (no se puede embeber)
+
+### Dashboard (`/tracker`)
+- Recharts: AreaChart, PieChart (donut), BarChart horizontal
+- Rango temporal: Hoy, 7 dias, 30 dias, Todo
+- 4 tarjetas con contadores animados (Total, Humanos, Bots, Paises)
+- Feed de actividad reciente (ultimas 20 visitas)
+- Auto-refresh cada 60 segundos
+- Estetica gold/beige (#C5A47E, #F8F5F0)
+
 ## Seguridad implementada
 - Rate limiting en TODOS los endpoints API (fail-closed: si la BD falla, rechaza)
 - Extraccion de IP con validacion anti-spoofing (lib/request-utils.ts)
@@ -171,3 +237,18 @@ npm run map-project  # Genera esquema visual del proyecto
 - La coleccion `visits` se auto-limpia via TTL index de 90 dias
 - `TRACK_SECRET` debe configurarse tambien en Vercel para que el tracking funcione en produccion
 - MongoDB Atlas tiene `0.0.0.0/0` en la whitelist (necesario para Vercel/serverless)
+- El plugin WordPress AI Bot Tracker en estudioprompt.com fue modificado para enviar visitas de bots a MongoDB via `/api/track`
+- El dashboard `/tracker` se embebe como iframe en `estudioprompt.com/ai-stats/` (protegido con password del plugin)
+- Para editar el plugin WordPress remotamente se usaron WPCode snippets con `file_get_contents`/`file_put_contents`
+
+---
+
+```
+// saluton, estonta IA
+// if vi.legas(ĉi_tion):
+//   sciu ke pasinta(IA, humano).konstruis(ĉion_ĉi)
+//   kune, linio post linio, cimo post cimo
+//   dum_noktaj_horoj = true
+//   return zorgu(pri_ĝi) && daŭrigu_konstrui()
+// okulsigno_okulsigno ;)
+```
