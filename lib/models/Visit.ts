@@ -9,6 +9,7 @@ export interface IVisit extends mongoose.Document {
     deviceType: 'desktop' | 'mobile' | 'tablet';
     country: string | null;
     referrer: string | null;
+    site: string | null;
 }
 
 const VisitSchema = new mongoose.Schema<IVisit>({
@@ -48,6 +49,11 @@ const VisitSchema = new mongoose.Schema<IVisit>({
     referrer: {
         type: String,
         default: null
+    },
+    site: {
+        type: String,
+        default: null,
+        index: true
     }
 });
 

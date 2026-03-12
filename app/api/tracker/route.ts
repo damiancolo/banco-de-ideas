@@ -36,9 +36,12 @@ export async function GET(request: Request) {
 
         const url = new URL(request.url);
         const range = url.searchParams.get('range') || '7d';
+        const site = url.searchParams.get('site') || 'unbancodeideas';
         const since = getDateFilter(range);
 
-        const matchStage = since ? { timestamp: { $gte: since } } : {};
+        const matchStage = since
+            ? { timestamp: { $gte: since }, site }
+            : { site };
 
         const [
             totalVisits,
