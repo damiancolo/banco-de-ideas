@@ -15,10 +15,12 @@ type SavedIdea = {
 
 export default function BancoView({
     initialIdeas,
-    isConnected
+    isConnected,
+    apiPrefix = '/api'
 }: {
     initialIdeas: SavedIdea[];
     isConnected: boolean;
+    apiPrefix?: string;
 }) {
     const [view, setView] = useState<'user' | 'bisociation'>('user');
     const [ideas, setIdeas] = useState<SavedIdea[]>(initialIdeas);
@@ -34,7 +36,7 @@ export default function BancoView({
     const handleHighlight = async (id: string) => {
         setDeletingId(id);
         try {
-            const response = await fetch(`/api/ideas?id=${id}`, {
+            const response = await fetch(`${apiPrefix}/ideas?id=${id}`, {
                 method: 'DELETE', // Sigue usando el mismo endpoint pero cambia el concepto
             });
 
@@ -188,6 +190,7 @@ export default function BancoView({
                     onDelete={(id) => {
                         handleHighlight(id);
                     }}
+                    apiPrefix={apiPrefix}
                     onCommentAdded={(newComment) => {
                         setIdeas(prev => prev.map(idea =>
                             idea.id === selectedIdea.id

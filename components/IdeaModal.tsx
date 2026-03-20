@@ -18,9 +18,10 @@ interface IdeaModalProps {
     onClose: () => void;
     onDelete: (id: string) => void;
     onCommentAdded: (comment: { text: string, createdAt: string }) => void;
+    apiPrefix?: string;
 }
 
-export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAdded }: IdeaModalProps) {
+export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAdded, apiPrefix = '/api' }: IdeaModalProps) {
     const [copied, setCopied] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
     const [commentText, setCommentText] = useState('');
@@ -79,7 +80,7 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
 
         setIsSubmitting(true);
         try {
-            const response = await fetch('/api/ideas/comments', {
+            const response = await fetch(`${apiPrefix}/ideas/comments`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ id: idea.id, text: commentText.trim() }),
