@@ -4,7 +4,12 @@ import PrivadoChat from "./PrivadoChat";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default async function PrivadoPage() {
-    const session = await auth();
+    let session = null;
+    try {
+        session = await auth();
+    } catch {
+        // If auth() fails, treat as unauthenticated
+    }
 
     if (!session?.user) {
         return (
