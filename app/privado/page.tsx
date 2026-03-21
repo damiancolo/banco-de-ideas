@@ -1,6 +1,7 @@
-import { auth, signIn } from "@/auth";
+import { auth } from "@/auth";
 import Link from "next/link";
 import PrivadoChat from "./PrivadoChat";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
 
 export default async function PrivadoPage() {
     const session = await auth();
@@ -24,17 +25,7 @@ export default async function PrivadoPage() {
                         Un banco de ideas personal donde solo vos podes ver y gestionar tus ideas.
                     </p>
 
-                    <form action={async () => {
-                        "use server";
-                        await signIn("google", { redirectTo: "/privado" });
-                    }}>
-                        <button
-                            type="submit"
-                            className="w-full px-6 py-3.5 bg-[#C5A47E] text-white rounded-xl font-medium hover:bg-[#b08e68] transition-colors shadow-lg shadow-[#C5A47E]/20"
-                        >
-                            Continuar con Google
-                        </button>
-                    </form>
+                    <GoogleSignInButton />
 
                     <Link
                         href="/"
