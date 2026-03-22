@@ -11,7 +11,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     debug: true,
     logger: {
         error(error) {
-            // Log to MongoDB for debugging on Vercel
+            // Serialize cause deeply
+            function serializeCause(c: unknown, depth = 0): unknown {
+                if (!c || depth > 3) return null;
+                if (c instanceof Error) {
+                    return { name: c.name, message: c.message, cause: serializeCause(c.cause, depth + 1) };
+                }
+                try { return JSON.parse(JSON.stringify(c)); } catch { return String(c); }
+            }
             getMongoClient().then(client => {
                 const db = client.db();
                 db.collection('auth_errors').insertOne({
@@ -20,9 +27,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                     error: {
                         name: error.name,
                         message: error.message,
-                        cause: error.cause instanceof Error
-                            ? { name: error.cause.name, message: error.cause.message }
-                            : error.cause ? String(error.cause) : null,
+                        stack: error.stack?.substring(0, 800),
+                        cause: serializeCause(error.cause),
                     },
                 }).catch(() => {});
             }).catch(() => {});
