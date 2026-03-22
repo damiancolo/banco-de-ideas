@@ -7,8 +7,10 @@ export async function GET(req: NextRequest) {
 
     // Check 1: ENV vars
     checks.AUTH_SECRET = process.env.AUTH_SECRET ? 'SET' : 'MISSING';
-    checks.AUTH_GOOGLE_ID = process.env.AUTH_GOOGLE_ID ? 'SET' : 'MISSING';
-    checks.AUTH_GOOGLE_SECRET = process.env.AUTH_GOOGLE_SECRET ? 'SET' : 'MISSING';
+    const gid = process.env.AUTH_GOOGLE_ID ?? '';
+    const gsec = process.env.AUTH_GOOGLE_SECRET ?? '';
+    checks.AUTH_GOOGLE_ID = gid ? `SET (${gid.length} chars, starts: ${gid.substring(0, 15)}...)` : 'MISSING';
+    checks.AUTH_GOOGLE_SECRET = gsec ? `SET (${gsec.length} chars, starts: ${gsec.substring(0, 8)}...)` : 'MISSING';
     checks.MONGODB_URI = process.env.MONGODB_URI ? 'SET' : 'MISSING';
     checks.AUTH_URL = process.env.AUTH_URL ?? 'NOT SET';
     checks.NEXTAUTH_URL = process.env.NEXTAUTH_URL ?? 'NOT SET';
