@@ -5,7 +5,9 @@ import { getMongoClient } from '@/lib/auth-client';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: MongoDBAdapter(getMongoClient()),
-    providers: [Google],
+    providers: [Google({
+        client: { token_endpoint_auth_method: "client_secret_post" },
+    })],
     session: { strategy: 'jwt' },
     trustHost: true,
     debug: true,
