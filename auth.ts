@@ -1,35 +1,33 @@
 import NextAuth from 'next-auth';
+import Google from 'next-auth/providers/google';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { getMongoClient } from '@/lib/auth-client';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: MongoDBAdapter(getMongoClient()),
-    providers: [
-        {
-            id: "google",
-            name: "Google",
-            type: "oauth",
-            authorization: {
-                url: "https://accounts.google.com/o/oauth2/v2/auth",
-                params: { scope: "email profile" },
-            },
-            token: "https://oauth2.googleapis.com/token",
-            userinfo: "https://www.googleapis.com/oauth2/v2/userinfo",
-            clientId: process.env.AUTH_GOOGLE_ID,
-            clientSecret: process.env.AUTH_GOOGLE_SECRET,
-            checks: ["pkce", "state"],
-            profile(profile) {
-                return {
-                    id: profile.id,
-                    name: profile.name,
-                    email: profile.email,
-                    image: profile.picture,
-                };
-            },
-        },
-    ],
+    providers: [Google],
     session: { strategy: 'jwt' },
     trustHost: true,
+    debug: true,
+    logger: {
+        error(error) {
+            // Log to MongoDB for debugging on Vercel
+            getMongoClient().then(client => {
+                const db = client.db();
+                db.collection('auth_errors').insertOne({
+                    ts: new Date(),
+                    type: 'auth_error',
+                    error: {
+                        name: error.name,
+                        message: error.message,
+                        cause: error.cause instanceof Error
+                            ? { name: error.cause.name, message: error.cause.message }
+                            : error.cause ? String(error.cause) : null,
+                    },
+                }).catch(() => {});
+            }).catch(() => {});
+        },
+    },
     pages: {
         signIn: '/privado',
     },
