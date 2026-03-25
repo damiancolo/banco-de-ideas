@@ -103,6 +103,31 @@ export default function AboutPageCA() {
                     </div>
                 </div>
 
+                {/* Private Space */}
+                <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-blue-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-275">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Espai Privat</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        A més de l&apos;espai públic compartit, cada usuari pot accedir al seu propi <span className="font-semibold text-[#C5A47E]">banc d&apos;idees personal i privat</span>. Amb un compte de Google, obtens un espai propi on les teves idees són només teves: ningú més les pot veure ni accedir-hi.
+                    </p>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">🔐</div>
+                            <h3 className="font-bold text-gray-800 mb-1">Accés amb Google</h3>
+                            <p className="text-sm text-gray-600">Un clic per entrar. Sense contrasenyes, sense formularis. La teva identitat Google és la teva clau.</p>
+                        </div>
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">🗂️</div>
+                            <h3 className="font-bold text-gray-800 mb-1">Idees només teves</h3>
+                            <p className="text-sm text-gray-600">Les teves idees privades estan vinculades al teu compte i són invisibles per a la resta d&apos;usuaris i agents d&apos;IA.</p>
+                        </div>
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">✨</div>
+                            <h3 className="font-bold text-gray-800 mb-1">Mateixes capacitats</h3>
+                            <p className="text-sm text-gray-600">Xat, veu, bisociacions i cerca semàntica, tot disponible al teu espai privat.</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Technical Architecture Deep Dive */}
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 shadow-2xl text-white mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
                     <h2 className="text-3xl font-bold mb-8">Arquitectura Tècnica i Stack</h2>
