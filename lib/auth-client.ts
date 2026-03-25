@@ -1,19 +1,27 @@
-import { connectDB } from './mongodb';
-import mongoose from 'mongoose';
-import type { MongoClient } from 'mongodb';
+import { MongoClient } from 'mongodb';
 
-let clientPromise: Promise<MongoClient> | null = null;
+const MONGODB_URI = process.env.MONGODB_URI!;
 
-/**
- * Extrae el MongoClient nativo de la conexión de Mongoose.
- * Auth.js necesita un MongoClient, no Mongoose.
- * Reutilizamos la misma conexión para no duplicar pools.
- */
-export function getMongoClient(): Promise<MongoClient> {
-    if (!clientPromise) {
-        clientPromise = connectDB().then(() => {
-            return mongoose.connection.getClient() as unknown as MongoClient;
-        });
+// Singleton nativo para el MongoDB Adapter de Auth.js
+// No reutilizamos la conexión de Mongoose porque el adapter
+// necesita un MongoClient propio para garantizar compatibilidad.
+
+declare global {
+    // eslint-disable-next-line no-var
+    var _authMongoClientPromise: Promise<MongoClient> | undefined;
+}
+
+let clientPromise: Promise<MongoClient>;
+
+if (process.env.NODE_ENV === 'development') {
+    if (!global._authMongoClientPromise) {
+        global._authMongoClientPromise = new MongoClient(MONGODB_URI).connect();
     }
+    clientPromise = global._authMongoClientPromise;
+} else {
+    clientPromise = new MongoClient(MONGODB_URI).connect();
+}
+
+export function getMongoClient(): Promise<MongoClient> {
     return clientPromise;
 }

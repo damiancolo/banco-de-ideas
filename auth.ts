@@ -19,7 +19,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 if (c instanceof Error) {
                     return { name: c.name, message: c.message, cause: serializeCause(c.cause, depth + 1) };
                 }
-                try { return JSON.parse(JSON.stringify(c)); } catch { return String(c); }
+                try {
+                    return JSON.parse(JSON.stringify(c, (_k, v) =>
+                        v instanceof Error ? { name: v.name, message: v.message, stack: v.stack?.substring(0, 300) } : v
+                    ));
+                } catch { return String(c); }
             }
             getMongoClient().then(client => {
                 const db = client.db();
