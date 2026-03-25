@@ -18,6 +18,7 @@ export interface IIdea extends Document {
     embedding?: number[];
     deletionAttempts: number;
     comments: IComment[];
+    userId?: string | null;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -55,6 +56,11 @@ const IdeaSchema = new Schema<IIdea>(
             default: 0,
             required: true
         },
+        userId: {
+            type: String,
+            default: null,
+            index: true
+        },
         comments: [{
             text: { type: String, required: true },
             createdAt: { type: Date, default: Date.now }
@@ -72,6 +78,9 @@ IdeaSchema.index({ category: 1, createdAt: -1 });
 
 // Índice para ordenar todas las ideas por fecha (usado en getIdeas)
 IdeaSchema.index({ createdAt: -1 });
+
+// Índice compuesto para ideas privadas por usuario
+IdeaSchema.index({ userId: 1, category: 1, createdAt: -1 });
 
 // Índice de texto para búsqueda futura (opcional, comentado por ahora)
 // IdeaSchema.index({ text: 'text' });

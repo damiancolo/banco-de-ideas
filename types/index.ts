@@ -30,6 +30,7 @@ export type SavedIdea = {
     text: string;
     createdAt: string;
     category: 'user' | 'bisociation';
+    userId?: string | null;
 };
 
 /**

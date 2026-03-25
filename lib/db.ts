@@ -59,9 +59,9 @@ export async function getIdeas(): Promise<SavedIdea[]> {
     try {
         await connectDB();
 
-        const ideas = await Idea.find({})
+        const ideas = await Idea.find({ $or: [{ userId: null }, { userId: { $exists: false } }] })
             .sort({ createdAt: -1 })
-            .lean() // Retorna objetos planos (más rápido)
+            .lean()
             .exec();
 
         return ideas.map(idea => toSavedIdea(idea));
@@ -90,7 +90,7 @@ export async function getIdeasByCategory(
     try {
         await connectDB();
 
-        const ideas = await Idea.find({ category })
+        const ideas = await Idea.find({ category, $or: [{ userId: null }, { userId: { $exists: false } }] })
             .sort({ createdAt: -1 })
             .lean()
             .exec();
@@ -322,9 +322,10 @@ export async function searchIdeasByKeywords(query: string): Promise<SavedIdea[]>
             .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
             .join('|');
 
-        // Búsqueda case-insensitive con regex (OR logic)
+        // Búsqueda case-insensitive con regex (OR logic) - solo ideas públicas
         const ideas = await Idea.find({
-            text: { $regex: regexPattern, $options: 'i' }
+            text: { $regex: regexPattern, $options: 'i' },
+            $or: [{ userId: null }, { userId: { $exists: false } }]
         })
             .sort({ createdAt: -1 })
             .limit(10) // Limitar a 10 resultados
@@ -336,5 +337,156 @@ export async function searchIdeasByKeywords(query: string): Promise<SavedIdea[]>
     } catch (error) {
         console.error('Error searching ideas by keywords:', error);
         return [];
+    }
+}
+
+// =============================================
+// Funciones para ideas privadas (con userId)
+// =============================================
+
+/**
+ * Obtiene todas las ideas de un usuario específico
+ */
+export async function getUserIdeas(userId: string): Promise<SavedIdea[]> {
+    try {
+        await connectDB();
+        const ideas = await Idea.find({ userId })
+            .sort({ createdAt: -1 })
+            .lean()
+            .exec();
+        return ideas.map(idea => toSavedIdea(idea));
+    } catch (error) {
+        console.error('Error fetching user ideas:', error);
+        return [];
+    }
+}
+
+/**
+ * Guarda una idea privada con userId
+ */
+export async function savePrivateIdea(
+    text: string,
+    category: 'user' | 'bisociation',
+    userId: string
+): Promise<SavedIdea> {
+    if (!text || typeof text !== 'string') {
+        throw new Error('El texto de la idea es requerido');
+    }
+    const trimmedText = text.trim();
+    if (trimmedText.length === 0) throw new Error('La idea no puede estar vacía');
+    if (trimmedText.length > 1500) throw new Error('La idea no puede exceder 1500 caracteres');
+
+    try {
+        await connectDB();
+        const idea = await Idea.create({ text: trimmedText, category, userId });
+        return toSavedIdea(idea);
+    } catch (error) {
+        console.error('Error saving private idea:', error);
+        throw new Error('No se pudo guardar la idea.');
+    }
+}
+
+/**
+ * Guarda múltiples ideas privadas (bisociaciones) con userId
+ */
+export async function savePrivateIdeas(
+    ideas: Array<{ text: string; category: 'user' | 'bisociation' }>,
+    userId: string
+): Promise<SavedIdea[]> {
+    if (!Array.isArray(ideas) || ideas.length === 0) {
+        throw new Error('Se requiere un array no vacío de ideas');
+    }
+
+    const validatedIdeas = ideas.map((idea, index) => {
+        if (!idea.text || typeof idea.text !== 'string') {
+            throw new Error(`Idea en posición ${index}: texto requerido`);
+        }
+        const trimmedText = idea.text.trim();
+        if (trimmedText.length === 0) throw new Error(`Idea en posición ${index}: vacía`);
+        if (trimmedText.length > 2000) throw new Error(`Idea en posición ${index}: excede 2000 caracteres`);
+        return { text: trimmedText, category: idea.category, userId };
+    });
+
+    try {
+        await connectDB();
+        const savedIdeas = await Idea.insertMany(validatedIdeas);
+        return savedIdeas.map(idea => toSavedIdea(idea));
+    } catch (error) {
+        console.error('Error saving private ideas:', error);
+        throw new Error('No se pudieron guardar las ideas.');
+    }
+}
+
+/**
+ * Busca ideas de un usuario por palabras clave
+ */
+export async function searchUserIdeasByKeywords(query: string, userId: string): Promise<SavedIdea[]> {
+    if (!query || typeof query !== 'string') throw new Error('Query requerido');
+    const trimmed = query.trim();
+    if (trimmed.length === 0) throw new Error('Query vacío');
+    if (trimmed.length > 200) throw new Error('Query excede 200 caracteres');
+
+    try {
+        await connectDB();
+        const words = trimmed.split(/\s+/).filter(w => w.length > 0);
+        if (words.length === 0) return [];
+
+        const regexPattern = words
+            .map(w => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .join('|');
+
+        const ideas = await Idea.find({
+            text: { $regex: regexPattern, $options: 'i' },
+            userId
+        })
+            .sort({ createdAt: -1 })
+            .limit(10)
+            .lean()
+            .exec();
+
+        return ideas.map(idea => toSavedIdea(idea));
+    } catch (error) {
+        console.error('Error searching user ideas:', error);
+        return [];
+    }
+}
+
+/**
+ * Highlight una idea privada (verificando ownership)
+ */
+export async function highlightPrivateIdea(id: string, userId: string): Promise<boolean> {
+    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) return false;
+
+    try {
+        await connectDB();
+        const result = await Idea.findOneAndUpdate(
+            { _id: id, userId },
+            { $inc: { deletionAttempts: 1 } },
+            { new: true }
+        );
+        return !!result;
+    } catch (error) {
+        console.error('Error highlighting private idea:', error);
+        return false;
+    }
+}
+
+/**
+ * Añade un comentario a una idea privada (verificando ownership)
+ */
+export async function addPrivateComment(id: string, text: string, userId: string): Promise<boolean> {
+    if (!id || !text || !/^[0-9a-fA-F]{24}$/.test(id)) return false;
+
+    try {
+        await connectDB();
+        const result = await Idea.findOneAndUpdate(
+            { _id: id, userId },
+            { $push: { comments: { text: text.trim(), createdAt: new Date() } } },
+            { new: true }
+        );
+        return !!result;
+    } catch (error) {
+        console.error('Error adding private comment:', error);
+        return false;
     }
 }
