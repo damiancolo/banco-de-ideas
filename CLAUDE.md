@@ -13,16 +13,22 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 
 ## Entornos
 
-| Entorno | Rama Git | Proyecto Vercel | Base de datos MongoDB | URL |
-|---|---|---|---|---|
-| Pruebas | `develop` | `banco-de-ideas-pruebas` (ID: prj_VuYaHpJZT32A7JnyBzOoT0q7KIuK) | `banco-ideas-pruebas` | banco-de-ideas.vercel.app |
-| Produccion | `main` | `banco-de-ideas` (ID: prj_nSLBUjl6RLxljIYtqRpYsRCZn09j) | `banco-ideas` | www.unbancodeideas.com |
+Todo en un solo proyecto Vercel: `banco-de-ideas` (ID: `prj_nSLBUjl6RLxljIYtqRpYsRCZn09j`)
+
+| Rama | Propósito | URL | Base de datos MongoDB |
+|---|---|---|---|
+| `develop` | Desarrollo activo | preview URL aleatoria (ver Vercel) | `banco-ideas-pruebas` |
+| `staging` | Pruebas antes de producción | preview estable (ver Active Branches en Vercel) | `banco-ideas-pruebas` |
+| `main` | Producción | `www.unbancodeideas.com` | `banco-ideas` |
 
 Team ID Vercel: `team_ABSUeFTZC1zeHHswIAVbNDJ0`
 
-**Flujo**: trabajar en `develop` → push → auto-deploy a pruebas → merge a `main` → auto-deploy a produccion.
+**Flujo de trabajo**:
+1. Trabajar en `develop` → push → preview en Vercel
+2. Merge `develop` → `staging` → preview estable para probar
+3. Merge `staging` → `main` → auto-deploy a producción
 
-> La rama `staging` existe pero ya no se usa para trabajo nuevo.
+> El proyecto `banco-de-ideas-pruebas` ya no se usa.
 
 **IMPORTANTE**: Las bases de datos se llaman `banco-ideas` y `banco-ideas-pruebas` (SIN "de"). No usar `banco-de-ideas` ni `banco-de-ideas-pruebas`.
 
