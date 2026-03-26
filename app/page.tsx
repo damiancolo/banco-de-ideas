@@ -1,13 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ChatEngine from "@/components/ChatEngine";
 
 export default function Home() {
   const [tooltipState, setTooltipState] = useState<"hidden" | "visible" | "fading">("hidden");
+  const [tooltipLeft, setTooltipLeft] = useState<number | null>(null);
+  const bancoRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
+    if (bancoRef.current) {
+      const rect = bancoRef.current.getBoundingClientRect();
+      setTooltipLeft(rect.left + rect.width / 2);
+    }
     const t1 = setTimeout(() => setTooltipState("visible"), 400);
     const t2 = setTimeout(() => setTooltipState("fading"), 5400);
     const t3 = setTimeout(() => setTooltipState("hidden"), 6100);
@@ -39,9 +45,10 @@ export default function Home() {
       </Link>
 
       {/* Onboarding Tooltip */}
-      {tooltipState !== "hidden" && (
+      {tooltipState !== "hidden" && tooltipLeft !== null && (
         <div
-          className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-[9999] pointer-events-none transition-opacity duration-700 ${tooltipState === "visible" ? "opacity-100" : "opacity-0"}`}
+          className={`fixed bottom-20 z-[9999] pointer-events-none transition-opacity duration-700 -translate-x-1/2 ${tooltipState === "visible" ? "opacity-100" : "opacity-0"}`}
+          style={{ left: tooltipLeft }}
         >
           <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
             Revisa las ideas del banco aquí
@@ -55,7 +62,7 @@ export default function Home() {
         footerSlot={
           <div className="pb-8 flex items-center gap-4">
             {/* Bottom Icons: Folder + Analytics + Private Space */}
-            <Link href="/banco" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
+            <Link href="/banco" ref={bancoRef} className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path>
               </svg>
