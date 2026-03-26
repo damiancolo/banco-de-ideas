@@ -97,7 +97,7 @@ export default function TrackerPage() {
 
 function TrackerContent() {
     const searchParams = useSearchParams();
-    const site = searchParams.get("site") || "estudioprompt";
+    const site = searchParams.get("site") || "unbancodeideas";
     const [data, setData] = useState<TrackerData | null>(null);
     const [range, setRange] = useState("7d");
     const [loading, setLoading] = useState(true);

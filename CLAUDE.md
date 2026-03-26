@@ -7,6 +7,7 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Base de datos**: MongoDB Atlas (Mongoose 9)
 - **IA**: OpenAI GPT-4o-mini (chat/analisis), Whisper-1 (STT), TTS-1 Shimmer (TTS)
+- **Auth**: NextAuth v5 beta (next-auth@5.0.0-beta) + @auth/mongodb-adapter + Google OAuth
 - **Estilos**: TailwindCSS 4
 - **Deploy**: Vercel (auto-deploy desde GitHub)
 
@@ -14,10 +15,18 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 
 | Entorno | Rama Git | Proyecto Vercel | Base de datos MongoDB | URL |
 |---|---|---|---|---|
-| Pruebas | `develop` | `banco-de-ideas-pruebas` | `banco-ideas-pruebas` | unbancodeideas.com |
-| Produccion | `main` | `banco-de-ideas` | `banco-ideas` | www.unbancodeideas.com |
+| Pruebas | `develop` | `banco-de-ideas-pruebas` (ID: prj_VuYaHpJZT32A7JnyBzOoT0q7KIuK) | `banco-ideas-pruebas` | banco-de-ideas.vercel.app |
+| Produccion | `main` | `banco-de-ideas` (ID: prj_nSLBUjl6RLxljIYtqRpYsRCZn09j) | `banco-ideas` | www.unbancodeideas.com |
+
+Team ID Vercel: `team_ABSUeFTZC1zeHHswIAVbNDJ0`
+
+**Flujo**: trabajar en `develop` → push → auto-deploy a pruebas → merge a `main` → auto-deploy a produccion.
+
+> La rama `staging` existe pero ya no se usa para trabajo nuevo.
 
 **IMPORTANTE**: Las bases de datos se llaman `banco-ideas` y `banco-ideas-pruebas` (SIN "de"). No usar `banco-de-ideas` ni `banco-de-ideas-pruebas`.
+
+**Credenciales**: ver `credentials.md` (gitignoreado).
 
 ## Variables de entorno
 ```
@@ -25,6 +34,10 @@ OPENAI_API_KEY=sk-proj-...
 MONGODB_URI=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
 MONGODB_URI_PRUEBAS=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas-pruebas?retryWrites=true&w=majority&appName=bancodeideas
 TRACK_SECRET=internal_track_2026_banco
+# Autenticacion Google (NextAuth v5)
+AUTH_SECRET=<random-32-bytes-base64>
+AUTH_GOOGLE_ID=<google-oauth-client-id>
+AUTH_GOOGLE_SECRET=<google-oauth-client-secret>
 ```
 
 Las mismas variables estan configuradas en Vercel para cada proyecto. Para probar localmente contra la BD de pruebas, se cambia `MONGODB_URI` para que apunte a `banco-ideas-pruebas`.
@@ -32,32 +45,53 @@ Las mismas variables estan configuradas en Vercel para cada proyecto. Para proba
 ## Estructura de archivos
 ```
 app/
-  page.tsx                      # Orquestador principal (chat)
-  banco/page.tsx                # Dashboard visual de ideas
-  about/page.tsx                # Pagina sobre el proyecto
+  page.tsx                      # Orquestador principal (chat publico)
+  banco/page.tsx                # Dashboard visual de ideas publicas
+  about/page.tsx                # Pagina sobre el proyecto (ES/EN/CA)
   tracker/page.tsx              # Dashboard de analytics (recharts, visitas humanos/bots)
+  privado/
+    page.tsx                    # Login con Google o chat privado si autenticado
+    layout.tsx                  # Wrapper con AuthProvider (no indexable por SEO)
+    PrivadoChat.tsx             # Chat privado usando ChatEngine con prefijo /api/privado
+    banco/page.tsx              # Dashboard de ideas privadas del usuario
   api/
     analyze/route.ts            # Chat/bisociaciones/analisis (OpenAI) [rate limit: 15/min]
     transcribe/route.ts         # Speech-to-text (Whisper) [rate limit: 10/min]
     speak/route.ts              # Text-to-speech (TTS) [rate limit: 10/min]
-    ideas/route.ts              # CRUD de ideas [rate limit: 5/min POST, 10/min DELETE]
+    ideas/route.ts              # CRUD de ideas publicas [rate limit: 5/min POST, 10/min DELETE]
     ideas/comments/route.ts     # Comentarios en ideas [rate limit: 10/min]
-    search/semantic/route.ts    # Busqueda por embeddings [rate limit: 15/min]
-    search/keywords/route.ts    # Busqueda por texto [rate limit: 20/min]
+    search/semantic/route.ts    # Busqueda semantica publica [rate limit: 15/min]
+    search/keywords/route.ts    # Busqueda por texto publica [rate limit: 20/min]
     agent/route.ts              # API para agentes de IA (GET/POST/OPTIONS) [rate limit: 20/min]
     track/route.ts              # POST interno para guardar visitas (protegido con TRACK_SECRET)
     tracker/route.ts            # GET con agregaciones MongoDB para dashboard analytics [rate limit: 30/min]
+    auth/[...nextauth]/route.ts # Handler NextAuth (GET/POST)
+    auth-debug/route.ts         # Diagnostico de variables de auth (no exponer en produccion)
+    privado/
+      analyze/route.ts          # Chat/bisociaciones privado (requiere sesion)
+      ideas/route.ts            # CRUD de ideas privadas (filtradas por userId)
+      ideas/comments/route.ts   # Comentarios en ideas privadas
+      search/semantic/route.ts  # Busqueda semantica privada
+      search/keywords/route.ts  # Busqueda por texto privada
+auth.ts                         # Configuracion NextAuth: Google provider + MongoDBAdapter + JWT
 components/
   ChatMessage.tsx               # Mensaje individual con boton "Escuchar"
+  ChatEngine.tsx                # Motor de chat reutilizable (usado en publico y privado)
   BancoView.tsx                 # Vista del repositorio de ideas
   AgentJsonLd.tsx               # JSON-LD semantico invisible para agentes de IA
   AgentInvitation.tsx           # Comentario HTML invisible que invita a agentes
+  AuthProvider.tsx              # SessionProvider de next-auth para el area privada
+  GoogleSignInButton.tsx        # Boton de login con Google
+  PrivateHeader.tsx             # Header del area privada con foto de usuario y sign out
+  IdeaModal.tsx                 # Modal de detalle de idea
 hooks/
   useVoiceRecording.ts          # Hook push-to-talk (Web Media API)
 lib/
-  db.ts                         # Capa de datos (saveIdea, getIdeas, etc.)
-  mongodb.ts                    # Conexion singleton a MongoDB
-  models/Idea.ts                # Schema Mongoose (text, category, embedding, createdAt)
+  db.ts                         # Capa de datos (saveIdea, getIdeas, getUserIdeas, etc.)
+  mongodb.ts                    # Conexion singleton a MongoDB (Mongoose)
+  auth-client.ts                # MongoClient nativo para el MongoDB Adapter de NextAuth
+  auth-utils.ts                 # Utilidades de autenticacion (getAuthSession, etc.)
+  models/Idea.ts                # Schema Mongoose (text, category, userId, embedding, createdAt)
   models/RateLimit.ts           # Schema para rate limiting por IP
   models/Visit.ts               # Schema para visitas (TTL 90 dias, privacy-friendly sin IP)
   rate-limit.ts                 # Rate limiter con sliding window via MongoDB (fail-closed)
@@ -108,6 +142,13 @@ mcp-server/                     # Servidor MCP (Model Context Protocol) — proy
 }
 ```
 
+### User / Account (NextAuth MongoDB Adapter)
+```
+users:    { name, email, image, emailVerified, createdAt }
+accounts: { userId, provider, providerAccountId, type, ... }
+```
+Colecciones gestionadas automaticamente por `@auth/mongodb-adapter`. Los usuarios se crean al primer login con Google.
+
 ### Visit
 ```
 {
@@ -122,6 +163,33 @@ mcp-server/                     # Servidor MCP (Model Context Protocol) — proy
 }
 ```
 Privacy-friendly: no almacena IPs. Los datos se envian desde el middleware (Edge) via POST fire-and-forget a `/api/track` (Node.js).
+
+## Espacio Privado (autenticacion Google)
+
+El area `/privado` es un banco de ideas personal por usuario, separado del espacio publico.
+
+### Flujo de autenticacion
+```
+Usuario visita /privado
+  -> Si no autenticado: muestra pantalla de login con GoogleSignInButton
+  -> Click "Iniciar sesion con Google" -> Google OAuth (NextAuth)
+  -> Callback /api/auth/callback/google -> NextAuth crea/recupera usuario en MongoDB
+  -> Redirige a /privado -> muestra ChatEngine privado con PrivateHeader
+```
+
+### Caracteristicas
+- **Aislamiento total**: las ideas privadas tienen `userId` y solo son accesibles por ese usuario
+- **Mismas capacidades**: chat, voz, bisociaciones, busqueda semantica — todo igual que el espacio publico
+- **API privada**: `/api/privado/*` replica los endpoints publicos pero filtra por `session.user.id`
+- **No indexable**: `robots: { index: false }` en el layout privado
+- **Sin rate limit por IP en privado**: las rutas privadas confian en la sesion JWT
+
+### Configuracion NextAuth (`auth.ts`)
+- Provider: Google con `client_secret_post`
+- Adapter: MongoDBAdapter con MongoClient nativo (no el de Mongoose)
+- Session: estrategia JWT
+- `trustHost: true` (necesario para Vercel)
+- Pagina de login personalizada: `/privado`
 
 ## Capa invisible para agentes de IA
 El proyecto incluye una capa completa para que agentes de IA descubran e interactuen con la plataforma, sin afectar la experiencia humana:
@@ -224,14 +292,19 @@ npm run map-project  # Genera esquema visual del proyecto
 
 ## Flujo de trabajo Git
 1. Trabajar en rama `develop`
-2. Push a `develop` -> auto-deploy a pruebas
+2. Push a `develop` -> auto-deploy a pruebas (banco-de-ideas.vercel.app)
 3. Verificar en entorno de pruebas
-4. PR de `develop` a `main` -> merge -> auto-deploy a produccion
+4. Merge `develop` a `main` -> auto-deploy a produccion (www.unbancodeideas.com)
+
+**IMPORTANTE**: Siempre pushear a `develop`, nunca directamente a `main`.
 
 ## Notas para agentes
 - El archivo `env.example` tiene el formato correcto de las variables
 - Para probar cambios: cambiar MONGODB_URI en .env.local a la URI de pruebas, ejecutar `npm run dev`
-- Nunca hacer push directo a `main`
+- Siempre trabajar en `develop`, nunca pushear directo a `main`
+- Para el area privada: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` deben estar en Vercel
+- El OAuth client de Google esta en el proyecto GCP `perfect-period-473623-p8` (project number 700254029805)
+- Redirect URIs autorizados en Google: `http://localhost:3000/api/auth/callback/google`, `https://banco-de-ideas.vercel.app/api/auth/callback/google`, `https://www.unbancodeideas.com/api/auth/callback/google`
 - Los logs detallados se mantienen internamente via `logger.error()`, pero las respuestas HTTP solo muestran mensajes genericos
 - La coleccion `ratelimits` se auto-limpia via TTL index de MongoDB
 - La coleccion `visits` se auto-limpia via TTL index de 90 dias

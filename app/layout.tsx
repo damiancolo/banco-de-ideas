@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     default: "Banco de Ideas | Gestiona y Expande tu Creatividad con IA",
     template: "%s | Banco de Ideas",
   },
-  description: "Una plataforma impulsada por IA para capturar, analizar y conectar tus ideas. Descubre bisociaciones, recibe feedback crítico y colabora en la evolución de conceptos.",
+  description: "Una plataforma impulsada por IA para capturar, analizar y conectar tus ideas. Espacio público de bisociaciones colectivas y espacio privado personal con acceso Google. Descubre conexiones inesperadas entre conceptos.",
   keywords: [
     "banco de ideas",
     "creatividad",
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   creator: "Damián Lafferranderie",
   openGraph: {
     title: "Banco de Ideas",
-    description: "Tu banco de ideas personal potenciado con IA. Captura, analiza y conecta conceptos para innovar.",
+    description: "Tu banco de ideas potenciado con IA. Espacio público de bisociaciones colectivas y espacio privado personal. Captura, analiza y conecta conceptos para innovar.",
     url: "https://unbancodeideas.com",
     siteName: "Banco de Ideas",
     locale: "es_ES",

@@ -103,6 +103,31 @@ export default function AboutPage() {
                     </div>
                 </div>
 
+                {/* Private Space */}
+                <div className="bg-gradient-to-br from-blue-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-blue-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-275">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Espacio Privado</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        Además del espacio público compartido, cada usuario puede acceder a su <span className="font-semibold text-[#C5A47E]">banco de ideas personal y privado</span>. Con una cuenta de Google, obtienes un espacio propio donde tus ideas son solo tuyas: nadie más puede verlas ni acceder a ellas.
+                    </p>
+                    <div className="grid md:grid-cols-3 gap-4">
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">🔐</div>
+                            <h3 className="font-bold text-gray-800 mb-1">Acceso con Google</h3>
+                            <p className="text-sm text-gray-600">Un click para entrar. Sin contraseñas, sin formularios. Tu identidad Google es tu llave.</p>
+                        </div>
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">🗂️</div>
+                            <h3 className="font-bold text-gray-800 mb-1">Ideas solo tuyas</h3>
+                            <p className="text-sm text-gray-600">Tus ideas privadas están vinculadas a tu cuenta y son invisibles para el resto de usuarios y agentes de IA.</p>
+                        </div>
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">✨</div>
+                            <h3 className="font-bold text-gray-800 mb-1">Mismas capacidades</h3>
+                            <p className="text-sm text-gray-600">Chat, voz, bisociaciones y búsqueda semántica, todo disponible en tu espacio privado.</p>
+                        </div>
+                    </div>
+                </div>
+
                 {/* Technical Architecture Deep Dive */}
                 <div className="bg-gradient-to-br from-gray-900 to-gray-800 rounded-3xl p-8 md:p-12 shadow-2xl text-white mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-300">
                     <h2 className="text-3xl font-bold mb-8">Arquitectura Técnica y Stack</h2>
