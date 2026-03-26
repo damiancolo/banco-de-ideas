@@ -8,13 +8,9 @@ export default function Home() {
   const [tooltipState, setTooltipState] = useState<"hidden" | "visible" | "fading">("hidden");
 
   useEffect(() => {
-    if (localStorage.getItem("banco-tooltip-seen")) return;
     const t1 = setTimeout(() => setTooltipState("visible"), 400);
     const t2 = setTimeout(() => setTooltipState("fading"), 5400);
-    const t3 = setTimeout(() => {
-      setTooltipState("hidden");
-      localStorage.setItem("banco-tooltip-seen", "1");
-    }, 6100);
+    const t3 = setTimeout(() => setTooltipState("hidden"), 6100);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
@@ -50,7 +46,7 @@ export default function Home() {
             <div className="relative">
               {tooltipState !== "hidden" && (
                 <div
-                  className={`absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none transition-opacity duration-700 ${tooltipState === "visible" ? "opacity-100" : "opacity-0"}`}
+                  className={`fixed bottom-24 left-1/2 -translate-x-1/2 pointer-events-none transition-opacity duration-700 z-50 ${tooltipState === "visible" ? "opacity-100" : "opacity-0"}`}
                 >
                   <div className="bg-gray-900/85 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap">
                     Revisa las ideas del banco aquí
