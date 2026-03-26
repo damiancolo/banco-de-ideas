@@ -1,9 +1,23 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import ChatEngine from "@/components/ChatEngine";
 
 export default function Home() {
+  const [tooltipState, setTooltipState] = useState<"hidden" | "visible" | "fading">("hidden");
+
+  useEffect(() => {
+    if (localStorage.getItem("banco-tooltip-seen")) return;
+    const t1 = setTimeout(() => setTooltipState("visible"), 400);
+    const t2 = setTimeout(() => setTooltipState("fading"), 5400);
+    const t3 = setTimeout(() => {
+      setTooltipState("hidden");
+      localStorage.setItem("banco-tooltip-seen", "1");
+    }, 6100);
+    return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
+  }, []);
+
   return (
     <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
       {/* Semantic Content for SEO & Screen Readers */}
@@ -33,11 +47,23 @@ export default function Home() {
         footerSlot={
           <div className="pb-8 flex items-center gap-4">
             {/* Bottom Icons: Folder + Analytics + Private Space */}
-            <Link href="/banco" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path>
-              </svg>
-            </Link>
+            <div className="relative">
+              {tooltipState !== "hidden" && (
+                <div
+                  className={`absolute bottom-full mb-3 left-1/2 -translate-x-1/2 pointer-events-none transition-opacity duration-700 ${tooltipState === "visible" ? "opacity-100" : "opacity-0"}`}
+                >
+                  <div className="bg-gray-900/85 backdrop-blur-sm text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap">
+                    Revisa las ideas del banco aquí
+                  </div>
+                  <div className="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900/85" />
+                </div>
+              )}
+              <Link href="/banco" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"></path>
+                </svg>
+              </Link>
+            </div>
             <Link href="/tracker" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 20V10" /><path d="M12 20V4" /><path d="M6 20v-6" />
