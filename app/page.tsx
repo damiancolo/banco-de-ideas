@@ -5,8 +5,17 @@ import Link from "next/link";
 import ChatEngine from "@/components/ChatEngine";
 
 export default function Home() {
+  const MESSAGES = [
+    "Revisa las ideas del banco aquí",
+    "Lee las increíbles ideas de otros",
+    "Bisociaciones ajenas",
+    "Lo que piensa la gente",
+    "Las ideas son patrimonio humano",
+  ];
+
   const [tooltipState, setTooltipState] = useState<"hidden" | "visible" | "fading">("hidden");
   const [tooltipLeft, setTooltipLeft] = useState<number | null>(null);
+  const [message, setMessage] = useState("");
   const bancoRef = useRef<HTMLAnchorElement>(null);
 
   useEffect(() => {
@@ -14,9 +23,17 @@ export default function Home() {
       const rect = bancoRef.current.getBoundingClientRect();
       setTooltipLeft(rect.left + rect.width / 2);
     }
-    const t1 = setTimeout(() => setTooltipState("visible"), 400);
-    const t2 = setTimeout(() => setTooltipState("fading"), 5400);
-    const t3 = setTimeout(() => setTooltipState("hidden"), 6100);
+
+    const show = () => {
+      setMessage(MESSAGES[Math.floor(Math.random() * MESSAGES.length)]);
+      setTooltipState("visible");
+      setTimeout(() => setTooltipState("fading"), 5000);
+      setTimeout(() => setTooltipState("hidden"), 5700);
+    };
+
+    const t1 = setTimeout(show, 400);
+    const t2 = setTimeout(show, 15000);
+    const t3 = setTimeout(show, 30000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
 
@@ -51,7 +68,7 @@ export default function Home() {
           style={{ left: tooltipLeft }}
         >
           <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
-            Revisa las ideas del banco aquí
+            {message}
           </div>
           <div className="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900" />
         </div>
