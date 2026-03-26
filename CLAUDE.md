@@ -15,12 +15,18 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 
 | Entorno | Rama Git | Proyecto Vercel | Base de datos MongoDB | URL |
 |---|---|---|---|---|
-| Staging | `staging` | `banco-de-ideas-pruebas` | `banco-ideas-pruebas` | banco-de-ideas.vercel.app |
-| Produccion | `main` | `banco-de-ideas` | `banco-ideas` | www.unbancodeideas.com |
+| Pruebas | `develop` | `banco-de-ideas-pruebas` (ID: prj_VuYaHpJZT32A7JnyBzOoT0q7KIuK) | `banco-ideas-pruebas` | banco-de-ideas.vercel.app |
+| Produccion | `main` | `banco-de-ideas` (ID: prj_nSLBUjl6RLxljIYtqRpYsRCZn09j) | `banco-ideas` | www.unbancodeideas.com |
 
-**Flujo**: trabajar en `staging` → push → auto-deploy a pruebas → merge a `main` → auto-deploy a produccion.
+Team ID Vercel: `team_ABSUeFTZC1zeHHswIAVbNDJ0`
+
+**Flujo**: trabajar en `develop` → push → auto-deploy a pruebas → merge a `main` → auto-deploy a produccion.
+
+> La rama `staging` existe pero ya no se usa para trabajo nuevo.
 
 **IMPORTANTE**: Las bases de datos se llaman `banco-ideas` y `banco-ideas-pruebas` (SIN "de"). No usar `banco-de-ideas` ni `banco-de-ideas-pruebas`.
+
+**Credenciales**: ver `credentials.md` (gitignoreado).
 
 ## Variables de entorno
 ```
@@ -285,17 +291,17 @@ npm run map-project  # Genera esquema visual del proyecto
 ```
 
 ## Flujo de trabajo Git
-1. Trabajar en rama `staging`
-2. Push a `staging` -> auto-deploy a pruebas (banco-de-ideas.vercel.app)
+1. Trabajar en rama `develop`
+2. Push a `develop` -> auto-deploy a pruebas (banco-de-ideas.vercel.app)
 3. Verificar en entorno de pruebas
-4. Merge `staging` a `main` -> auto-deploy a produccion (www.unbancodeideas.com)
+4. Merge `develop` a `main` -> auto-deploy a produccion (www.unbancodeideas.com)
 
-**IMPORTANTE**: Siempre pushear a `staging`, nunca directamente a `main` ni `develop`.
+**IMPORTANTE**: Siempre pushear a `develop`, nunca directamente a `main`.
 
 ## Notas para agentes
 - El archivo `env.example` tiene el formato correcto de las variables
 - Para probar cambios: cambiar MONGODB_URI en .env.local a la URI de pruebas, ejecutar `npm run dev`
-- Siempre trabajar en `staging`, nunca pushear directo a `main` ni `develop`
+- Siempre trabajar en `develop`, nunca pushear directo a `main`
 - Para el area privada: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` deben estar en Vercel
 - El OAuth client de Google esta en el proyecto GCP `perfect-period-473623-p8` (project number 700254029805)
 - Redirect URIs autorizados en Google: `http://localhost:3000/api/auth/callback/google`, `https://banco-de-ideas.vercel.app/api/auth/callback/google`, `https://www.unbancodeideas.com/api/auth/callback/google`
