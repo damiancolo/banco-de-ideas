@@ -16,7 +16,7 @@ export async function POST(request: Request) {
         await connectDB();
 
         await Visit.create({
-            timestamp: new Date(),
+            timestamp: body.timestamp ? new Date(body.timestamp) : new Date(),
             path: body.path || '/',
             visitorType: body.visitorType || 'human',
             botName: body.botName || null,
