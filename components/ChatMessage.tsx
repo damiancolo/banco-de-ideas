@@ -1,4 +1,6 @@
 import React from 'react';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface ChatMessageProps {
     role: 'user' | 'assistant';
@@ -22,9 +24,9 @@ export default function ChatMessage({ role, content, plainText, onSpeak }: ChatM
                     {/* Bot Bubble (Optional Card) vs User Text */}
                     {!isUser && typeof content === 'string' ? (
                         <div className="flex items-start gap-2">
-                            <span className="bg-white px-5 py-3 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl shadow-sm border border-black/5 inline-block">
-                                {content}
-                            </span>
+                            <div className="bg-white px-5 py-3 rounded-tr-2xl rounded-bl-2xl rounded-br-2xl shadow-sm border border-black/5 prose prose-sm max-w-none prose-headings:text-gray-700 prose-headings:font-semibold prose-strong:text-gray-700 prose-p:text-gray-600 prose-li:text-gray-600 prose-ul:my-1 prose-ol:my-1 prose-p:my-1 prose-headings:my-2">
+                                <ReactMarkdown remarkPlugins={[remarkGfm]}>{content}</ReactMarkdown>
+                            </div>
                         </div>
                     ) : isUser ? (
                         <span className="inline-block text-gray-500 bg-[#F0EEE6] px-5 py-3 rounded-tl-2xl rounded-bl-2xl rounded-br-2xl text-base opacity-80">
