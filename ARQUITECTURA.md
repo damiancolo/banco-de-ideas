@@ -23,7 +23,7 @@
 ### 1. **Full Voice Loop** 🎙️→🔊
 Ciclo completo de interacción por voz:
 ```
-Usuario habla → Whisper transcribe → GPT-4o-mini responde → TTS lee respuesta → Usuario escucha
+Usuario habla → Whisper transcribe → DeepSeek responde → TTS lee respuesta → Usuario escucha
 ```
 - **Detección automática**: Si usas voz, la IA responde en voz. Si escribes, responde en texto.
 - **Control manual**: Botón "Escuchar" disponible en todos los mensajes.
@@ -86,7 +86,7 @@ Visualización de todas las ideas persistidas:
 ┌─────────────────────────────────────────┐
 │  IA & Voz                                │
 ├─────────────────────────────────────────┤
-│  OpenAI GPT-4o-mini (Conversación)      │
+│  DeepSeek deepseek-chat (Conversación)   │
 │  OpenAI Whisper-1 (Speech-to-Text)      │
 │  OpenAI TTS-1 Shimmer (Text-to-Speech)  │
 └─────────────────────────────────────────┘
@@ -159,7 +159,7 @@ graph TD
     G -->|analysis| I[/api/analyze?action=analysis]
     G -->|chat| J[/api/analyze?action=chat]
     
-    H --> K[🤖 GPT-4o-mini]
+    H --> K[🤖 DeepSeek deepseek-chat]
     I --> K
     J --> K
     
@@ -513,7 +513,7 @@ logger.warn("Text too long:", length);
 - ⏱️ **Time to First Byte (TTFB)**: < 200ms
 - 🎤 **Transcripción Whisper**: ~2-3 segundos
 - 🔊 **Generación TTS**: ~1-2 segundos
-- 🧠 **Respuesta GPT-4o-mini**: ~3-5 segundos
+- 🧠 **Respuesta DeepSeek**: ~3-5 segundos
 
 ### Calidad de Código
 - ✅ **21 problemas identificados** en code review

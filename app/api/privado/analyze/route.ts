@@ -49,13 +49,14 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: `Acción inválida: "${action}"` }, { status: 400 });
         }
 
-        const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY || "dummy-key",
-        });
-
-        if (!process.env.OPENAI_API_KEY) {
-            return NextResponse.json({ error: "OPENAI_API_KEY no configurada" }, { status: 500 });
+        if (!process.env.DEEPSEEK_API_KEY) {
+            return NextResponse.json({ error: "DEEPSEEK_API_KEY no configurada" }, { status: 500 });
         }
+
+        const openai = new OpenAI({
+            apiKey: process.env.DEEPSEEK_API_KEY,
+            baseURL: "https://api.deepseek.com",
+        });
 
         if (!idea && action !== 'chat') {
             return NextResponse.json({ error: 'El campo "idea" es requerido' }, { status: 400 });
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
                         result = parsed.ideas || parsed.result || parsed.bisociations || [];
                     }
                 } catch (parseErr) {
-                    logger.error("Error parsing OpenAI JSON:", parseErr);
+                    logger.error("Error parsing DeepSeek JSON:", parseErr);
                 }
 
                 if (result.length > 0) {
@@ -154,7 +155,7 @@ export async function POST(request: Request) {
             ];
 
             const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: API.MODEL,
                 messages: messages,
             });
             const analysisContent = completion.choices?.[0]?.message?.content;
@@ -172,7 +173,7 @@ export async function POST(request: Request) {
             ];
 
             const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: API.MODEL,
                 messages: messages,
             });
 

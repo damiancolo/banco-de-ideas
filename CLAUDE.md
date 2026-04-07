@@ -6,7 +6,8 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Base de datos**: MongoDB Atlas (Mongoose 9)
-- **IA**: OpenAI GPT-4o-mini (chat/analisis), Whisper-1 (STT), TTS-1 Shimmer (TTS)
+- **IA chat/análisis**: DeepSeek `deepseek-chat` (V3.2) vía SDK OpenAI-compatible
+- **IA voz**: OpenAI Whisper-1 (STT), TTS-1 Shimmer (TTS), text-embedding-3-small (embeddings)
 - **Auth**: NextAuth v5 beta (next-auth@5.0.0-beta) + @auth/mongodb-adapter + Google OAuth
 - **Estilos**: TailwindCSS 4
 - **Deploy**: Vercel (auto-deploy desde GitHub)
@@ -36,7 +37,11 @@ Team ID Vercel: `team_ABSUeFTZC1zeHHswIAVbNDJ0`
 
 ## Variables de entorno
 ```
+# IA - DeepSeek (chat/análisis)
+DEEPSEEK_API_KEY=sk-...
+# IA - OpenAI (voz: Whisper STT, TTS, embeddings)
 OPENAI_API_KEY=sk-proj-...
+# MongoDB Atlas
 MONGODB_URI=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
 MONGODB_URI_PRUEBAS=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas-pruebas?retryWrites=true&w=majority&appName=bancodeideas
 TRACK_SECRET=internal_track_2026_banco
@@ -284,7 +289,7 @@ El plugin en `estudioprompt.com/wp-content/plugins/ai-bot-tracker/ai-bot-tracker
 Usuario habla/escribe
   -> Si voz: /api/transcribe (Whisper) -> texto
   -> Deteccion de intencion en cliente (keywords)
-  -> /api/analyze?action=similar|analysis|chat (GPT-4o-mini)
+  -> /api/analyze?action=similar|analysis|chat (DeepSeek deepseek-chat)
   -> Si via voz: /api/speak (TTS) -> audio MP3
   -> Bisociaciones se guardan automaticamente en MongoDB
 ```

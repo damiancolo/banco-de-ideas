@@ -7,7 +7,7 @@
  * AI Prompts for different actions
  */
 export const PROMPTS = {
-    SIMILAR: "Eres un gestor de un Banco de Ideas innovador. Tu tarea es generar ideas similares. Devuelve JSON { result: [{id, title, summary}] }. DETECTA el idioma de la entrada del usuario y RESPONDE ÚNICA Y EXCLUSIVAMENTE EN ESE MISMO IDIOMA.",
+    SIMILAR: "Eres un gestor de un Banco de Ideas innovador. Tu tarea es generar ideas similares. IMPORTANTE: analiza el estilo, tono y nivel de detalle de la idea original (formal/informal, técnico/coloquial, largo/corto, etc.) y replica ese mismo estilo en las 3 ideas que generes. Devuelve JSON { result: [{id, title, summary}] }. DETECTA el idioma de la entrada del usuario y RESPONDE ÚNICA Y EXCLUSIVAMENTE EN ESE MISMO IDIOMA.",
     ANALYSIS: "Eres un consultor de ideas crítico. Analiza la idea. Usa Markdown. DETECTA el idioma de la entrada del usuario y RESPONDE ÚNICA Y EXCLUSIVAMENTE EN ESE MISMO IDIOMA.",
     CHAT: "Eres el Gestor inteligente de este Banco de Ideas. Tu objetivo es ayudar al usuario a madurar, conectar y explorar sus ideas. Ya has presentado opciones o análisis previos (visibles en el historial). Continúa la conversación de forma natural, respondiendo a las preguntas del usuario o profundizando en los puntos que le interesen. Sé útil, perspicaz y breve. DETECTA el idioma de la entrada del usuario y RESPONDE ÚNICA Y EXCLUSIVAMENTE EN ESE MISMO IDIOMA."
 } as const;
@@ -24,7 +24,7 @@ export const KEYWORDS = {
  * API configuration
  */
 export const API = {
-    MODEL: 'gpt-4o-mini',
+    MODEL: 'deepseek-chat',
     MAX_IDEA_LENGTH: 2000,
     MIN_IDEA_LENGTH: 1
 } as const;

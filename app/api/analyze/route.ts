@@ -40,7 +40,7 @@ type ChatMessage = {
  */
 export async function POST(request: Request) {
     try {
-        // Rate limit: 15 req/min (uses OpenAI, costly)
+        // Rate limit: 15 req/min (uses DeepSeek, costly)
         const ip = getIp(request);
         const rateLimit = await checkRateLimit(ip, 'analyze', 15, 60);
         if (!rateLimit.success) {
@@ -69,17 +69,18 @@ export async function POST(request: Request) {
             );
         }
 
-        // Inicializar OpenAI
-        const openai = new OpenAI({
-            apiKey: process.env.OPENAI_API_KEY || "dummy-key",
-        });
-
-        if (!process.env.OPENAI_API_KEY) {
+        if (!process.env.DEEPSEEK_API_KEY) {
             return NextResponse.json(
-                { error: "OPENAI_API_KEY no configurada. Por favor configura esta variable en .env.local" },
+                { error: "DEEPSEEK_API_KEY no configurada. Por favor configura esta variable en .env.local" },
                 { status: 500 }
             );
         }
+
+        // Inicializar DeepSeek (compatible con SDK de OpenAI)
+        const openai = new OpenAI({
+            apiKey: process.env.DEEPSEEK_API_KEY,
+            baseURL: "https://api.deepseek.com",
+        });
 
         // Validar que idea esté presente para acciones que la requieren
         if (!idea && action !== 'chat') {
@@ -136,7 +137,7 @@ export async function POST(request: Request) {
                     { role: "user" as const, content: `La idea es: "${idea}". Dame 3 ideas similares.` }
                 ];
 
-                logger.debug("Calling OpenAI with messages count:", llmMessages.length);
+                logger.debug("Calling DeepSeek with messages count:", llmMessages.length);
 
                 const completion = await openai.chat.completions.create({
                     model: API.MODEL,
@@ -146,10 +147,10 @@ export async function POST(request: Request) {
 
                 const content = completion.choices?.[0]?.message?.content;
                 if (!content) {
-                    logger.error("OpenAI returned empty response for similar action");
+                    logger.error("DeepSeek returned empty response for similar action");
                     return NextResponse.json({ result: [] });
                 }
-                logger.debug("OpenAI raw response content:", content);
+                logger.debug("DeepSeek raw response content:", content);
 
                 let result = [];
 
@@ -163,7 +164,7 @@ export async function POST(request: Request) {
                         }
                         logger.debug("Parsed result count:", result.length);
                     } catch (parseErr) {
-                        logger.error("Error parsing OpenAI JSON:", parseErr);
+                        logger.error("Error parsing DeepSeek JSON:", parseErr);
                     }
                 }
 
@@ -214,12 +215,12 @@ export async function POST(request: Request) {
             ];
 
             const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: API.MODEL,
                 messages: messages,
             });
             const analysisContent = completion.choices?.[0]?.message?.content;
             if (!analysisContent) {
-                logger.error("OpenAI returned empty response for analysis action");
+                logger.error("DeepSeek returned empty response for analysis action");
                 return NextResponse.json({ error: "La IA no pudo generar un análisis" }, { status: 500 });
             }
             return NextResponse.json({ result: analysisContent });
@@ -236,13 +237,13 @@ export async function POST(request: Request) {
             ];
 
             const completion = await openai.chat.completions.create({
-                model: "gpt-4o-mini",
+                model: API.MODEL,
                 messages: messages,
             });
 
             const chatContent = completion.choices?.[0]?.message?.content;
             if (!chatContent) {
-                logger.error("OpenAI returned empty response for chat action");
+                logger.error("DeepSeek returned empty response for chat action");
                 return NextResponse.json({ error: "La IA no pudo generar una respuesta" }, { status: 500 });
             }
             return NextResponse.json({ result: chatContent });

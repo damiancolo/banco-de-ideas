@@ -18,7 +18,7 @@ Aplicacion web para gestionar y expandir ideas usando Inteligencia Artificial. C
 
 - Next.js 16 (App Router) + React 19 + TypeScript
 - MongoDB Atlas + Mongoose 9
-- OpenAI GPT-4o-mini / Whisper-1 / TTS-1
+- DeepSeek `deepseek-chat` (chat/análisis) + OpenAI Whisper-1 / TTS-1 (voz)
 - TailwindCSS 4
 - Vercel
 
@@ -36,6 +36,7 @@ npm run dev
 ### Variables de entorno requeridas
 
 ```
+DEEPSEEK_API_KEY=sk-...
 OPENAI_API_KEY=sk-proj-...
 MONGODB_URI=mongodb+srv://usuario:password@cluster.mongodb.net/banco-ideas?retryWrites=true&w=majority
 ```
