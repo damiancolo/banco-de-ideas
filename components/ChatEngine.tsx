@@ -347,12 +347,8 @@ export default function ChatEngine({
             plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
               result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
           } else {
-            content = (
-              <div className="prose prose-sm prose-stone max-w-none text-gray-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <div className="whitespace-pre-wrap">{typeof result === 'string' ? result : JSON.stringify(result)}</div>
-              </div>
-            );
             plainTextForContext = typeof result === 'string' ? result : "Respuesta completada.";
+            content = plainTextForContext;
           }
 
           const reply: Message = {
@@ -506,12 +502,8 @@ export default function ChatEngine({
             plainTextForContext = result;
 
           } else {
-            content = (
-              <div className="prose prose-sm prose-stone max-w-none text-gray-700 leading-relaxed bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                <div className="whitespace-pre-wrap">{typeof result === 'string' ? result : JSON.stringify(result)}</div>
-              </div>
-            );
             plainTextForContext = typeof result === 'string' ? result : "Respuesta completada.";
+            content = plainTextForContext;
           }
 
           const reply: Message = {
