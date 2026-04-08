@@ -38,6 +38,10 @@ const THINKING_MESSAGES = [
   "Explorando el espacio latente...",
   "Tejiendo bisociaciones con hilo invisible...",
   "Claudiando...",
+  "Geminiando...",
+  "ChatGPTeando...",
+  "DeepSeeKeando...",
+  "Bardeando...",
   "Aplicando creatividad artificial...",
   "Buscando conexiones inesperadas...",
 ];
