@@ -37,7 +37,7 @@ const THINKING_MESSAGES = [
   "Procesando... (no, en serio, procesando)",
   "Explorando el espacio latente...",
   "Tejiendo bisociaciones con hilo invisible...",
-  "Consultando con Claude Code (que ayudó a construir esto)...",
+  "Claudiando...",
   "Aplicando creatividad artificial...",
   "Buscando conexiones inesperadas...",
 ];
