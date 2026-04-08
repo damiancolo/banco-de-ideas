@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import { logger } from "@/lib/logger";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
@@ -23,6 +23,24 @@ type SearchMode = 'essence' | 'keywords' | 'similar' | 'analysis' | null;
 // ID generator to avoid race conditions
 let messageIdCounter = 0;
 const generateMessageId = () => `msg-${Date.now()}-${++messageIdCounter}`;
+
+const THINKING_MESSAGES = [
+  "Bisociando conceptos...",
+  "Consultando el oráculo...",
+  "Reordenando el universo...",
+  "Invocando musas creativas...",
+  "Conectando lo inconectable...",
+  "Pensando en voz muy baja...",
+  "Preguntándole a DeepSeek...",
+  "Atravesando dominios de conocimiento...",
+  "Calibrando el detector de ideas brillantes...",
+  "Procesando... (no, en serio, procesando)",
+  "Explorando el espacio latente...",
+  "Tejiendo bisociaciones con hilo invisible...",
+  "Consultando con Claude Code (que ayudó a construir esto)...",
+  "Aplicando creatividad artificial...",
+  "Buscando conexiones inesperadas...",
+];
 
 interface ChatEngineProps {
   apiPrefix?: string;
@@ -47,6 +65,7 @@ export default function ChatEngine({
 
   const [searchMode, setSearchMode] = useState<SearchMode>(null);
   const [showModeMenu, setShowModeMenu] = useState(false);
+  const [thinkingIndex, setThinkingIndex] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
@@ -83,6 +102,16 @@ export default function ChatEngine({
       if (menuLeaveTimeoutRef.current) clearTimeout(menuLeaveTimeoutRef.current);
     };
   }, []);
+
+  // Rotar mensajes de "pensando" mientras loading
+  useEffect(() => {
+    if (!loading) return;
+    setThinkingIndex(Math.floor(Math.random() * THINKING_MESSAGES.length));
+    const interval = setInterval(() => {
+      setThinkingIndex(i => (i + 1) % THINKING_MESSAGES.length);
+    }, 2500);
+    return () => clearInterval(interval);
+  }, [loading]);
 
   const resetConversation = () => {
     stopSpeaking();
@@ -605,11 +634,11 @@ export default function ChatEngine({
               />
             ))}
             {(loading || isTranscribing || isSpeaking) && (
-              <div className="pl-4 text-sm text-gray-400 flex items-center gap-3">
+              <div className="pl-2 flex items-center gap-3">
                 {isTranscribing ? (
-                  <span className="animate-pulse">Transcribiendo audio...</span>
+                  <span className="text-sm text-gray-400 animate-pulse">Transcribiendo audio...</span>
                 ) : isSpeaking ? (
-                  <div className="flex items-center gap-2 text-[#C5A47E] font-medium">
+                  <div className="flex items-center gap-2 text-[#C5A47E] font-medium text-sm">
                     <span className="flex gap-1 items-end h-3">
                       <span className="w-1 bg-current animate-[sound_0.5s_ease-in-out_infinite]"></span>
                       <span className="w-1 bg-current animate-[sound_0.8s_ease-in-out_infinite]"></span>
@@ -618,7 +647,14 @@ export default function ChatEngine({
                     La IA está hablando...
                   </div>
                 ) : (
-                  <span className="animate-pulse">Escribiendo...</span>
+                  <div className="flex items-center gap-3 bg-white/80 px-4 py-3 rounded-2xl border border-black/5 shadow-sm">
+                    <div className="flex gap-1 items-end h-4">
+                      <span className="w-1.5 h-1.5 bg-[#C5A47E] rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></span>
+                      <span className="w-1.5 h-1.5 bg-[#C5A47E] rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></span>
+                      <span className="w-1.5 h-1.5 bg-[#C5A47E] rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></span>
+                    </div>
+                    <span className="text-base text-gray-500 animate-pulse">{THINKING_MESSAGES[thinkingIndex]}</span>
+                  </div>
                 )}
               </div>
             )}
