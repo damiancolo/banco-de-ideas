@@ -86,9 +86,10 @@ Visualización de todas las ideas persistidas:
 ┌─────────────────────────────────────────┐
 │  IA & Voz                                │
 ├─────────────────────────────────────────┤
-│  DeepSeek deepseek-chat (Conversación)   │
+│  DeepSeek deepseek-chat V3.2 (Chat/IA)  │
 │  OpenAI Whisper-1 (Speech-to-Text)      │
 │  OpenAI TTS-1 Shimmer (Text-to-Speech)  │
+│  OpenAI text-embedding-3-small (Search) │
 └─────────────────────────────────────────┘
 
 ┌─────────────────────────────────────────┐
@@ -533,14 +534,23 @@ logger.warn("Text too long:", length);
 ### Variables de Entorno
 
 ```env
-# OpenAI (Requerido)
-OPENAI_API_KEY=sk-...
+# DeepSeek (chat/análisis — Requerido)
+DEEPSEEK_API_KEY=sk-...
+
+# OpenAI (voz: Whisper, TTS, embeddings — Requerido)
+OPENAI_API_KEY=sk-proj-...
 
 # MongoDB (Requerido)
 MONGODB_URI=mongodb+srv://...
+MONGODB_URI_PRUEBAS=mongodb+srv://...
 
-# Opcional
-NODE_ENV=production
+# Tracking interno
+TRACK_SECRET=...
+
+# Auth Google (NextAuth v5)
+AUTH_SECRET=...
+AUTH_GOOGLE_ID=...
+AUTH_GOOGLE_SECRET=...
 ```
 
 ### Comandos de Desarrollo
@@ -564,6 +574,8 @@ vercel --prod
   "react": "^19.0.0",
   "mongoose": "^9.0.0",
   "openai": "^4.0.0",
+  "react-markdown": "^10.0.0",
+  "remark-gfm": "^4.0.0",
   "tailwindcss": "^4.0.0"
 }
 ```
@@ -588,7 +600,7 @@ vercel --prod
 
 ---
 
-**Versión:** 2.0.0 (Voice Loop Edition)  
-**Última actualización:** Diciembre 29, 2024  
+**Versión:** 2.1.0  
+**Última actualización:** Abril 2026  
 **Estado:** ✅ Estable y en producción  
 **Licencia:** MIT
