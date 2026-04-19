@@ -16,37 +16,49 @@ const CORS_HEADERS = {
     'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-// ── R1: diseña el juego con razonamiento ────────────────────────────────
-// deepseek-reasoner (R1) piensa antes de responder.
-// Le pedimos un plan JSON pequeño — la respuesta llega en ~8-12s.
-const R1_SYSTEM = `You are a creative game designer. Given 3 elements, design a simple but fun browser game.
+// Fase 1: razonamiento — diseña el juego y devuelve un plan JSON pequeño
+const DESIGN_SYSTEM = `You are a creative game designer. Given 3 elements, design a simple but fun browser game.
 
-Respond ONLY with valid JSON (no markdown, no explanation):
+Respond ONLY with valid JSON (no markdown, no extra text):
 {
   "title": "short game title",
-  "mechanic": "core mechanic in one sentence — how elements connect",
-  "controls": "keyboard/mouse controls in one line",
+  "mechanic": "core mechanic in one sentence — how the 3 elements connect",
+  "controls": "describe both keyboard AND touch controls",
   "winCondition": "how to win or progress",
-  "style": "3-4 word visual style (e.g. 'dark pixel sci-fi')"
+  "style": "3-4 word visual style (e.g. 'dark neon arcade')"
 }
 
-Design for Canvas 480×480. Keep the mechanic achievable in ~120 lines of vanilla JS.`;
+Design for a square canvas that fits any screen. Mechanic must be achievable in ~130 lines of vanilla JS.
+Prefer mechanics that work with a single tap/click (not complex keyboard combos) so they're fun on mobile.`;
 
-// ── V3: codea el juego diseñado por R1 ─────────────────────────────────
-// deepseek-chat (V3) es el mejor modelo costo/calidad para código.
-// Recibe el plan de R1 → genera HTML completo en streaming.
-const V3_SYSTEM = `You are an expert HTML5 game developer using vanilla JS and Canvas API.
+// Fase 2: codificación — implementa el juego con soporte móvil completo
+const CODE_SYSTEM = `You are an expert HTML5 game developer. Implement the given game design as a complete, playable HTML file.
 
-Implement the game design below as a COMPLETE, PLAYABLE HTML file.
-
-STRICT RULES — follow all of them:
+STRICT OUTPUT RULES:
 1. Output ONLY the HTML file. Start with <!DOCTYPE html>. Zero text outside it.
-2. Canvas 480×480, centered on page, dark background.
-3. Vanilla JS only. No libraries. No fetch. No localStorage. No external URLs.
-4. Works in iframe sandbox="allow-scripts".
-5. Under 130 lines total. Compact code.
-6. Must include: start screen (SPACE/click), requestAnimationFrame game loop, score display, game over screen with restart.
-7. Max 3 colors. Clean, readable visuals. Show controls on screen.`;
+2. Works in iframe with sandbox="allow-scripts" — no fetch, no localStorage, no external URLs.
+3. Vanilla JS + Canvas API only. No libraries.
+4. Under 140 lines total. Compact but complete.
+
+MOBILE-FIRST CANVAS (required):
+- Size: const SIZE = Math.min(480, window.innerWidth - 16); canvas.width = SIZE; canvas.height = SIZE;
+- Center canvas: canvas.style.display='block'; canvas.style.margin='auto';
+- Resize on orientation change: window.addEventListener('resize', resizeCanvas);
+- Body: margin:0; background:#111; overflow:hidden; display:flex; align-items:center; justify-content:center; min-height:100vh;
+
+TOUCH + KEYBOARD CONTROLS (both required):
+- Start screen: tap OR press SPACE to start
+- Movement games: listen to touchstart/touchmove/touchend on canvas; map touch X/Y to game direction
+- Tap games: touchstart = same as click
+- Show on-screen hint: "TAP" on mobile, "SPACE/CLICK" on desktop (detect via navigator.maxTouchPoints)
+- Touch handler example: canvas.addEventListener('touchstart', e => { e.preventDefault(); handleInput(e.touches[0]); }, {passive:false});
+
+GAME COMPLETENESS:
+- Start screen with title + controls hint
+- requestAnimationFrame game loop
+- Score or progress display (large, readable on small screens)
+- Game over screen + restart on tap/click/SPACE
+- Max 3 colors. Minimum font size 16px for any text.`;
 
 export async function OPTIONS() {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -83,17 +95,16 @@ export async function POST(request: Request) {
             };
 
             try {
-                // ══ FASE 1: R1 DISEÑA ══════════════════════════════════════════════
-                send({ type: 'phase', phase: 'design', msg: 'R1 diseñando el juego...' });
+                // ── FASE 1: DISEÑO (razonamiento) ─────────────────────────────────
+                send({ type: 'phase', phase: 'design' });
 
                 const planRes = await deepseek.chat.completions.create({
                     model: 'deepseek-reasoner',
                     messages: [
-                        { role: 'system', content: R1_SYSTEM },
+                        { role: 'system', content: DESIGN_SYSTEM },
                         { role: 'user', content: `Elements: ${triggers.join(', ')}` },
                     ],
                     max_tokens: 400,
-                    // R1 no tiene temperature — usa su propio razonamiento
                 });
 
                 const raw = planRes.choices[0].message.content || '{}';
@@ -102,52 +113,54 @@ export async function POST(request: Request) {
                     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
                     plan = JSON.parse(cleaned);
                 } catch {
-                    // Si R1 no devolvió JSON válido, construimos un plan mínimo
                     plan = {
                         title: triggers.join(' & '),
-                        mechanic: `Juego con ${triggers.join(', ')}`,
-                        controls: 'Flechas o WASD para mover, SPACE para acción',
-                        winCondition: 'Sobrevivir el mayor tiempo posible',
-                        style: 'dark minimal pixel',
+                        mechanic: `Game combining ${triggers.join(', ')}`,
+                        controls: 'Tap or click to play',
+                        winCondition: 'Survive as long as possible',
+                        style: 'dark minimal',
                     };
                 }
 
                 send({ type: 'plan', content: plan });
 
-                // ══ FASE 2: V3 CODEA ═══════════════════════════════════════════════
-                send({ type: 'phase', phase: 'code', msg: 'V3 compilando el código...' });
+                // ── FASE 2: CÓDIGO (streaming) ────────────────────────────────────
+                send({ type: 'phase', phase: 'code' });
 
                 const codeStream = await deepseek.chat.completions.create({
                     model: 'deepseek-chat',
                     messages: [
-                        { role: 'system', content: V3_SYSTEM },
+                        { role: 'system', content: CODE_SYSTEM },
                         {
                             role: 'user',
-                            content: `Game design:\nTitle: ${plan.title}\nMechanic: ${plan.mechanic}\nControls: ${plan.controls}\nWin: ${plan.winCondition}\nStyle: ${plan.style || 'dark minimal'}\n\nWrite the complete HTML.`,
+                            content: [
+                                `Game design:`,
+                                `Title: ${plan.title}`,
+                                `Mechanic: ${plan.mechanic}`,
+                                `Controls: ${plan.controls}`,
+                                `Win: ${plan.winCondition}`,
+                                `Style: ${plan.style || 'dark minimal'}`,
+                                ``,
+                                `Write the complete HTML file now.`,
+                            ].join('\n'),
                         },
                     ],
-                    max_tokens: 2400,
-                    temperature: 0.25,
+                    max_tokens: 2600,
+                    temperature: 0.2,
                     stream: true,
                 });
 
                 for await (const chunk of codeStream) {
                     const content = chunk.choices[0]?.delta?.content || '';
                     if (content) send({ type: 'code', content });
-
-                    if (chunk.choices[0]?.finish_reason) {
-                        send({ type: 'done' });
-                    }
+                    if (chunk.choices[0]?.finish_reason) send({ type: 'done' });
                 }
 
-                // Red de seguridad: done al final del loop
-                send({ type: 'done' });
+                send({ type: 'done' }); // red de seguridad
 
             } catch (err) {
                 logger.error('gamegen error:', err);
-                // done de todas formas para que el cliente no quede colgado
-                send({ type: 'done' });
-                send({ type: 'error', msg: err instanceof Error ? err.message : 'Error interno.' });
+                send({ type: 'done' }); // el cliente finaliza con lo que tenga
             } finally {
                 try { controller.close(); } catch { /* ya cerrado */ }
             }
