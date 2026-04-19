@@ -18,29 +18,897 @@ const CORS_HEADERS = {
 
 // ── Templates (Steven Straker — MIT license) ────────────────────────────
 // https://github.com/straker — minimal canvas games, educational, open source
-const TEMPLATES: Record<string, { url: string; genre: string; description: string }> = {
+// Hardcoded to avoid runtime fetch failures in serverless environments
+
+const TEMPLATE_SNAKE = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Basic Snake HTML Game</title>
+  <meta charset="UTF-8">
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  canvas {
+    border: 1px solid white;
+  }
+  </style>
+</head>
+<body>
+<canvas width="400" height="400" id="game"></canvas>
+<script>
+var canvas = document.getElementById('game');
+var context = canvas.getContext('2d');
+
+var grid = 16;
+var count = 0;
+
+var snake = {
+  x: 160,
+  y: 160,
+  dx: grid,
+  dy: 0,
+  cells: [],
+  maxCells: 4
+};
+var apple = {
+  x: 320,
+  y: 320
+};
+
+function getRandomInt(min, max) {
+  return Math.floor(Math.random() * (max - min)) + min;
+}
+
+function loop() {
+  requestAnimationFrame(loop);
+
+  if (++count < 4) {
+    return;
+  }
+
+  count = 0;
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  snake.x += snake.dx;
+  snake.y += snake.dy;
+
+  if (snake.x < 0) {
+    snake.x = canvas.width - grid;
+  }
+  else if (snake.x >= canvas.width) {
+    snake.x = 0;
+  }
+
+  if (snake.y < 0) {
+    snake.y = canvas.height - grid;
+  }
+  else if (snake.y >= canvas.height) {
+    snake.y = 0;
+  }
+
+  snake.cells.unshift({x: snake.x, y: snake.y});
+
+  if (snake.cells.length > snake.maxCells) {
+    snake.cells.pop();
+  }
+
+  context.fillStyle = 'red';
+  context.fillRect(apple.x, apple.y, grid-1, grid-1);
+
+  context.fillStyle = 'green';
+  snake.cells.forEach(function(cell, index) {
+
+    context.fillRect(cell.x, cell.y, grid-1, grid-1);
+
+    if (cell.x === apple.x && cell.y === apple.y) {
+      snake.maxCells++;
+
+      apple.x = getRandomInt(0, 25) * grid;
+      apple.y = getRandomInt(0, 25) * grid;
+    }
+
+    for (var i = index + 1; i < snake.cells.length; i++) {
+
+      if (cell.x === snake.cells[i].x && cell.y === snake.cells[i].y) {
+        snake.x = 160;
+        snake.y = 160;
+        snake.cells = [];
+        snake.maxCells = 4;
+        snake.dx = grid;
+        snake.dy = 0;
+
+        apple.x = getRandomInt(0, 25) * grid;
+        apple.y = getRandomInt(0, 25) * grid;
+      }
+    }
+  });
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.which === 37 && snake.dx === 0) {
+    snake.dx = -grid;
+    snake.dy = 0;
+  }
+  else if (e.which === 38 && snake.dy === 0) {
+    snake.dy = -grid;
+    snake.dx = 0;
+  }
+  else if (e.which === 39 && snake.dx === 0) {
+    snake.dx = grid;
+    snake.dy = 0;
+  }
+  else if (e.which === 40 && snake.dy === 0) {
+    snake.dy = grid;
+    snake.dx = 0;
+  }
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>`;
+
+const TEMPLATE_BREAKOUT = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Basic Breakout HTML Game</title>
+  <meta charset="UTF-8">
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  </style>
+</head>
+<body>
+<canvas width="400" height="500" id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const context = canvas.getContext('2d');
+
+const level1 = [
+  [],
+  [],
+  [],
+  [],
+  [],
+  [],
+  ['R','R','R','R','R','R','R','R','R','R','R','R','R','R'],
+  ['R','R','R','R','R','R','R','R','R','R','R','R','R','R'],
+  ['O','O','O','O','O','O','O','O','O','O','O','O','O','O'],
+  ['O','O','O','O','O','O','O','O','O','O','O','O','O','O'],
+  ['G','G','G','G','G','G','G','G','G','G','G','G','G','G'],
+  ['G','G','G','G','G','G','G','G','G','G','G','G','G','G'],
+  ['Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y'],
+  ['Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y','Y']
+];
+
+const colorMap = {
+  'R': 'red',
+  'O': 'orange',
+  'G': 'green',
+  'Y': 'yellow'
+};
+
+const brickGap = 2;
+const brickWidth = 25;
+const brickHeight = 12;
+
+const wallSize = 12;
+const bricks = [];
+
+for (let row = 0; row < level1.length; row++) {
+  for (let col = 0; col < level1[row].length; col++) {
+    const colorCode = level1[row][col];
+
+    bricks.push({
+      x: wallSize + (brickWidth + brickGap) * col,
+      y: wallSize + (brickHeight + brickGap) * row,
+      color: colorMap[colorCode],
+      width: brickWidth,
+      height: brickHeight
+    });
+  }
+}
+
+const paddle = {
+  x: canvas.width / 2 - brickWidth / 2,
+  y: 440,
+  width: brickWidth,
+  height: brickHeight,
+  dx: 0
+};
+
+const ball = {
+  x: 130,
+  y: 260,
+  width: 5,
+  height: 5,
+  speed: 2,
+  dx: 0,
+  dy: 0
+};
+
+function collides(obj1, obj2) {
+  return obj1.x < obj2.x + obj2.width &&
+         obj1.x + obj1.width > obj2.x &&
+         obj1.y < obj2.y + obj2.height &&
+         obj1.y + obj1.height > obj2.y;
+}
+
+function loop() {
+  requestAnimationFrame(loop);
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  paddle.x += paddle.dx;
+
+  if (paddle.x < wallSize) {
+    paddle.x = wallSize;
+  }
+  else if (paddle.x + brickWidth > canvas.width - wallSize) {
+    paddle.x = canvas.width - wallSize - brickWidth;
+  }
+
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  if (ball.x < wallSize) {
+    ball.x = wallSize;
+    ball.dx *= -1;
+  }
+  else if (ball.x + ball.width > canvas.width - wallSize) {
+    ball.x = canvas.width - wallSize - ball.width;
+    ball.dx *= -1;
+  }
+  if (ball.y < wallSize) {
+    ball.y = wallSize;
+    ball.dy *= -1;
+  }
+
+  if (ball.y > canvas.height) {
+    ball.x = 130;
+    ball.y = 260;
+    ball.dx = 0;
+    ball.dy = 0;
+  }
+
+  if (collides(ball, paddle)) {
+    ball.dy *= -1;
+    ball.y = paddle.y - ball.height;
+  }
+
+  for (let i = 0; i < bricks.length; i++) {
+    const brick = bricks[i];
+
+    if (collides(ball, brick)) {
+      bricks.splice(i, 1);
+
+      if (ball.y + ball.height - ball.speed <= brick.y ||
+          ball.y >= brick.y + brick.height - ball.speed) {
+        ball.dy *= -1;
+      }
+      else {
+        ball.dx *= -1;
+      }
+
+      break;
+    }
+  }
+
+  context.fillStyle = 'lightgrey';
+  context.fillRect(0, 0, canvas.width, wallSize);
+  context.fillRect(0, 0, wallSize, canvas.height);
+  context.fillRect(canvas.width - wallSize, 0, wallSize, canvas.height);
+
+  if (ball.dx || ball.dy) {
+    context.fillRect(ball.x, ball.y, ball.width, ball.height);
+  }
+
+  bricks.forEach(function(brick) {
+    context.fillStyle = brick.color;
+    context.fillRect(brick.x, brick.y, brick.width, brick.height);
+  });
+
+  context.fillStyle = 'cyan';
+  context.fillRect(paddle.x, paddle.y, paddle.width, paddle.height);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.which === 37) {
+    paddle.dx = -3;
+  }
+  else if (e.which === 39) {
+    paddle.dx = 3;
+  }
+
+  if (ball.dx === 0 && ball.dy === 0 && e.which === 32) {
+    ball.dx = ball.speed;
+    ball.dy = ball.speed;
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  if (e.which === 37 || e.which === 39) {
+    paddle.dx = 0;
+  }
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>`;
+
+const TEMPLATE_PONG = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Basic Pong HTML Game</title>
+  <meta charset="UTF-8">
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  </style>
+</head>
+<body>
+<canvas width="750" height="585" id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const context = canvas.getContext('2d');
+const grid = 15;
+const paddleHeight = grid * 5;
+const maxPaddleY = canvas.height - grid - paddleHeight;
+
+var paddleSpeed = 6;
+var ballSpeed = 5;
+
+const leftPaddle = {
+  x: grid * 2,
+  y: canvas.height / 2 - paddleHeight / 2,
+  width: grid,
+  height: paddleHeight,
+  dy: 0
+};
+const rightPaddle = {
+  x: canvas.width - grid * 3,
+  y: canvas.height / 2 - paddleHeight / 2,
+  width: grid,
+  height: paddleHeight,
+  dy: 0
+};
+const ball = {
+  x: canvas.width / 2,
+  y: canvas.height / 2,
+  width: grid,
+  height: grid,
+  resetting: false,
+  dx: ballSpeed,
+  dy: -ballSpeed
+};
+
+function collides(obj1, obj2) {
+  return obj1.x < obj2.x + obj2.width &&
+         obj1.x + obj1.width > obj2.x &&
+         obj1.y < obj2.y + obj2.height &&
+         obj1.y + obj1.height > obj2.y;
+}
+
+function loop() {
+  requestAnimationFrame(loop);
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  leftPaddle.y += leftPaddle.dy;
+  rightPaddle.y += rightPaddle.dy;
+
+  if (leftPaddle.y < grid) {
+    leftPaddle.y = grid;
+  }
+  else if (leftPaddle.y > maxPaddleY) {
+    leftPaddle.y = maxPaddleY;
+  }
+
+  if (rightPaddle.y < grid) {
+    rightPaddle.y = grid;
+  }
+  else if (rightPaddle.y > maxPaddleY) {
+    rightPaddle.y = maxPaddleY;
+  }
+
+  context.fillStyle = 'white';
+  context.fillRect(leftPaddle.x, leftPaddle.y, leftPaddle.width, leftPaddle.height);
+  context.fillRect(rightPaddle.x, rightPaddle.y, rightPaddle.width, rightPaddle.height);
+
+  ball.x += ball.dx;
+  ball.y += ball.dy;
+
+  if (ball.y < grid) {
+    ball.y = grid;
+    ball.dy *= -1;
+  }
+  else if (ball.y + grid > canvas.height - grid) {
+    ball.y = canvas.height - grid * 2;
+    ball.dy *= -1;
+  }
+
+  if ((ball.x < 0 || ball.x > canvas.width) && !ball.resetting) {
+    ball.resetting = true;
+
+    setTimeout(() => {
+      ball.resetting = false;
+      ball.x = canvas.width / 2;
+      ball.y = canvas.height / 2;
+    }, 400);
+  }
+
+  if (collides(ball, leftPaddle)) {
+    ball.dx *= -1;
+    ball.x = leftPaddle.x + leftPaddle.width;
+  }
+  else if (collides(ball, rightPaddle)) {
+    ball.dx *= -1;
+    ball.x = rightPaddle.x - ball.width;
+  }
+
+  context.fillRect(ball.x, ball.y, ball.width, ball.height);
+
+  context.fillStyle = 'lightgrey';
+  context.fillRect(0, 0, canvas.width, grid);
+  context.fillRect(0, canvas.height - grid, canvas.width, canvas.height);
+
+  for (let i = grid; i < canvas.height - grid; i += grid * 2) {
+    context.fillRect(canvas.width / 2 - grid / 2, i, grid, grid);
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.which === 38) {
+    rightPaddle.dy = -paddleSpeed;
+  }
+  else if (e.which === 40) {
+    rightPaddle.dy = paddleSpeed;
+  }
+
+  if (e.which === 87) {
+    leftPaddle.dy = -paddleSpeed;
+  }
+  else if (e.which === 83) {
+    leftPaddle.dy = paddleSpeed;
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  if (e.which === 38 || e.which === 40) {
+    rightPaddle.dy = 0;
+  }
+
+  if (e.which === 83 || e.which === 87) {
+    leftPaddle.dy = 0;
+  }
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>`;
+
+const TEMPLATE_DOODLE_JUMP = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Basic Doodle Jump HTML Game</title>
+  <meta charset="UTF-8">
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  canvas {
+    border: 1px solid black;
+  }
+  </style>
+</head>
+<body>
+<canvas width="375" height="667" id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const context = canvas.getContext('2d');
+
+const platformWidth = 65;
+const platformHeight = 20;
+const platformStart = canvas.height - 50;
+
+const gravity = 0.33;
+const drag = 0.3;
+const bounceVelocity = -12.5;
+
+let minPlatformSpace = 15;
+let maxPlatformSpace = 20;
+
+let platforms = [{
+  x: canvas.width / 2 - platformWidth / 2,
+  y: platformStart
+}];
+
+function random(min, max) {
+  return Math.random() * (max - min) + min;
+}
+
+let y = platformStart;
+while (y > 0) {
+  y -= platformHeight + random(minPlatformSpace, maxPlatformSpace);
+
+  let x;
+  do {
+    x = random(25, canvas.width - 25 - platformWidth);
+  } while (
+    y > canvas.height / 2 &&
+    x > canvas.width / 2 - platformWidth * 1.5 &&
+    x < canvas.width / 2 + platformWidth / 2
+  );
+
+  platforms.push({ x, y });
+}
+
+const doodle = {
+  width: 40,
+  height: 60,
+  x: canvas.width / 2 - 20,
+  y: platformStart - 60,
+  dx: 0,
+  dy: 0
+};
+
+let playerDir = 0;
+let keydown = false;
+let prevDoodleY = doodle.y;
+
+function loop() {
+  requestAnimationFrame(loop);
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  doodle.dy += gravity;
+
+  if (doodle.y < canvas.height / 2 && doodle.dy < 0) {
+    platforms.forEach(function(platform) {
+      platform.y += -doodle.dy;
+    });
+
+    while (platforms[platforms.length - 1].y > 0) {
+      platforms.push({
+        x: random(25, canvas.width - 25 - platformWidth),
+        y: platforms[platforms.length - 1].y - (platformHeight + random(minPlatformSpace, maxPlatformSpace))
+      });
+
+      minPlatformSpace += 0.5;
+      maxPlatformSpace += 0.5;
+
+      maxPlatformSpace = Math.min(maxPlatformSpace, canvas.height / 2);
+    }
+  }
+  else {
+    doodle.y += doodle.dy;
+  }
+
+  if (!keydown) {
+    if (playerDir < 0) {
+      doodle.dx += drag;
+
+      if (doodle.dx > 0) {
+        doodle.dx = 0;
+        playerDir = 0;
+      }
+    }
+    else if (playerDir > 0) {
+      doodle.dx -= drag;
+
+      if (doodle.dx < 0) {
+        doodle.dx = 0;
+        playerDir = 0;
+      }
+    }
+  }
+
+  doodle.x += doodle.dx;
+
+  if (doodle.x + doodle.width < 0) {
+    doodle.x = canvas.width;
+  }
+  else if (doodle.x > canvas.width) {
+    doodle.x = -doodle.width;
+  }
+
+  context.fillStyle = 'green';
+  platforms.forEach(function(platform) {
+    context.fillRect(platform.x, platform.y, platformWidth, platformHeight);
+
+    if (
+      doodle.dy > 0 &&
+      prevDoodleY + doodle.height <= platform.y &&
+      doodle.x < platform.x + platformWidth &&
+      doodle.x + doodle.width > platform.x &&
+      doodle.y < platform.y + platformHeight &&
+      doodle.y + doodle.height > platform.y
+    ) {
+      doodle.y = platform.y - doodle.height;
+      doodle.dy = bounceVelocity;
+    }
+  });
+
+  context.fillStyle = 'yellow';
+  context.fillRect(doodle.x, doodle.y, doodle.width, doodle.height);
+
+  prevDoodleY = doodle.y;
+
+  platforms = platforms.filter(function(platform) {
+    return platform.y < canvas.height;
+  });
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.which === 37) {
+    keydown = true;
+    playerDir = -1;
+    doodle.dx = -3;
+  }
+  else if (e.which === 39) {
+    keydown = true;
+    playerDir = 1;
+    doodle.dx = 3;
+  }
+});
+
+document.addEventListener('keyup', function(e) {
+  keydown = false;
+});
+
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>`;
+
+const TEMPLATE_HELICOPTER = `<!DOCTYPE html>
+<html>
+<head>
+  <title>Basic Helicopter HTML Game</title>
+  <meta charset="UTF-8">
+  <style>
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  </style>
+</head>
+<body>
+<canvas width="800" height="550" id="game"></canvas>
+<script>
+const canvas = document.getElementById('game');
+const context = canvas.getContext('2d');
+
+const minTunnelWidth = 400;
+const maxTunnelWidth = canvas.width;
+const minHeight = 10;
+const maxHeight = 100;
+
+const obstacleWidth = 65;
+const obstacleHeight = 135;
+
+const moveSpeed = 7;
+const gravity = 0.35;
+
+let spacePressed = false;
+
+function clamp(num, min, max) {
+  return Math.min( Math.max(min, num), max);
+}
+
+function randInt(min, max) {
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+const helicopter = {
+  x: 200,
+  y: 100,
+  width: 100,
+  height: 60,
+  dy: 0,
+  ddy: 0
+};
+
+let tunnels = [{
+  x: 0,
+  width: canvas.width,
+  start: 50,
+  end: 50
+},
+{
+  x: canvas.width,
+  width: randInt(minTunnelWidth, maxTunnelWidth),
+  start: 50,
+  end: randInt(minHeight, maxHeight)
+}];
+
+let obstacles = [{
+  x: canvas.width,
+  y: canvas.height / 2
+},
+{
+  x: canvas.width * 2,
+  y: canvas.height / 2
+}];
+
+const wallColor = 'green';
+context.fillStyle = wallColor;
+context.fillRect(0, 0, 1, 1);
+
+const wallData = context.getImageData(0, 0, 1, 1);
+const [ wallRed, wallGreen, wallBlue ] = wallData.data;
+
+let rAF;
+function loop() {
+  rAF = requestAnimationFrame(loop);
+  context.clearRect(0,0,canvas.width,canvas.height);
+
+  if (spacePressed) {
+    helicopter.ddy = -0.7;
+  }
+  else {
+    helicopter.ddy = 0;
+  }
+
+  helicopter.dy += helicopter.ddy + gravity;
+  helicopter.dy = clamp(helicopter.dy, -8, 8);
+  helicopter.y += helicopter.dy;
+
+  context.fillStyle = 'white';
+  context.fillRect(helicopter.x, helicopter.y, helicopter.width, helicopter.height);
+
+  context.fillStyle = 'green';
+  tunnels.forEach((tunnel, index) => {
+    tunnel.x -= moveSpeed;
+
+    if (
+      index === tunnels.length - 1 &&
+      tunnel.x + tunnel.width <= canvas.width
+    ) {
+      tunnels.push({
+        x: tunnel.x + tunnel.width,
+        width: randInt(minTunnelWidth, maxTunnelWidth),
+        start: tunnel.end,
+        end: randInt(minHeight, maxHeight)
+      });
+    }
+
+    context.beginPath();
+    context.moveTo(tunnel.x, 0);
+    context.lineTo(tunnel.x, tunnel.start);
+    context.lineTo(tunnel.x + tunnel.width, tunnel.end);
+    context.lineTo(tunnel.x + tunnel.width, 0);
+    context.closePath();
+    context.fill();
+
+    context.beginPath();
+    context.moveTo(tunnel.x, canvas.height);
+    context.lineTo(tunnel.x, tunnel.start + 450);
+    context.lineTo(tunnel.x + tunnel.width, tunnel.end + 450);
+    context.lineTo(tunnel.x + tunnel.width, canvas.height);
+    context.closePath();
+    context.fill();
+  });
+
+  obstacles.forEach((obstacle, index) => {
+    obstacle.x -= moveSpeed;
+    context.fillRect(obstacle.x, obstacle.y, obstacleWidth, obstacleHeight);
+
+    if (
+      index === obstacles.length - 1 &&
+      obstacle.x + obstacleWidth <= canvas.width
+    ) {
+      obstacles.push({
+        x: canvas.width * 2,
+        y: randInt(maxHeight + 50, canvas.height - obstacleHeight - maxHeight - 50)
+      });
+    }
+  });
+
+  tunnels = tunnels.filter(tunnel => tunnel.x + tunnel.width > 0);
+  obstacles = obstacles.filter(obstacle => obstacle.x + obstacleWidth > 0);
+
+  const { data } = context.getImageData(helicopter.x, helicopter.y, helicopter.width, helicopter.height);
+
+  for (let i = 0; i < data.length; i += 4) {
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+
+    if (r === wallRed && g === wallGreen && b === wallBlue) {
+      context.strokeStyle = 'red';
+      context.setLineDash([5, 15]);
+      context.lineWidth = 4;
+
+      context.beginPath();
+      context.arc(helicopter.x + helicopter.width / 2, helicopter.y + helicopter.height / 2, helicopter.width, 0, 2 * Math.PI);
+      context.stroke();
+
+      cancelAnimationFrame(rAF);
+    }
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.code === 'Space') {
+    spacePressed = true;
+  }
+});
+document.addEventListener('keyup', function(e) {
+  if (e.code === 'Space') {
+    spacePressed = false;
+  }
+});
+
+rAF = requestAnimationFrame(loop);
+</script>
+</body>
+</html>`;
+
+const TEMPLATES: Record<string, { code: string; genre: string; description: string }> = {
     snake: {
-        url: 'https://gist.githubusercontent.com/straker/ff00b4b49669ad3dec890306d348adc4/raw/snake.html',
+        code: TEMPLATE_SNAKE,
         genre: 'arcade',
         description: 'Snake that grows eating food, avoid walls and itself. Arrow keys.',
     },
     breakout: {
-        url: 'https://gist.githubusercontent.com/straker/98a2aed6a7686d26c04810f08bfaf66b/raw/breakout.html',
+        code: TEMPLATE_BREAKOUT,
         genre: 'arcade',
-        description: 'Bounce a ball to break bricks. Mouse/keyboard paddle.',
+        description: 'Bounce a ball to break bricks. Mouse/keyboard paddle. Space to launch.',
     },
     pong: {
-        url: 'https://gist.githubusercontent.com/straker/81b59eecf70da93af396f963596dfdc5/raw/pong.html',
+        code: TEMPLATE_PONG,
         genre: 'arcade',
-        description: 'Classic Pong: player vs AI, bounce ball back and forth.',
+        description: 'Classic Pong: player vs AI, bounce ball back and forth. Arrow keys + W/S.',
     },
     'doodle-jump': {
-        url: 'https://gist.githubusercontent.com/straker/b96a4a68bd6d79cf75a833d98a2b654f/raw/doodle-jump.html',
+        code: TEMPLATE_DOODLE_JUMP,
         genre: 'platformer',
         description: 'Jump upward on platforms infinitely. Arrow keys. Score = height.',
     },
     helicopter: {
-        url: 'https://gist.githubusercontent.com/straker/0d25ae9d235f6a62f8287fd36a097043/raw/helicopter.html',
+        code: TEMPLATE_HELICOPTER,
         genre: 'endless',
         description: 'Fly helicopter through cave obstacles. Hold space/click to go up.',
     },
@@ -87,14 +955,6 @@ RULES:
    (Only if canvas is square — for non-square games, resize only width proportionally)
 5. Show the custom title on the start screen.
 6. Keep the code compact. Do not add comments unless already present.`;
-
-async function fetchTemplate(name: string): Promise<string> {
-    const tmpl = TEMPLATES[name];
-    if (!tmpl) throw new Error(`Template "${name}" not found.`);
-    const res = await fetch(tmpl.url, { signal: AbortSignal.timeout(8000) });
-    if (!res.ok) throw new Error(`Failed to fetch template "${name}": ${res.status}`);
-    return await res.text();
-}
 
 export async function OPTIONS() {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -161,14 +1021,10 @@ export async function POST(request: Request) {
 
                 send({ type: 'plan', content: { title: plan.title, template: plan.template, changes: plan.changes } });
 
-                // ── DESCARGA DEL TEMPLATE ──────────────────────────────────────────
-                send({ type: 'phase', phase: 'fetch' });
-
-                const templateCode = await fetchTemplate(plan.template);
-
                 // ── FASE 2: V3 aplica los cambios en streaming ────────────────────
                 send({ type: 'phase', phase: 'code' });
 
+                const templateCode = TEMPLATES[plan.template].code;
                 const changesText = plan.changes.map((c, i) => `${i + 1}. ${c}`).join('\n');
 
                 const codeStream = await deepseek.chat.completions.create({
