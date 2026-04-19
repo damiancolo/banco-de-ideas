@@ -995,12 +995,13 @@ export async function POST(request: Request) {
                 send({ type: 'phase', phase: 'design' });
 
                 const planRes = await deepseek.chat.completions.create({
-                    model: 'deepseek-reasoner',
+                    model: 'deepseek-chat',
                     messages: [
                         { role: 'system', content: DESIGN_SYSTEM },
                         { role: 'user', content: `Elements: ${triggers.join(', ')}` },
                     ],
-                    max_tokens: 500,
+                    max_tokens: 800,
+                    temperature: 0.7,
                 });
 
                 const raw = planRes.choices[0].message.content || '{}';
@@ -1009,15 +1010,19 @@ export async function POST(request: Request) {
                     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
                     plan = JSON.parse(cleaned);
                 } catch {
-                    plan = {
-                        template: 'snake',
-                        title: triggers.join(' & '),
-                        changes: [`Rename "Snake" to "${triggers[0]}"`, `Change food color to orange`],
-                    };
+                    plan = { template: 'snake', title: '', changes: [] };
                 }
 
-                // Validar que el template existe
+                // Validar campos obligatorios
                 if (!TEMPLATES[plan.template]) plan.template = 'snake';
+                if (!plan.title) plan.title = triggers.join(' & ');
+                if (!Array.isArray(plan.changes) || !plan.changes.length) {
+                    plan.changes = [
+                        `Rename "Snake" to "${triggers[0]}"`,
+                        `Change food color to orange`,
+                        `Add title "${triggers.join(', ')}" on start screen`,
+                    ];
+                }
 
                 send({ type: 'plan', content: { title: plan.title, template: plan.template, changes: plan.changes } });
 
