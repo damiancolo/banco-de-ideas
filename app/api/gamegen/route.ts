@@ -915,7 +915,7 @@ const TEMPLATES: Record<string, { code: string; genre: string; description: stri
 };
 
 // Fase 1: R1 elige el template más apropiado y planifica los cambios
-const DESIGN_SYSTEM = `You are a creative game customizer. Given 3 elements and a list of game templates, choose the best template and plan SPECIFIC changes to theme it around the elements.
+const DESIGN_SYSTEM = `You are a creative game themer. Given 3 elements, pick the best game template and plan a DEEP THEMATIC TRANSFORMATION — not just color swaps, but a full immersive reskin.
 
 Available templates:
 ${Object.entries(TEMPLATES).map(([k, v]) => `- ${k}: ${v.description}`).join('\n')}
@@ -923,38 +923,57 @@ ${Object.entries(TEMPLATES).map(([k, v]) => `- ${k}: ${v.description}`).join('\n
 Respond ONLY with valid JSON (no markdown, no extra text):
 {
   "template": "<template name from list above>",
-  "title": "<creative game title incorporating the elements>",
+  "title": "<punchy game title using the 3 elements>",
+  "theme": "<one sentence: what world/story does this game take place in>",
   "changes": [
-    "<specific change 1: e.g. 'Replace snake color #00ff00 with #ff6b35'>",
-    "<specific change 2: e.g. 'Rename food to [element]'>",
-    "<specific change 3>",
-    "<specific change 4>",
-    "<specific change 5>"
+    "<change 1>",
+    "<change 2>",
+    "<change 3>",
+    "<change 4>",
+    "<change 5>",
+    "<change 6>",
+    "<change 7>",
+    "<change 8>"
   ]
 }
 
-CHANGE RULES:
-- Max 6 changes. Be SPECIFIC (mention exact things to change, not vague instructions).
-- Prefer: color changes, label/text changes, speed tweaks (+20% faster), rename objects.
-- Avoid: structural changes, new game mechanics, adding new systems.
-- The 3 elements must appear in the title and at least 2 changes.`;
-
-// Fase 2: V3 aplica los cambios al template existente
-const EDIT_SYSTEM = `You are a code editor. Your job is to apply a short list of changes to an existing HTML game file.
+HOW TO WRITE CHANGES — be specific and bold:
+- Rename EVERY game object to match the theme (snake→[element1], food→[element2], walls→[element3], paddle→X, ball→Y, bricks→Z, helicopter→A, platforms→B, player→C)
+- Set background color to something evocative of the theme (e.g. '#0a1628' for ocean, '#1a0a00' for fire)
+- Set a DISTINCT color for each renamed object (not just green/red, use themed palette)
+- Add a styled start screen: black overlay, title in large text, theme sentence, "tap or press any key to start"
+- Add a game-over/win screen: thematic message (e.g. "El [element] fue destruido"), score, "tap to restart"
+- Add a live score display in the top corner of the canvas during gameplay
+- Adjust speed or physics to match theme feel (fire = fast, underwater = slow/floaty, space = weightless)
+- One creative extra: trail effect, pulsing glow on objects, thematic particle or emoji drawn on canvas
 
 RULES:
-1. Output ONLY the complete modified HTML. Start with <!DOCTYPE html>. Zero text outside.
-2. Apply ALL the listed changes. Keep everything else IDENTICAL.
-3. Add touch support if missing:
-   - Tap/touchstart = spacebar or primary action
-   - Touch left half of canvas = left arrow; right half = right arrow
-   - Add: canvas.addEventListener('touchstart', e => { e.preventDefault(); ... }, {passive:false})
-4. Make canvas responsive: add this after canvas is created:
-   function resizeCanvas() { const s = Math.min(400, window.innerWidth - 16); canvas.width = s; canvas.height = s; }
-   window.addEventListener('resize', resizeCanvas); resizeCanvas();
-   (Only if canvas is square — for non-square games, resize only width proportionally)
-5. Show the custom title on the start screen.
-6. Keep the code compact. Do not add comments unless already present.`;
+- All 3 elements must appear in object names, title, or screens
+- Every change must be implementable with canvas 2D API and vanilla JS only
+- No external libraries, no audio`;
+
+// Fase 2: V3 aplica la transformación temática al template
+const EDIT_SYSTEM = `You are a creative game developer. Transform an existing HTML canvas game into a fully themed experience based on the instructions. The result must feel like a completely different game skin, not just a color change.
+
+RULES:
+1. Output ONLY the complete modified HTML. Start with <!DOCTYPE html>. Zero text outside the HTML.
+2. Apply ALL listed changes faithfully and creatively.
+3. RENAME every in-game object as specified (variables, draw labels, screen text).
+4. START SCREEN: before the game loop starts, draw a full-canvas overlay with:
+   - Background fill matching the theme color
+   - Game title in large bold text (center)
+   - Theme sentence in smaller text below
+   - "Tap or press any key to start" at the bottom
+   - On keydown or touchstart: hide overlay and start game
+5. GAME OVER SCREEN: when game ends, draw overlay with thematic message and score. Tap/key to restart.
+6. SCORE: draw score text directly on canvas each frame (top-left or top-right corner).
+7. TOUCH SUPPORT:
+   - touchstart = spacebar / primary action
+   - touch left half = left arrow; right half = right arrow
+   - use passive:false to prevent scroll
+8. RESPONSIVE CANVAS: after canvas creation add resize logic. For square canvas: min(480, innerWidth-16). For wide canvas: scale width proportionally keeping aspect ratio.
+9. Keep code compact and working. No external libraries. No audio.
+10. The game must be fully playable and the theme must be unmistakably visible.`;
 
 export async function OPTIONS() {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -1005,26 +1024,29 @@ export async function POST(request: Request) {
                 });
 
                 const raw = planRes.choices[0].message.content || '{}';
-                let plan: { template: string; title: string; changes: string[] };
+                let plan: { template: string; title: string; theme: string; changes: string[] };
                 try {
                     const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
                     plan = JSON.parse(cleaned);
                 } catch {
-                    plan = { template: 'snake', title: '', changes: [] };
+                    plan = { template: 'snake', title: '', theme: '', changes: [] };
                 }
 
                 // Validar campos obligatorios
                 if (!TEMPLATES[plan.template]) plan.template = 'snake';
                 if (!plan.title) plan.title = triggers.join(' & ');
+                if (!plan.theme) plan.theme = `Un mundo donde ${triggers.join(', ')} cobran vida`;
                 if (!Array.isArray(plan.changes) || !plan.changes.length) {
                     plan.changes = [
-                        `Rename "Snake" to "${triggers[0]}"`,
-                        `Change food color to orange`,
-                        `Add title "${triggers.join(', ')}" on start screen`,
+                        `Rename "Snake" to "${triggers[0]}", food to "${triggers[1]}", walls to "${triggers[2]}"`,
+                        `Set background to dark themed color`,
+                        `Add start screen with title and theme`,
+                        `Add game-over screen with thematic message`,
+                        `Add score display on canvas`,
                     ];
                 }
 
-                send({ type: 'plan', content: { title: plan.title, template: plan.template, changes: plan.changes } });
+                send({ type: 'plan', content: { title: plan.title, theme: plan.theme, template: plan.template, changes: plan.changes } });
 
                 // ── FASE 2: V3 aplica los cambios en streaming ────────────────────
                 send({ type: 'phase', phase: 'code' });
@@ -1040,8 +1062,10 @@ export async function POST(request: Request) {
                             role: 'user',
                             content: [
                                 `Game title: "${plan.title}"`,
+                                `Theme/world: "${plan.theme}"`,
+                                `Elements: ${triggers.join(', ')}`,
                                 ``,
-                                `Changes to apply:`,
+                                `Transformation plan:`,
                                 changesText,
                                 ``,
                                 `Original game code:`,
@@ -1049,12 +1073,12 @@ export async function POST(request: Request) {
                                 templateCode,
                                 `\`\`\``,
                                 ``,
-                                `Output the complete modified HTML file.`,
+                                `Output the complete transformed HTML file. Make it unmistakably themed.`,
                             ].join('\n'),
                         },
                     ],
-                    max_tokens: 2800,
-                    temperature: 0.15,
+                    max_tokens: 4000,
+                    temperature: 0.2,
                     stream: true,
                 });
 
