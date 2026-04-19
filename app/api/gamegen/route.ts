@@ -3,7 +3,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 import { logger } from '@/lib/logger';
 
-export const maxDuration = 90;
+export const maxDuration = 60;
 
 const deepseek = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY!,
@@ -16,34 +16,24 @@ const CORS_HEADERS = {
     'Access-Control-Allow-Headers': 'Content-Type',
 };
 
-const PLAN_SYSTEM = `Eres un diseñador de videojuegos experto. Dado un conjunto de elementos/disparadores, diseña un juego de navegador simple pero ingenioso y divertido.
+// Prompt diseñado para generar juegos CORTOS y COMPLETOS en una sola pasada.
+// Límite de 150 líneas → ~1800 tokens → termina en ~25-35s.
+const SYSTEM = `You are an expert browser game developer. Create a complete, playable HTML5 game.
 
-Responde ÚNICAMENTE con JSON válido (sin markdown, sin texto fuera del JSON), con esta estructura exacta:
-{
-  "titulo": "nombre del juego",
-  "genero": "género breve (ej: arcade, puzzle, plataformas, estrategia, acción)",
-  "mecanica_central": "descripción de la mecánica principal en 1-2 oraciones claras",
-  "objetivo": "qué debe hacer el jugador para ganar o progresar",
-  "controles": "descripción de controles (teclado/mouse/táctil)",
-  "estetica": "descripción de la estética visual, paleta de 3-4 colores específicos (ej: negro, blanco, rojo vivo, gris)"
-}
+OUTPUT RULES (strict):
+- Output ONLY the HTML file. Start with <!DOCTYPE html>. Nothing before or after it.
+- The game must work inside an iframe with sandbox="allow-scripts" (no fetch, no localStorage, no external URLs)
+- Use Canvas API (480×480px, centered). Black or dark background.
+- Vanilla JS only. No libraries.
 
-El juego debe ser realizable en vanilla JS con Canvas o DOM puro, en ~150-250 líneas de HTML.`;
+GAME RULES:
+- Under 150 lines of code total. Compact but complete.
+- Must have: start screen (press SPACE or click), game loop (requestAnimationFrame), score, game over + restart
+- 3 colors maximum
+- Show controls on screen
+- Pick the SIMPLEST mechanic that connects all elements. Don't overcomplicate it.
 
-const CODE_SYSTEM = `Eres un experto desarrollador de juegos de navegador con vanilla JS.
-
-Dado un diseño de juego, genera el código HTML/CSS/JS completo y 100% funcional.
-
-REGLAS ABSOLUTAS:
-- Responde SOLO con el HTML (<!DOCTYPE html>...). Cero texto fuera del HTML.
-- El juego debe funcionar inmediatamente al cargarse en un iframe con sandbox="allow-scripts"
-- Usa Canvas API para juegos de acción/arcade/plataformas
-- Usa DOM puro para puzzles/cartas/estrategia por turnos
-- NO uses fetch, localStorage, cookies ni APIs externas (el sandbox los bloquea)
-- Controles bien definidos, feedback visual inmediato, condición clara de victoria/derrota/gameover
-- Paleta limitada a 3-4 colores, estética limpia y legible
-- El código debe estar COMPLETO: game loop, detección de colisiones, puntuación, pantalla de inicio, pantalla de fin
-- Tamaño del canvas/viewport: 480x480 o 600x400 para mejor compatibilidad`;
+Think of the mechanic first (one sentence in a JS comment at the top), then write the code.`;
 
 export async function OPTIONS() {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -59,83 +49,59 @@ export async function POST(request: Request) {
         );
     }
 
-    let triggers: string[], genre: string;
+    let triggers: string[];
     try {
         const body = await request.json();
         triggers = (body.triggers as string[])?.filter((t: string) => t?.trim());
-        genre = body.genre || '';
         if (!triggers?.length) {
-            return Response.json(
-                { error: 'Se requiere al menos un disparador.' },
-                { status: 400, headers: CORS_HEADERS }
-            );
+            return Response.json({ error: 'Se requiere al menos un elemento.' }, { status: 400, headers: CORS_HEADERS });
         }
     } catch {
         return Response.json({ error: 'JSON inválido.' }, { status: 400, headers: CORS_HEADERS });
     }
 
-    const userPrompt = `Elementos/disparadores: ${triggers.join(', ')}${genre ? `\nGénero sugerido: ${genre}` : ''}`;
     const encoder = new TextEncoder();
 
     const stream = new ReadableStream({
         async start(controller) {
             const send = (data: object) => {
-                controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+                try {
+                    controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+                } catch { /* controller ya cerrado */ }
             };
 
             try {
-                // ── FASE 01: ANÁLISIS / PLANIFICACIÓN ──────────────────────────
-                send({ type: 'status', phase: 'plan', msg: 'Analizando disparadores...' });
-
-                const planRes = await deepseek.chat.completions.create({
+                const gameStream = await deepseek.chat.completions.create({
                     model: 'deepseek-chat',
                     messages: [
-                        { role: 'system', content: PLAN_SYSTEM },
-                        { role: 'user', content: userPrompt },
+                        { role: 'system', content: SYSTEM },
+                        { role: 'user', content: `Game elements: ${triggers.join(', ')}` },
                     ],
-                    max_tokens: 600,
-                    temperature: 0.85,
-                });
-
-                const planRaw = planRes.choices[0].message.content || '{}';
-                let plan: Record<string, string>;
-                try {
-                    const cleaned = planRaw.replace(/^```(?:json)?\n?|```$/gm, '').trim();
-                    plan = JSON.parse(cleaned);
-                } catch {
-                    plan = { titulo: 'Juego generado', mecanica_central: planRaw };
-                }
-
-                send({ type: 'plan', content: plan });
-
-                // ── FASE 02: SÍNTESIS / GENERACIÓN DE CÓDIGO ───────────────────
-                send({ type: 'status', phase: 'code', msg: 'Compilando código del juego...' });
-
-                const codeStream = await deepseek.chat.completions.create({
-                    model: 'deepseek-chat',
-                    messages: [
-                        { role: 'system', content: CODE_SYSTEM },
-                        {
-                            role: 'user',
-                            content: `Diseño del juego:\n${JSON.stringify(plan, null, 2)}\n\nGenera el HTML completo y funcional.`,
-                        },
-                    ],
-                    max_tokens: 4096,
-                    temperature: 0.25,
+                    max_tokens: 2200,
+                    temperature: 0.4,
                     stream: true,
                 });
 
-                for await (const chunk of codeStream) {
+                for await (const chunk of gameStream) {
                     const content = chunk.choices[0]?.delta?.content || '';
                     if (content) send({ type: 'code', content });
+
+                    // Si el modelo terminó (finish_reason presente), mandamos done
+                    if (chunk.choices[0]?.finish_reason) {
+                        send({ type: 'done' });
+                    }
                 }
 
+                // Segunda red de seguridad: done al final del for await
                 send({ type: 'done' });
+
             } catch (err) {
-                logger.error('gamegen pipeline error:', err);
-                send({ type: 'error', msg: err instanceof Error ? err.message : 'Error interno del servidor.' });
+                logger.error('gamegen error:', err);
+                // Mandamos done de todas formas para que el cliente finalice con lo que tenga
+                send({ type: 'done' });
+                send({ type: 'error', msg: err instanceof Error ? err.message : 'Error interno.' });
             } finally {
-                controller.close();
+                try { controller.close(); } catch { /* ya cerrado */ }
             }
         },
     });
