@@ -915,65 +915,38 @@ const TEMPLATES: Record<string, { code: string; genre: string; description: stri
 };
 
 // Fase 1: R1 elige el template más apropiado y planifica los cambios
-const DESIGN_SYSTEM = `You are a creative game themer. Given 3 elements, pick the best game template and plan a DEEP THEMATIC TRANSFORMATION — not just color swaps, but a full immersive reskin.
+const DESIGN_SYSTEM = `You are a game themer. Given 3 elements, pick the best template and plan specific thematic changes.
 
 Available templates:
 ${Object.entries(TEMPLATES).map(([k, v]) => `- ${k}: ${v.description}`).join('\n')}
 
-Respond ONLY with valid JSON (no markdown, no extra text):
+Respond ONLY with valid JSON (no markdown):
 {
-  "template": "<template name from list above>",
-  "title": "<punchy game title using the 3 elements>",
-  "theme": "<one sentence: what world/story does this game take place in>",
-  "changes": [
-    "<change 1>",
-    "<change 2>",
-    "<change 3>",
-    "<change 4>",
-    "<change 5>",
-    "<change 6>",
-    "<change 7>",
-    "<change 8>"
-  ]
+  "template": "<name>",
+  "title": "<punchy title using the 3 elements>",
+  "theme": "<one sentence: the story/world of this game>",
+  "changes": ["<change 1>","<change 2>","<change 3>","<change 4>","<change 5>","<change 6>"]
 }
 
-HOW TO WRITE CHANGES — be specific and bold:
-- Rename EVERY game object to match the theme (snake→[element1], food→[element2], walls→[element3], paddle→X, ball→Y, bricks→Z, helicopter→A, platforms→B, player→C)
-- Set background color to something evocative of the theme (e.g. '#0a1628' for ocean, '#1a0a00' for fire)
-- Set a DISTINCT color for each renamed object (not just green/red, use themed palette)
-- Add a styled start screen: black overlay, title in large text, theme sentence, "tap or press any key to start"
-- Add a game-over/win screen: thematic message (e.g. "El [element] fue destruido"), score, "tap to restart"
-- Add a live score display in the top corner of the canvas during gameplay
-- Adjust speed or physics to match theme feel (fire = fast, underwater = slow/floaty, space = weightless)
-- One creative extra: trail effect, pulsing glow on objects, thematic particle or emoji drawn on canvas
-
-RULES:
-- All 3 elements must appear in object names, title, or screens
-- Every change must be implementable with canvas 2D API and vanilla JS only
-- No external libraries, no audio`;
+CHANGE RULES (pick 6, be specific):
+- Rename main player/object to element 1 with a thematic color (hex)
+- Rename food/target/ball/obstacle to element 2 with a thematic color (hex)
+- Rename walls/environment to element 3 with a thematic color (hex)
+- Set canvas background to a dark thematic color (hex)
+- Set title screen text to use the game title and a short theme tagline
+- Adjust one physics value (speed, gravity, etc.) to match the theme feel
+All 3 elements must appear somewhere. Be specific with hex colors and object names.`;
 
 // Fase 2: V3 aplica la transformación temática al template
-const EDIT_SYSTEM = `You are a creative game developer. Transform an existing HTML canvas game into a fully themed experience based on the instructions. The result must feel like a completely different game skin, not just a color change.
+const EDIT_SYSTEM = `You are a game skinner. Apply thematic changes to an HTML canvas game. Be concise — every token matters.
 
-RULES:
-1. Output ONLY the complete modified HTML. Start with <!DOCTYPE html>. Zero text outside the HTML.
-2. Apply ALL listed changes faithfully and creatively.
-3. RENAME every in-game object as specified (variables, draw labels, screen text).
-4. START SCREEN: before the game loop starts, draw a full-canvas overlay with:
-   - Background fill matching the theme color
-   - Game title in large bold text (center)
-   - Theme sentence in smaller text below
-   - "Tap or press any key to start" at the bottom
-   - On keydown or touchstart: hide overlay and start game
-5. GAME OVER SCREEN: when game ends, draw overlay with thematic message and score. Tap/key to restart.
-6. SCORE: draw score text directly on canvas each frame (top-left or top-right corner).
-7. TOUCH SUPPORT:
-   - touchstart = spacebar / primary action
-   - touch left half = left arrow; right half = right arrow
-   - use passive:false to prevent scroll
-8. RESPONSIVE CANVAS: after canvas creation add resize logic. For square canvas: min(480, innerWidth-16). For wide canvas: scale width proportionally keeping aspect ratio.
-9. Keep code compact and working. No external libraries. No audio.
-10. The game must be fully playable and the theme must be unmistakably visible.`;
+RULES (all mandatory):
+1. Output ONLY the full HTML. Start with <!DOCTYPE html>. Nothing outside.
+2. Apply every change in the list. Rename variables and draw calls as specified.
+3. START SCREEN: add var started=false. In loop(), if(!started){draw title overlay; return;}. On keydown+touchstart: started=true.
+4. SCORE: add var score=0. Increment on relevant event. Draw on canvas: ctx.fillText('score:'+score,8,18) each frame.
+5. TOUCH: canvas.addEventListener('touchstart',e=>{e.preventDefault();started=true;/* primary action */},{passive:false}). Left half touch = left arrow, right = right.
+6. Write the most compact valid JS possible. No blank lines, no comments.`;
 
 export async function OPTIONS() {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -1077,7 +1050,7 @@ export async function POST(request: Request) {
                             ].join('\n'),
                         },
                     ],
-                    max_tokens: 4000,
+                    max_tokens: 2500,
                     temperature: 0.2,
                     stream: true,
                 });
