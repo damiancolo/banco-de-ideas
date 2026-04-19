@@ -3,7 +3,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 import { logger } from '@/lib/logger';
 
-export const maxDuration = 90;
+export const maxDuration = 300;
 
 const deepseek = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY!,
@@ -938,15 +938,15 @@ CHANGE RULES (pick 6, be specific):
 All 3 elements must appear somewhere. Be specific with hex colors and object names.`;
 
 // Fase 2: V3 aplica la transformación temática al template
-const EDIT_SYSTEM = `You are a game skinner. Apply thematic changes to an HTML canvas game. Be concise — every token matters.
+const EDIT_SYSTEM = `You are a game skinner. Transform an HTML canvas game into a fully themed version. Output must be complete and playable.
 
-RULES (all mandatory):
+MANDATORY (do all):
 1. Output ONLY the full HTML. Start with <!DOCTYPE html>. Nothing outside.
-2. Apply every change in the list. Rename variables and draw calls as specified.
-3. START SCREEN: add var started=false. In loop(), if(!started){draw title overlay; return;}. On keydown+touchstart: started=true.
-4. SCORE: add var score=0. Increment on relevant event. Draw on canvas: ctx.fillText('score:'+score,8,18) each frame.
-5. TOUCH: canvas.addEventListener('touchstart',e=>{e.preventDefault();started=true;/* primary action */},{passive:false}). Left half touch = left arrow, right = right.
-6. Write the most compact valid JS possible. No blank lines, no comments.`;
+2. Apply every change in the list. Rename variables, colors, and draw labels as specified.
+3. START SCREEN: var started=false. In loop(), if(!started){fill canvas with theme color; draw title bold center; draw tagline; draw "Pulsa tecla / Toca para empezar" small bottom; return;}. keydown+touchstart → started=true.
+4. SCORE: var score=0. Increment on eat/bounce/jump. Draw top-left each frame: context.fillStyle='#fff'; context.font='14px monospace'; context.fillText('score: '+score, 8, 20).
+5. TOUCH: canvas.addEventListener('touchstart',e=>{e.preventDefault(); started=true; spacePressed=true; /* trigger action */},{passive:false}); canvas.addEventListener('touchend',e=>{spacePressed=false;},{passive:false}); Left half touch → left arrow logic, right half → right arrow logic.
+6. No blank lines between functions, no new comments. Keep code compact.`;
 
 export async function OPTIONS() {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -994,13 +994,13 @@ export async function POST(request: Request) {
                     ],
                     max_tokens: 800,
                     temperature: 0.7,
+                    response_format: { type: 'json_object' },
                 });
 
                 const raw = planRes.choices[0].message.content || '{}';
                 let plan: { template: string; title: string; theme: string; changes: string[] };
                 try {
-                    const cleaned = raw.replace(/^```(?:json)?\s*/i, '').replace(/\s*```$/i, '').trim();
-                    plan = JSON.parse(cleaned);
+                    plan = JSON.parse(raw);
                 } catch {
                     plan = { template: 'snake', title: '', theme: '', changes: [] };
                 }
@@ -1050,7 +1050,7 @@ export async function POST(request: Request) {
                             ].join('\n'),
                         },
                     ],
-                    max_tokens: 2500,
+                    max_tokens: 4000,
                     temperature: 0.2,
                     stream: true,
                 });
