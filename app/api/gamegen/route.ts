@@ -3,7 +3,7 @@ import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 import { logger } from '@/lib/logger';
 
-export const maxDuration = 60;
+export const maxDuration = 90;
 
 const deepseek = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY!,
