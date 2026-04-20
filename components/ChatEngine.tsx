@@ -50,12 +50,14 @@ interface ChatEngineProps {
   apiPrefix?: string;
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
+  userName?: string;
 }
 
 export default function ChatEngine({
   apiPrefix = "/api",
   headerSlot,
   footerSlot,
+  userName,
 }: ChatEngineProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -626,6 +628,15 @@ export default function ChatEngine({
     stopRecording();
   };
 
+  const handleColectivizar = async (text: string, mode: 'anon' | 'user') => {
+    const publicText = mode === 'user' && userName ? `[${userName}]: ${text}` : text;
+    await fetch('/api/ideas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: publicText }),
+    });
+  };
+
   return (
     <>
       {headerSlot}
@@ -643,6 +654,9 @@ export default function ChatEngine({
                 content={msg.content}
                 plainText={msg.plainText}
                 onSpeak={msg.role === 'assistant' ? handleTTS : undefined}
+                onColectivizar={msg.role === 'assistant' && apiPrefix === '/api/privado'
+                  ? (mode) => handleColectivizar(msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''), mode)
+                  : undefined}
               />
             ))}
             {(loading || isTranscribing || isSpeaking) && (

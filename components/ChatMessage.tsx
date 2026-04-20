@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 interface ChatMessageProps {
     role: 'user' | 'assistant';
     content: string | React.ReactNode;
     plainText?: string;
     onSpeak?: (text: string) => void;
+    onColectivizar?: (mode: 'anon' | 'user') => Promise<void>;
 }
 
 // Convierte texto inline con **negrita** e *cursiva* a React nodes
@@ -92,8 +93,10 @@ function MarkdownContent({ content }: { content: string }) {
     return <div className="space-y-0.5">{elements}</div>;
 }
 
-export default function ChatMessage({ role, content, plainText, onSpeak }: ChatMessageProps) {
+export default function ChatMessage({ role, content, plainText, onSpeak, onColectivizar }: ChatMessageProps) {
     const isUser = role === 'user';
+    const [showDropdown, setShowDropdown] = useState(false);
+    const [done, setDone] = useState(false);
 
     return (
         <div className={`w-full flex ${isUser ? 'justify-end' : 'justify-start'} animate-in fade-in slide-in-from-bottom-2 duration-500`}>
@@ -119,16 +122,62 @@ export default function ChatMessage({ role, content, plainText, onSpeak }: ChatM
                     )}
                 </div>
 
-                {/* Botón escuchar */}
-                {!isUser && onSpeak && plainText && (
-                    <button
-                        onClick={() => onSpeak(plainText)}
-                        className="self-start p-2 text-gray-400 hover:text-[#C5A47E] hover:bg-white rounded-lg transition-all flex items-center gap-2 text-xs font-medium border border-gray-200 hover:border-[#C5A47E] bg-white/50 hover:shadow-sm"
-                        title="Escuchar mensaje"
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
-                        Escuchar
-                    </button>
+                {/* Botones de acción */}
+                {!isUser && (onSpeak || onColectivizar) && (
+                    <div className="self-start flex items-center gap-2 flex-wrap">
+                        {onSpeak && plainText && (
+                            <button
+                                onClick={() => onSpeak(plainText)}
+                                className="p-2 text-gray-400 hover:text-[#C5A47E] hover:bg-white rounded-lg transition-all flex items-center gap-2 text-xs font-medium border border-gray-200 hover:border-[#C5A47E] bg-white/50 hover:shadow-sm"
+                                title="Escuchar mensaje"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                                Escuchar
+                            </button>
+                        )}
+                        {onColectivizar && (
+                            <div className="relative">
+                                {done ? (
+                                    <span className="p-2 text-green-500 flex items-center gap-2 text-xs font-medium border border-green-200 bg-green-50 rounded-lg">
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                                        Colectivizada
+                                    </span>
+                                ) : (
+                                    <button
+                                        onClick={() => setShowDropdown(v => !v)}
+                                        className="p-2 text-gray-400 hover:text-[#C5A47E] hover:bg-white rounded-lg transition-all flex items-center gap-2 text-xs font-medium border border-gray-200 hover:border-[#C5A47E] bg-white/50 hover:shadow-sm"
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                                        Colectivizar
+                                    </button>
+                                )}
+                                {showDropdown && !done && (
+                                    <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-10 min-w-[140px]">
+                                        <button
+                                            className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-50 hover:text-[#C5A47E] transition-colors"
+                                            onClick={async () => {
+                                                setShowDropdown(false);
+                                                await onColectivizar('anon');
+                                                setDone(true);
+                                            }}
+                                        >
+                                            Anónimo
+                                        </button>
+                                        <button
+                                            className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-50 hover:text-[#C5A47E] transition-colors border-t border-gray-100"
+                                            onClick={async () => {
+                                                setShowDropdown(false);
+                                                await onColectivizar('user');
+                                                setDone(true);
+                                            }}
+                                        >
+                                            Con usuario
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
         </div>
