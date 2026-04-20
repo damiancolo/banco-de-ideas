@@ -109,7 +109,7 @@ export default function AboutPageEN() {
                     <p className="text-lg text-gray-700 leading-relaxed mb-6">
                         In addition to the shared public space, each user can access their own <span className="font-semibold text-[#C5A47E]">personal and private idea bank</span>. With a Google account, you get your own space where your ideas are yours alone: no one else can see or access them.
                     </p>
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-2 gap-4 mb-4">
                         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                             <div className="text-2xl mb-2">🔐</div>
                             <h3 className="font-bold text-gray-800 mb-1">Sign in with Google</h3>
@@ -125,7 +125,29 @@ export default function AboutPageEN() {
                             <h3 className="font-bold text-gray-800 mb-1">Full capabilities</h3>
                             <p className="text-sm text-gray-600">Chat, voice, bisociations and semantic search — all available in your private space.</p>
                         </div>
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">📱</div>
+                            <h3 className="font-bold text-gray-800 mb-1">App on your phone</h3>
+                            <p className="text-sm text-gray-600">Install the bank as an app on iPhone or Android. One tap and you&apos;re in your private space, no browser needed.</p>
+                        </div>
                     </div>
+                </div>
+
+                {/* Custom AI */}
+                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/20 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-280">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">Your AI, your way</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        Your private space runs on a state-of-the-art AI model as your ideas manager. If you&apos;d like to use a different model — another provider, another personality, another analysis style — reach out. We&apos;ll gladly configure the API of your choice for your environment.
+                    </p>
+                    <a
+                        href="mailto:damian@estudioprompt.com?subject=I%20want%20to%20configure%20my%20AI%20in%20the%20Idea%20Bank"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#C5A47E] hover:bg-[#b08e68] text-white rounded-xl font-medium transition-colors text-sm"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        Contact us to customize your AI
+                    </a>
                 </div>
 
                 {/* Technical Architecture Deep Dive */}
@@ -138,7 +160,8 @@ export default function AboutPageEN() {
                                 <span>🧠</span> AI Engine, Multimodality, and Vectorization
                             </h3>
                             <div className="space-y-4 text-gray-300 text-sm leading-relaxed">
-                                <p><span className="text-white font-medium">Logical Processing:</span> Use of GPT-4o-mini for inference, feasibility analysis, and generation of bisociative ideas.</p>
+                                <p><span className="text-white font-medium">Public space:</span> DeepSeek engine (deepseek-chat) for inference, analysis, and generation of collective bisociations.</p>
+                                <p><span className="text-white font-medium">Private space:</span> Claude Opus 4.6 (Anthropic) as a personal ideas manager — the most advanced model available for deep analysis and creative generation.</p>
                                 <div className="pl-4 border-l border-gray-700">
                                     <p className="font-medium text-white mb-1">Voice Interaction (STT/TTS):</p>
                                     <ul className="space-y-2">

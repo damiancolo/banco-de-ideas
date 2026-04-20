@@ -109,7 +109,7 @@ export default function AboutPageCA() {
                     <p className="text-lg text-gray-700 leading-relaxed mb-6">
                         A més de l&apos;espai públic compartit, cada usuari pot accedir al seu propi <span className="font-semibold text-[#C5A47E]">banc d&apos;idees personal i privat</span>. Amb un compte de Google, obtens un espai propi on les teves idees són només teves: ningú més les pot veure ni accedir-hi.
                     </p>
-                    <div className="grid md:grid-cols-3 gap-4">
+                    <div className="grid md:grid-cols-2 gap-4 mb-4">
                         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                             <div className="text-2xl mb-2">🔐</div>
                             <h3 className="font-bold text-gray-800 mb-1">Accés amb Google</h3>
@@ -125,7 +125,29 @@ export default function AboutPageCA() {
                             <h3 className="font-bold text-gray-800 mb-1">Mateixes capacitats</h3>
                             <p className="text-sm text-gray-600">Xat, veu, bisociacions i cerca semàntica, tot disponible al teu espai privat.</p>
                         </div>
+                        <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
+                            <div className="text-2xl mb-2">📱</div>
+                            <h3 className="font-bold text-gray-800 mb-1">App al teu mòbil</h3>
+                            <p className="text-sm text-gray-600">Instal·la el banc com a app a l&apos;iPhone o Android. Un toc i ets al teu espai privat, sense obrir el navegador.</p>
+                        </div>
                     </div>
+                </div>
+
+                {/* Custom AI */}
+                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/20 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-280">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-4">La teva IA, al teu estil</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        L&apos;espai privat funciona amb un model d&apos;IA d&apos;última generació com a gestor de les teves idees. Si vols utilitzar un model diferent —un altre proveïdor, una altra personalitat, un altre estil d&apos;anàlisi— escriu-nos. Amb molt de gust configurem l&apos;API que prefereixis per al teu entorn.
+                    </p>
+                    <a
+                        href="mailto:damian@estudioprompt.com?subject=Vull%20configurar%20la%20meva%20IA%20al%20Banc%20d%27Idees"
+                        className="inline-flex items-center gap-2 px-6 py-3 bg-[#C5A47E] hover:bg-[#b08e68] text-white rounded-xl font-medium transition-colors text-sm"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/>
+                        </svg>
+                        Escriu-nos per personalitzar la teva IA
+                    </a>
                 </div>
 
                 {/* Technical Architecture Deep Dive */}
@@ -138,7 +160,8 @@ export default function AboutPageCA() {
                                 <span>🧠</span> Motor d&apos;IA, Multimodalitat i Vectorització
                             </h3>
                             <div className="space-y-4 text-gray-300 text-sm leading-relaxed">
-                                <p><span className="text-white font-medium">Processament Lògic:</span> Ús de GPT-4o-mini per a la inferencia, anàlisi de viabilitat i generació d&apos;idees bisociatives.</p>
+                                <p><span className="text-white font-medium">Espai públic:</span> Motor DeepSeek (deepseek-chat) per a la inferència, anàlisi i generació de bisociacions col·lectives.</p>
+                                <p><span className="text-white font-medium">Espai privat:</span> Claude Opus 4.6 (Anthropic) com a gestor personal d&apos;idees — el model més avançat disponible per a l&apos;anàlisi profunda i la generació creativa.</p>
                                 <div className="pl-4 border-l border-gray-700">
                                     <p className="font-medium text-white mb-1">Interacció per Veu (STT/TTS):</p>
                                     <ul className="space-y-2">
