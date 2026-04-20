@@ -22,11 +22,13 @@ function parseAuthor(text: string): { author: string | null; displayText: string
 export default function BancoView({
     initialIdeas,
     isConnected,
-    apiPrefix = '/api'
+    apiPrefix = '/api',
+    userName,
 }: {
     initialIdeas: SavedIdea[];
     isConnected: boolean;
     apiPrefix?: string;
+    userName?: string;
 }) {
     const [view, setView] = useState<'user' | 'bisociation'>('user');
     const [ideas, setIdeas] = useState<SavedIdea[]>(initialIdeas);
@@ -203,6 +205,7 @@ export default function BancoView({
                         handleHighlight(id);
                     }}
                     apiPrefix={apiPrefix}
+                    userName={userName}
                     onCommentAdded={(newComment) => {
                         setIdeas(prev => prev.map(idea =>
                             idea.id === selectedIdea.id

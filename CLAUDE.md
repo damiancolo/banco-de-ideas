@@ -86,15 +86,15 @@ app/
       search/keywords/route.ts  # Busqueda por texto privada
 auth.ts                         # Configuracion NextAuth: Google provider + MongoDBAdapter + JWT
 components/
-  ChatMessage.tsx               # Mensaje individual con boton "Escuchar"
+  ChatMessage.tsx               # Mensaje individual con botones "Escuchar" y "Colectivizar" (privado)
   ChatEngine.tsx                # Motor de chat reutilizable (usado en publico y privado)
-  BancoView.tsx                 # Vista del repositorio de ideas
+  BancoView.tsx                 # Vista del repositorio de ideas (parsea [Autor]: en texto)
   AgentJsonLd.tsx               # JSON-LD semantico invisible para agentes de IA
   AgentInvitation.tsx           # Comentario HTML invisible que invita a agentes
   AuthProvider.tsx              # SessionProvider de next-auth para el area privada
   GoogleSignInButton.tsx        # Boton de login con Google
   PrivateHeader.tsx             # Header del area privada con foto de usuario y sign out
-  IdeaModal.tsx                 # Modal de detalle de idea
+  IdeaModal.tsx                 # Modal de detalle de idea (botones: calendario, colectivizar, copiar)
 hooks/
   useVoiceRecording.ts          # Hook push-to-talk (Web Media API)
 lib/
@@ -135,6 +135,8 @@ mcp-server/                     # Servidor MCP (Model Context Protocol) — proy
 ```
 {
   text: String (1-2000 chars, required, trimmed),
+         // Las ideas colectivizadas "con usuario" llevan prefijo "[Nombre]: texto"
+         // Este prefijo se parsea en frontend (BancoView, IdeaModal) para mostrar el autor
   category: "user" | "bisociation" (default: "user", indexed),
   embedding: [Number] (vector para busqueda semantica, excluido por defecto en queries),
   comments: [{ text: String, createdAt: Date }],
@@ -194,6 +196,14 @@ Usuario visita /privado
 - **API privada**: `/api/privado/*` replica los endpoints publicos pero filtra por `session.user.id`
 - **No indexable**: `robots: { index: false }` en el layout privado
 - **Sin rate limit por IP en privado**: las rutas privadas confian en la sesion JWT
+
+### Features exclusivas del area privada
+- **Botón Escuchar**: TTS en mensajes del asistente (ChatMessage)
+- **Botón Colectivizar** (en mensajes del chat): aparece junto a "Escuchar" en respuestas del asistente. Opciones: "Anónimo" (publica texto tal cual) o "Con usuario" (publica con prefijo `[Nombre]: texto`). POST a `/api/ideas` (publico).
+- **Botón Colectivizar** (en IdeaModal del banco privado): mismo comportamiento, icono compartir junto al calendario. Solo visible cuando `apiPrefix === '/api/privado'`.
+- **Botón Google Calendar** (en IdeaModal): abre `calendar.google.com/render` con la idea pre-cargada. Solo en area privada.
+- **Atribución de autor**: el prefijo `[Nombre]: ` en ideas colectivizadas se parsea en BancoView e IdeaModal para mostrar el nombre como badge en lugar de "Inteligencia Artesanal", y el texto limpio en el contenido.
+- **iOS fix voz**: `onTouchEnd` como fallback de `onPointerUp` en el botón de micrófono, con `touch-action: none`. Evita que el micrófono quede activo al soltar en Safari iOS.
 
 ### Configuracion NextAuth (`auth.ts`)
 - Provider: Google con `client_secret_post`

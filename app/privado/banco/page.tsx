@@ -44,6 +44,7 @@ export default async function PrivadoBancoPage() {
                 initialIdeas={ideas}
                 isConnected={connected}
                 apiPrefix="/api/privado"
+                userName={session.user.name ?? undefined}
             />
         </main>
     );
