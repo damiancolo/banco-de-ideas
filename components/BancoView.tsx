@@ -169,7 +169,7 @@ export default function BancoView({
                             <div className="text-xs text-gray-400 mb-3 font-mono flex justify-between items-center">
                                 <div className="flex items-center gap-2">
                                     <span>{new Date(idea.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
-                                    {author && <span className="text-gray-500 font-medium not-mono">{author}</span>}
+                                    {author && <span className="opacity-0 group-hover:opacity-100 text-gray-500 font-medium not-mono transition-opacity">{author}</span>}
                                 </div>
                                 <div className="flex items-center gap-2">
                                     {idea.category === 'bisociation' && <span className="text-[#C5A47E] font-bold">IA</span>}
