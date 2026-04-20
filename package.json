@@ -13,6 +13,7 @@
     "map-project": "node scripts/map-project.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.90.0",
     "@auth/mongodb-adapter": "^3.11.1",
     "@tailwindcss/typography": "^0.5.19",
     "mongoose": "^9.0.1",

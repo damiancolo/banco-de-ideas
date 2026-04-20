@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import Anthropic from '@anthropic-ai/sdk';
 import { requireAuth } from '@/lib/auth-utils';
 import { savePrivateIdea, savePrivateIdeas } from '@/lib/db';
 import { logger } from '@/lib/logger';
@@ -49,75 +49,76 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: `Acción inválida: "${action}"` }, { status: 400 });
         }
 
-        if (!process.env.DEEPSEEK_API_KEY) {
-            return NextResponse.json({ error: "DEEPSEEK_API_KEY no configurada" }, { status: 500 });
+        if (!process.env.ANTHROPIC_API_KEY) {
+            return NextResponse.json({ error: "ANTHROPIC_API_KEY no configurada" }, { status: 500 });
         }
 
-        const openai = new OpenAI({
-            apiKey: process.env.DEEPSEEK_API_KEY,
-            baseURL: "https://api.deepseek.com",
+        const anthropic = new Anthropic({
+            apiKey: process.env.ANTHROPIC_API_KEY,
         });
 
         if (!idea && action !== 'chat') {
             return NextResponse.json({ error: 'El campo "idea" es requerido' }, { status: 400 });
         }
 
-        if (idea && typeof idea === 'string' && idea.trim().length > 2000) {
+        if (idea && typeof idea === 'string' && idea.trim().length > API.MAX_IDEA_LENGTH) {
             return NextResponse.json({ error: 'La idea no puede exceder 2000 caracteres' }, { status: 400 });
         }
 
-        let messages: Array<{ role: 'user' | 'assistant' | 'system'; content: string }> = [];
-
+        // Build message history (Anthropic only accepts user/assistant roles)
+        let messages: Array<{ role: 'user' | 'assistant'; content: string }> = [];
         if (history && Array.isArray(history)) {
             messages = history
                 .filter((msg) => msg && (msg.role === 'user' || msg.role === 'assistant'))
                 .map((msg: ChatMessage) => ({
                     role: msg.role,
-                    content: msg.plainText || (typeof msg.content === 'string' ? msg.content : "Contenido visual")
+                    content: msg.plainText || (typeof msg.content === 'string' ? msg.content : 'Contenido visual')
                 }));
         }
 
-        if (action === "save") {
+        if (action === 'save') {
             if (idea) {
                 try {
                     await savePrivateIdea(idea, 'user', userId);
-                    return NextResponse.json({ result: "Idea guardada exitosamente" });
+                    return NextResponse.json({ result: 'Idea guardada exitosamente' });
                 } catch (err: unknown) {
-                    const errorMessage = err instanceof Error ? err.message : "Error desconocido";
-                    logger.error("Error saving private idea:", errorMessage);
-                    return NextResponse.json({ result: "Idea recibida (error al persistir)", error: errorMessage });
+                    const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+                    logger.error('Error saving private idea:', errorMessage);
+                    return NextResponse.json({ result: 'Idea recibida (error al persistir)', error: errorMessage });
                 }
             }
         }
 
-        if (action === "similar") {
+        if (action === 'similar') {
             try {
-                const systemPrompt = PROMPTS.SIMILAR;
-                const llmMessages = [
-                    { role: "system" as const, content: systemPrompt },
+                const userMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
                     ...messages,
-                    { role: "user" as const, content: `La idea es: "${idea}". Dame 3 ideas similares.` }
+                    { role: 'user', content: `La idea es: "${idea}". Dame 3 ideas similares en formato JSON.` }
                 ];
 
-                const completion = await openai.chat.completions.create({
-                    model: API.MODEL,
-                    messages: llmMessages,
-                    response_format: { type: "json_object" },
+                const completion = await anthropic.messages.create({
+                    model: 'claude-opus-4-6',
+                    max_tokens: 1024,
+                    system: PROMPTS.SIMILAR,
+                    messages: userMessages,
                 });
 
-                const content = completion.choices?.[0]?.message?.content;
+                const content = completion.content[0]?.type === 'text' ? completion.content[0].text : null;
                 if (!content) return NextResponse.json({ result: [] });
 
                 let result = [];
                 try {
-                    const parsed = JSON.parse(content);
+                    // Extract JSON from response (Claude may wrap it in markdown)
+                    const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
+                    const jsonStr = jsonMatch ? jsonMatch[0] : content;
+                    const parsed = JSON.parse(jsonStr);
                     if (Array.isArray(parsed)) {
                         result = parsed;
                     } else {
                         result = parsed.ideas || parsed.result || parsed.bisociations || [];
                     }
                 } catch (parseErr) {
-                    logger.error("Error parsing DeepSeek JSON:", parseErr);
+                    logger.error('Error parsing Claude JSON:', parseErr);
                 }
 
                 if (result.length > 0) {
@@ -125,17 +126,16 @@ export async function POST(request: Request) {
                         text: item.summary || item.title || item.text || JSON.stringify(item),
                         category: 'bisociation' as const
                     }));
-
                     try {
                         await savePrivateIdeas(ideasToSave, userId);
                     } catch (err: unknown) {
-                        logger.error("Error guardando bisociaciones privadas:", err);
+                        logger.error('Error guardando bisociaciones privadas:', err);
                     }
 
                     return NextResponse.json({
                         result: result.map((item: SuggestedIdea, i: number) => ({
                             id: item.id || `temp-${Date.now()}-${i}`,
-                            title: item.title || item.text?.substring(0, 50) || "Idea Sugerida",
+                            title: item.title || item.text?.substring(0, 50) || 'Idea Sugerida',
                             summary: item.summary || item.text || JSON.stringify(item)
                         }))
                     });
@@ -143,52 +143,54 @@ export async function POST(request: Request) {
 
                 return NextResponse.json({ result: [] });
             } catch (llmErr: unknown) {
-                logger.error("LLM Error in similar action:", llmErr);
-                return NextResponse.json({ error: "Error de IA" }, { status: 500 });
+                logger.error('Claude Error in similar action:', llmErr);
+                return NextResponse.json({ error: 'Error de IA' }, { status: 500 });
             }
-        } else if (action === "analysis") {
-            const systemPrompt = PROMPTS.ANALYSIS;
-            messages = [
-                { role: "system", content: systemPrompt },
+
+        } else if (action === 'analysis') {
+            const userMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
                 ...messages,
-                { role: "user", content: `Analiza esta idea: "${idea}"` }
+                { role: 'user', content: `Analiza esta idea: "${idea}"` }
             ];
 
-            const completion = await openai.chat.completions.create({
-                model: API.MODEL,
-                messages: messages,
+            const completion = await anthropic.messages.create({
+                model: 'claude-opus-4-6',
+                max_tokens: 2048,
+                system: PROMPTS.ANALYSIS,
+                messages: userMessages,
             });
-            const analysisContent = completion.choices?.[0]?.message?.content;
+
+            const analysisContent = completion.content[0]?.type === 'text' ? completion.content[0].text : null;
             if (!analysisContent) {
-                return NextResponse.json({ error: "La IA no pudo generar un análisis" }, { status: 500 });
+                return NextResponse.json({ error: 'La IA no pudo generar un análisis' }, { status: 500 });
             }
             return NextResponse.json({ result: analysisContent });
 
-        } else if (action === "chat") {
-            const systemPrompt = PROMPTS.CHAT;
-            messages = [
-                { role: "system", content: systemPrompt },
+        } else if (action === 'chat') {
+            const userMessages: Array<{ role: 'user' | 'assistant'; content: string }> = [
                 ...messages,
-                { role: "user", content: idea }
+                { role: 'user', content: idea }
             ];
 
-            const completion = await openai.chat.completions.create({
-                model: API.MODEL,
-                messages: messages,
+            const completion = await anthropic.messages.create({
+                model: 'claude-opus-4-6',
+                max_tokens: 1024,
+                system: PROMPTS.CHAT,
+                messages: userMessages,
             });
 
-            const chatContent = completion.choices?.[0]?.message?.content;
+            const chatContent = completion.content[0]?.type === 'text' ? completion.content[0].text : null;
             if (!chatContent) {
-                return NextResponse.json({ error: "La IA no pudo generar una respuesta" }, { status: 500 });
+                return NextResponse.json({ error: 'La IA no pudo generar una respuesta' }, { status: 500 });
             }
             return NextResponse.json({ result: chatContent });
         }
 
-        return NextResponse.json({ error: "Acción no válida" }, { status: 400 });
+        return NextResponse.json({ error: 'Acción no válida' }, { status: 400 });
 
     } catch (error: unknown) {
-        const errorMsg = error instanceof Error ? error.message : "Error desconocido";
-        logger.error("Private API Error:", errorMsg);
-        return NextResponse.json({ error: "Error procesando solicitud" }, { status: 500 });
+        const errorMsg = error instanceof Error ? error.message : 'Error desconocido';
+        logger.error('Private API Error:', errorMsg);
+        return NextResponse.json({ error: 'Error procesando solicitud' }, { status: 500 });
     }
 }
