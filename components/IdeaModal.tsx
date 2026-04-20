@@ -66,6 +66,13 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
         onDelete(idea.id);
     };
 
+    const handleCalendar = () => {
+        const title = idea.text.slice(0, 80);
+        const details = idea.text;
+        const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&details=${encodeURIComponent(details)}`;
+        window.open(url, '_blank', 'noopener,noreferrer');
+    };
+
     const handleAddComment = async (e: React.FormEvent) => {
         e.preventDefault();
 
@@ -217,6 +224,22 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
                         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m12 3-1.912 5.813a2 2 0 0 1-1.275 1.275L3 12l5.813 1.912a2 2 0 0 1 1.275 1.275L12 21l1.912-5.813a2 2 0 0 1 1.275-1.275L21 12l-5.813-1.912a2 2 0 0 1-1.275-1.275L12 3Z" /></svg>
                     </button>
 
+                    <div className="flex items-center gap-2">
+                        {apiPrefix === '/api/privado' && (
+                            <button
+                                onClick={handleCalendar}
+                                className="w-10 h-10 flex items-center justify-center rounded-xl text-gray-400 hover:text-[#4285F4] hover:bg-blue-50 transition-all"
+                                title="Llevar a Google Calendar"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                                    <line x1="16" y1="2" x2="16" y2="6"></line>
+                                    <line x1="8" y1="2" x2="8" y2="6"></line>
+                                    <line x1="3" y1="10" x2="21" y2="10"></line>
+                                </svg>
+                            </button>
+                        )}
+
                     <button
                         onClick={handleCopy}
                         className={`w-10 h-10 flex items-center justify-center rounded-xl transition-all ${copied
@@ -236,6 +259,7 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
                             </svg>
                         )}
                     </button>
+                    </div>
                 </div>
             </div>
         </div>

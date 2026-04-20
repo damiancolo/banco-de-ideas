@@ -11,6 +11,21 @@ export default function Home() {
     "Bisociaciones ajenas",
     "Lo que piensa la gente",
     "Las ideas son patrimonio humano",
+    "ideas, ideas, ideas!!!",
+    "Ideario colectivo",
+    "Repositorio de ideas previas",
+    "divagues hermosos",
+    "Pensamientos sueltos de gente real",
+    "El caos organizado de las ideas",
+    "Mentes en ebullición",
+    "Colectivo de mentes inquietas",
+    "Lo que se les ocurrió a otros",
+    "Chispazos colectivos",
+    "El diván de las ideas",
+    "El caldo de ideas",
+    "Pensar en voz alta, juntos",
+    "Destellos de creatividad colectiva",
+    "Ideas que no caben en la cabeza de uno solo",
   ];
 
   const [tooltipState, setTooltipState] = useState<"hidden" | "visible" | "fading">("hidden");
