@@ -82,6 +82,7 @@ export default function ChatEngine({
     isRecording,
     isTranscribing,
     startRecording,
+    stopRecording,
     handlePointerUp
   } = useVoiceRecording({
     onTranscription: (text) => handleSendMessage(undefined, text, true),
@@ -618,6 +619,13 @@ export default function ChatEngine({
     handlePointerUp(e, buttonRef);
   };
 
+  const handleTouchEndProxy = (e: React.TouchEvent) => {
+    // Fallback for iOS Safari where pointerup is unreliable on long press
+    if (!isRecording) return;
+    e.preventDefault();
+    stopRecording();
+  };
+
   return (
     <>
       {headerSlot}
@@ -772,7 +780,9 @@ export default function ChatEngine({
                 }
               }}
               onPointerUp={handlePointerUpProxy}
+              onTouchEnd={handleTouchEndProxy}
               disabled={loading || isTranscribing}
+              style={{ touchAction: 'none', userSelect: 'none' }}
               className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${(inputValue.trim() || !voiceEnabled)
                 ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
                 : isRecording
