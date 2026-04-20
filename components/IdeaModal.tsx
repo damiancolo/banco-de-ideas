@@ -21,7 +21,14 @@ interface IdeaModalProps {
     apiPrefix?: string;
 }
 
+function parseAuthor(text: string): { author: string | null; displayText: string } {
+    const match = text.match(/^\[([^\]]+)\]: /);
+    if (match) return { author: match[1], displayText: text.slice(match[0].length) };
+    return { author: null, displayText: text };
+}
+
 export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAdded, apiPrefix = '/api' }: IdeaModalProps) {
+    const { author, displayText } = parseAuthor(idea.text);
     const [copied, setCopied] = useState(false);
     const [isClosing, setIsClosing] = useState(false);
     const [commentText, setCommentText] = useState('');
@@ -54,7 +61,7 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
 
     const handleCopy = async () => {
         try {
-            await navigator.clipboard.writeText(idea.text);
+            await navigator.clipboard.writeText(displayText);
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
@@ -67,8 +74,8 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
     };
 
     const handleCalendar = () => {
-        const title = idea.text.slice(0, 80);
-        const details = idea.text;
+        const title = displayText.slice(0, 80);
+        const details = displayText;
         const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&details=${encodeURIComponent(details)}`;
         window.open(url, '_blank', 'noopener,noreferrer');
     };
@@ -149,7 +156,7 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
                             ? 'bg-[#C5A47E]/10 text-[#C5A47E]'
                             : 'bg-gray-100 text-gray-600'
                             }`}>
-                            {idea.category === 'bisociation' ? 'IA (Bisociación)' : 'Inteligencia Artesanal'}
+                            {idea.category === 'bisociation' ? 'IA (Bisociación)' : author ? author : 'Inteligencia Artesanal'}
                         </span>
                         <span className="text-sm text-gray-400">
                             {formatDate(idea.createdAt)}
@@ -171,7 +178,7 @@ export default function IdeaModal({ idea, isOpen, onClose, onDelete, onCommentAd
                 <div className="flex-1 overflow-y-auto">
                     <div className="p-6 border-b border-gray-100 bg-gray-50/30">
                         <p className="text-lg text-gray-800 leading-relaxed whitespace-pre-wrap break-words">
-                            {idea.text}
+                            {displayText}
                         </p>
                     </div>
 
