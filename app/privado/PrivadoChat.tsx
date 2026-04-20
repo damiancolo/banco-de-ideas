@@ -3,11 +3,13 @@
 import Link from "next/link";
 import ChatEngine from "@/components/ChatEngine";
 import PrivateHeader from "@/components/PrivateHeader";
+import PWAInstallBanner from "@/components/PWAInstallBanner";
 
 export default function PrivadoChat({ userId }: { userId: string }) {
     return (
         <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 pt-20 relative overflow-hidden transition-all duration-700 bg-background">
-            <ChatEngine
+            <PWAInstallBanner />
+        <ChatEngine
                 apiPrefix="/api/privado"
                 headerSlot={<PrivateHeader />}
                 footerSlot={
