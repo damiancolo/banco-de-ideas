@@ -11,6 +11,7 @@ type Message = {
   content: React.ReactNode | string;
   plainText?: string;
   colectivizable?: boolean;
+  colectivizableText?: string; // texto a colectivizar (puede diferir del plainText del mensaje)
 };
 
 type Idea = {
@@ -452,7 +453,9 @@ export default function ChatEngine({
           id: generateMessageId(),
           role: 'assistant',
           content: replyText,
-          plainText: replyText
+          plainText: replyText,
+          colectivizable: true,
+          colectivizableText: userText,
         };
         setMessages(prev => [...prev, reply]);
         setLoading(false);
@@ -584,7 +587,9 @@ export default function ChatEngine({
             id: generateMessageId(),
             role: 'assistant',
             content: replyText,
-            plainText: replyText
+            plainText: replyText,
+            colectivizable: true,
+            colectivizableText: userText,
           };
           setMessages(prev => [...prev, reply]);
           setLoading(false);
@@ -658,7 +663,7 @@ export default function ChatEngine({
                 plainText={msg.plainText}
                 onSpeak={msg.role === 'assistant' ? handleTTS : undefined}
                 onColectivizar={msg.role === 'assistant' && msg.colectivizable && apiPrefix === '/api/privado'
-                  ? (mode) => handleColectivizar(msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''), mode)
+                  ? (mode) => handleColectivizar(msg.colectivizableText ?? msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''), mode)
                   : undefined}
               />
             ))}

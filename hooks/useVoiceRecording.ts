@@ -53,14 +53,6 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             streamRef.current = stream;
 
-            // If user released the button while we were getting permissions/stream
-            if (!isPressingRef.current) {
-                logger.info("Recording cancelled before start");
-                stream.getTracks().forEach(track => track.stop());
-                streamRef.current = null;
-                return;
-            }
-
             // Create MediaRecorder with supported mimeType
             const options: MediaRecorderOptions = {};
             if (audioFormatRef.current.mimeType) {
@@ -103,6 +95,13 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
 
             mediaRecorder.start();
             setIsRecording(true);
+
+            // If the user released during the async getUserMedia call (e.g. while the
+            // browser permission dialog was visible), stop immediately. The onstop handler
+            // will discard the audio because duration < 500 ms.
+            if (!isPressingRef.current) {
+                if (mediaRecorder.state !== "inactive") mediaRecorder.stop();
+            }
         } catch (err) {
             isPressingRef.current = false;
             setIsRecording(false);
@@ -184,7 +183,11 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
         if (isRecording) {
             const handler = () => stopRecording();
             window.addEventListener("pointerup", handler);
-            return () => window.removeEventListener("pointerup", handler);
+            window.addEventListener("touchend", handler);
+            return () => {
+                window.removeEventListener("pointerup", handler);
+                window.removeEventListener("touchend", handler);
+            };
         }
     }, [isRecording]);
 
