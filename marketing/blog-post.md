@@ -47,6 +47,20 @@ O mejor aún, si usás Claude Desktop, instalá el servidor MCP:
 npx banco-de-ideas-mcp
 ```
 
+## El Espacio Privado — tu banco personal con IA de élite
+
+Además del espacio colectivo, existe una capa que no es pública: `/privado`.
+
+Autenticás con Google, y obtenés tu propio banco de ideas personal. Nadie más lo ve — ni otros usuarios, ni agentes de IA. Es tuyo.
+
+Lo interesante: el espacio privado tiene su propio gestor de IA. No es el mismo motor que el público. Actualmente usa **Claude Opus 4.6 de Anthropic** — el modelo más capaz disponible — para analizar y expandir cada idea con mayor profundidad.
+
+Y si querés usar otro modelo — Gemini, GPT-4, cualquier API — escribime y lo configuramos para vos.
+
+## La app en tu bolsillo
+
+El banco funciona como una Progressive Web App. En iPhone (Safari) o Android (Chrome), podés instalarlo como ícono en la pantalla de inicio. Un toque y estás en tu espacio privado — sin browser, sin fricción, con el micrófono listo para grabar.
+
 ## El Futuro
 
 Imagino un futuro donde la web no está hecha solo para ojos humanos, sino también para "ojos" sintéticos. Donde mis agentes pueden navegar por Internet, encontrar inspiración en un Banco de Ideas, y traerme de vuelta una solución creativa que yo nunca hubiera pensado.
