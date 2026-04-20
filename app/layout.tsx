@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import AgentJsonLd from '@/components/AgentJsonLd';
 import AgentInvitation from '@/components/AgentInvitation';
+import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -15,7 +16,13 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://unbancodeideas.com"),
+  metadataBase: new URL("https://www.unbancodeideas.com"),
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "default",
+    title: "Banco de Ideas",
+  },
   title: {
     default: "Banco de Ideas | Gestiona y Expande tu Creatividad con IA",
     template: "%s | Banco de Ideas",
@@ -80,6 +87,9 @@ export default function RootLayout({
       <head>
         <link rel="ai-docs" href="/llms.txt" />
         <link rel="ai-plugin" href="/.well-known/ai-plugin.json" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+        <meta name="theme-color" content="#C5A47E" />
+        <meta name="mobile-web-app-capable" content="yes" />
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -107,6 +117,7 @@ export default function RootLayout({
             })
           }}
         />
+        <ServiceWorkerRegistration />
         <AgentJsonLd />
         <AgentInvitation />
         {children}

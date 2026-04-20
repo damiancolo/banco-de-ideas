@@ -1,0 +1,30 @@
+{
+  "name": "Banco de Ideas",
+  "short_name": "Ideas",
+  "description": "Tu banco de ideas potenciado con IA",
+  "start_url": "/privado",
+  "display": "standalone",
+  "background_color": "#F8F5F0",
+  "theme_color": "#C5A47E",
+  "orientation": "portrait-primary",
+  "lang": "es",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}
