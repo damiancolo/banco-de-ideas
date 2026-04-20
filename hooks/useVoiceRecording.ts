@@ -118,8 +118,10 @@ export function useVoiceRecording({ onTranscription, onTranscriptionError }: Use
         isPressingRef.current = false;
         if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
             mediaRecorderRef.current.stop();
-        } else if (streamRef.current) {
-            // Fallback if recorder wasn't started yet
+        }
+        // Stop tracks immediately (don't wait for onstop) so iOS releases
+        // the microphone indicator right away
+        if (streamRef.current) {
             streamRef.current.getTracks().forEach(track => track.stop());
             streamRef.current = null;
         }
