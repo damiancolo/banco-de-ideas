@@ -50,12 +50,14 @@ interface ChatEngineProps {
   apiPrefix?: string;
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
+  userName?: string;
 }
 
 export default function ChatEngine({
   apiPrefix = "/api",
   headerSlot,
   footerSlot,
+  userName,
 }: ChatEngineProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -82,6 +84,7 @@ export default function ChatEngine({
     isRecording,
     isTranscribing,
     startRecording,
+    stopRecording,
     handlePointerUp
   } = useVoiceRecording({
     onTranscription: (text) => handleSendMessage(undefined, text, true),
@@ -618,6 +621,22 @@ export default function ChatEngine({
     handlePointerUp(e, buttonRef);
   };
 
+  const handleTouchEndProxy = (e: React.TouchEvent) => {
+    // Fallback for iOS Safari where pointerup is unreliable on long press
+    if (!isRecording) return;
+    e.preventDefault();
+    stopRecording();
+  };
+
+  const handleColectivizar = async (text: string, mode: 'anon' | 'user') => {
+    const publicText = mode === 'user' && userName ? `[${userName}]: ${text}` : text;
+    await fetch('/api/ideas', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: publicText }),
+    });
+  };
+
   return (
     <>
       {headerSlot}
@@ -635,6 +654,9 @@ export default function ChatEngine({
                 content={msg.content}
                 plainText={msg.plainText}
                 onSpeak={msg.role === 'assistant' ? handleTTS : undefined}
+                onColectivizar={msg.role === 'assistant' && apiPrefix === '/api/privado'
+                  ? (mode) => handleColectivizar(msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''), mode)
+                  : undefined}
               />
             ))}
             {(loading || isTranscribing || isSpeaking) && (
@@ -772,7 +794,9 @@ export default function ChatEngine({
                 }
               }}
               onPointerUp={handlePointerUpProxy}
+              onTouchEnd={handleTouchEndProxy}
               disabled={loading || isTranscribing}
+              style={{ touchAction: 'none', userSelect: 'none' }}
               className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${(inputValue.trim() || !voiceEnabled)
                 ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
                 : isRecording

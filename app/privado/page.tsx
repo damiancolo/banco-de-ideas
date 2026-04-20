@@ -43,5 +43,5 @@ export default async function PrivadoPage() {
         );
     }
 
-    return <PrivadoChat userId={session.user.id!} />;
+    return <PrivadoChat userId={session.user.id!} userName={session.user.name ?? undefined} />;
 }
