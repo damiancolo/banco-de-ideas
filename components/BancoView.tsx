@@ -13,6 +13,12 @@ type SavedIdea = {
     comments: { text: string; createdAt: string }[];
 };
 
+function parseAuthor(text: string): { author: string | null; displayText: string } {
+    const match = text.match(/^\[([^\]]+)\]: /);
+    if (match) return { author: match[1], displayText: text.slice(match[0].length) };
+    return { author: null, displayText: text };
+}
+
 export default function BancoView({
     initialIdeas,
     isConnected,
@@ -150,14 +156,19 @@ export default function BancoView({
                         <p>No hay ideas en esta carpeta.</p>
                     </div>
                 ) : (
-                    visibleIdeas.map((idea) => (
+                    visibleIdeas.map((idea) => {
+                        const { author, displayText } = parseAuthor(idea.text);
+                        return (
                         <div
                             key={idea.id}
                             onClick={() => setSelectedIdea(idea)}
                             className={`bg-white p-6 rounded-2xl shadow-sm border border-black/5 hover:shadow-md transition-all group h-full flex flex-col relative cursor-pointer ${deletingId === idea.id ? 'opacity-50 scale-[0.98]' : ''}`}
                         >
                             <div className="text-xs text-gray-400 mb-3 font-mono flex justify-between items-center">
-                                <span>{new Date(idea.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                                <div className="flex items-center gap-2">
+                                    <span>{new Date(idea.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}</span>
+                                    {author && <span className="text-gray-500 font-medium not-mono">{author}</span>}
+                                </div>
                                 <div className="flex items-center gap-2">
                                     {idea.category === 'bisociation' && <span className="text-[#C5A47E] font-bold">IA</span>}
                                     <button
@@ -174,10 +185,11 @@ export default function BancoView({
                                 </div>
                             </div>
                             <p className="text-lg text-gray-800 font-medium leading-relaxed group-hover:text-[#C5A47E] transition-colors line-clamp-5 flex-1 break-words">
-                                {idea.text}
+                                {displayText}
                             </p>
                         </div>
-                    ))
+                        );
+                    })
                 )}
             </div>
 
