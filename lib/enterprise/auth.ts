@@ -59,7 +59,7 @@ export async function getActiveMemberships(userId: string): Promise<ActiveMember
     return memberships
         .filter(m => m.organizationId != null)
         .map(m => {
-            const org = m.organizationId as InstanceType<typeof Organization>;
+            const org = m.organizationId as unknown as InstanceType<typeof Organization>;
             return {
                 _id: m._id.toString(),
                 role: m.role,
