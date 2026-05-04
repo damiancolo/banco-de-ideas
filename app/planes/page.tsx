@@ -98,7 +98,7 @@ export default function PlanesPage() {
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>IA DeepSeek como gestor</span></li>
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Bisociaciones y análisis</span></li>
           </ul>
-          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar</p>
+          {/* No price info */}
         </button>
 
         {/* Pro */}
@@ -167,19 +167,24 @@ export default function PlanesPage() {
             />
           </div>
 
-          {/* Context */}
+          {/* Data Upload / Context */}
           <div>
-            <label htmlFor="org-context" className="block text-xs uppercase tracking-widest text-[#999] mb-2">Datos de tu empresa</label>
-            <p className="text-xs text-[#aaa] mb-2">Este texto especializa a la IA en el contexto de tu organización.</p>
+            <label htmlFor="org-context" className="block text-xs uppercase tracking-widest text-[#999] mb-2">DATA</label>
+            <p className="text-xs text-[#aaa] mb-3">
+              Espacio para cargar material de la empresa: descripciones de procesos, archivos o texto para especializar el modelo.
+            </p>
             <textarea
               id="org-context"
               disabled={loading}
               value={orgContext}
               onChange={e => setOrgContext(e.target.value)}
-              placeholder="Ej: Somos una startup de logística fundada en 2020. Nuestros principales retos son la optimización de rutas y la reducción de costes operativos…"
-              rows={5}
+              placeholder="Pega aquí el texto o describe el material de la empresa..."
+              rows={6}
               className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] resize-none disabled:opacity-50"
             />
+            <p className="text-[10px] text-red-400/80 mt-2 italic">
+              * Por seguridad, no subir información sensible o confidencial.
+            </p>
           </div>
 
           {/* Emails */}
@@ -207,7 +212,7 @@ export default function PlanesPage() {
               <>
                 <a
                   href="mailto:damianlafferranderie@gmail.com?subject=Consulta Programa Organización"
-                  className="w-full bg-[#2a2a2a] hover:bg-[#111] text-white text-center text-sm font-medium py-3.5 rounded-xl transition-colors disabled:opacity-50"
+                  className="w-full bg-[#2a2a2a] hover:bg-[#111] text-white text-center text-sm font-medium py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md block"
                 >
                   Consultar
                 </a>
@@ -254,10 +259,10 @@ export default function PlanesPage() {
 
       {/* For non-org plans, simple CTA */}
       {selectedPlan !== "org" && (
-        <div className="w-full max-w-2xl text-center">
+        <div className="w-full max-w-2xl text-center mt-4">
           <a
             href="mailto:damianlafferranderie@gmail.com?subject=Consulta Plan Personal"
-            className="inline-block bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium px-8 py-3.5 rounded-xl transition-colors"
+            className="inline-block bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium px-12 py-4 rounded-xl transition-all shadow-sm hover:shadow-md"
           >
             Consultar
           </a>
