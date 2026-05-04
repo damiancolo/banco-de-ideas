@@ -98,7 +98,7 @@ export default function PlanesPage() {
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>IA DeepSeek como gestor</span></li>
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Bisociaciones y análisis</span></li>
           </ul>
-          <p className="mt-4 text-[#C5A47E] font-medium text-sm">€0 / mes</p>
+          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar</p>
         </button>
 
         {/* Pro */}
@@ -115,10 +115,10 @@ export default function PlanesPage() {
           <h2 className="text-lg font-medium text-[#2a2a2a] mt-1 mb-3">Entorno avanzado</h2>
           <ul className="space-y-2">
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Todo lo del plan Gratis</span></li>
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Elige el modelo de IA (Claude, GPT-4o, DeepSeek…)</span></li>
+            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Elige el modelo de IA (Claude, GPT, DeepSeek…)</span></li>
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Gestor con mayor contexto</span></li>
           </ul>
-          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar precio</p>
+          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar</p>
         </button>
 
         {/* Organización */}
@@ -138,7 +138,7 @@ export default function PlanesPage() {
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>IA especializada en tu empresa</span></li>
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Hasta 10 participantes</span></li>
           </ul>
-          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar precio</p>
+          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar</p>
         </button>
       </div>
 
@@ -205,13 +205,12 @@ export default function PlanesPage() {
           <div className="space-y-3 pt-2">
             {!showCodeField ? (
               <>
-                <button
-                  id="btn-pagar"
-                  disabled={loading}
-                  className="w-full bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium py-3.5 rounded-xl transition-colors disabled:opacity-50"
+                <a
+                  href="mailto:damianlafferranderie@gmail.com?subject=Consulta Programa Organización"
+                  className="w-full bg-[#2a2a2a] hover:bg-[#111] text-white text-center text-sm font-medium py-3.5 rounded-xl transition-colors disabled:opacity-50"
                 >
-                  Contratar programa
-                </button>
+                  Consultar
+                </a>
                 <button
                   id="btn-codigo"
                   disabled={loading}
@@ -256,15 +255,12 @@ export default function PlanesPage() {
       {/* For non-org plans, simple CTA */}
       {selectedPlan !== "org" && (
         <div className="w-full max-w-2xl text-center">
-          <button
-            id="btn-plan-cta"
-            className="bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium px-8 py-3.5 rounded-xl transition-colors"
+          <a
+            href="mailto:damianlafferranderie@gmail.com?subject=Consulta Plan Personal"
+            className="inline-block bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium px-8 py-3.5 rounded-xl transition-colors"
           >
-            {selectedPlan === "gratis" ? "Empezar gratis" : "Contratar plan Pro"}
-          </button>
-          {selectedPlan === "gratis" && (
-            <p className="text-xs text-[#bbb] mt-3">Sin tarjeta de crédito. Ya tienes acceso al plan gratuito si te registras.</p>
-          )}
+            Consultar
+          </a>
         </div>
       )}
     </main>
