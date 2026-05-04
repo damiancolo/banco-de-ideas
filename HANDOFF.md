@@ -2,30 +2,41 @@
 
 ## Última sesión
 **Fecha:** 2026-05-04
-**Herramienta:** Antigravity (Gemini)
+**Herramienta:** Claude Code (Sonnet 4.6)
 **Branch:** feature/enterprise-environment
 
 ## Qué se hizo (SESIÓN COMPLETA — ENTORNO EMPRESA)
 
-Se ha completado el desarrollo del entorno empresa (Partes B y C del plan):
+Se completó el desarrollo del entorno empresa (Partes A → D). El build compila limpio.
 
-### Backend (Partes B.1 - B.4)
-- **Auth**: Implementado `requireMembership(slug, session)` en `lib/enterprise/auth.ts`.
-- **Organización**: Endpoint `GET /api/organizations/[slug]` para datos públicos de la org.
-- **Ideas**: Endpoint `GET/POST /api/organizations/[slug]/ideas` con helpers en `lib/db.ts` (`getOrganizationIdeas`, `saveOrganizationIdea`). Soporta `scope: "organization"`.
-- **IA**: 
-  - Interfaz `AIProvider` y factoría `getAIProvider` en `lib/ai/providers.ts`.
-  - Implementaciones para `ClaudeProvider`, `DeepSeekProvider` y `OpenAIProvider`.
-  - Endpoint `POST /api/organizations/[slug]/chat` que utiliza la Knowledge Base de la organización como contexto.
+### Backend (Partes A → B.4)
+- **Schemas**: `Organization`, `Membership`, `Idea` (con campo `scope`) en `lib/models/`
+- **Auth helper**: `requireMembership(slug, session)` en `lib/enterprise/auth.ts`
+- **Endpoints**:
+  - `GET /api/organizations/me` — orgs activas del usuario autenticado
+  - `GET /api/organizations/[slug]` — datos públicos de la org
+  - `GET/POST /api/organizations/[slug]/ideas` — CRUD ideas organizacionales
+  - `POST /api/organizations/[slug]/chat` — chat con IA usando knowledge base
+  - `POST /api/organizations/setup` — crea org desde formulario con código de invitación
+- **AI providers**: interfaz `AIProvider` + `ClaudeProvider`, `DeepSeekProvider`, `OpenAIProvider` en `lib/ai/providers.ts`
 
-### Frontend (Parte C)
-- **Header**: `PrivateHeader.tsx` ahora detecta y muestra los logos de las organizaciones activas del usuario, permitiendo navegación rápida.
-- **Entorno**: Nueva ruta `app/org/[slug]/page.tsx` que carga el entorno organizacional personalizado.
-- **Banco**: Nueva ruta `app/org/[slug]/banco/page.tsx` para el repositorio de ideas de la empresa.
-- **Reutilización**: Se han adaptado `ChatEngine` y `BancoView` para trabajar con prefijos de API dinámicos.
+### Frontend (Partes C + D)
+- **`/planes`** (construida por Antigravity): 3 cards (Gratis, Pro, Organización) + formulario de onboarding con código de invitación
+- **`/org/[slug]`**: entorno empresa con `ChatEngine` usando `apiPrefix=/api/organizations/[slug]`
+- **`/org/[slug]/banco`**: repositorio de ideas de la empresa
+- **`PrivateHeader`**: muestra logos de orgs activas del usuario + icono engranaje → `/planes`
 
-## Estado actual — Datos de prueba (Seed listo)
+### Fix sesión actual
+- Error TypeScript `mongoose.connection.db` possibly undefined → corregido con `?.`
+- Build limpio confirmado (`npm run build`)
 
+## Estado actual
+**Parte D completa. Build limpio. Listo para QA end-to-end.**
+
+## Código de invitación actual (piloto)
+`IDEAS2024` (hardcoded en `app/api/organizations/setup/route.ts`)
+
+## Datos de prueba en BD
 | Dato | Valor |
 |------|-------|
 | Org slug | `test-org` |
@@ -33,14 +44,17 @@ Se ha completado el desarrollo del entorno empresa (Partes B y C del plan):
 | aiProvider | `claude` |
 | aiModel | `claude-opus-4-6` |
 
-## Próxima sesión — Parte D / QA
+## Próxima sesión — QA end-to-end
 
-1. Verificar el funcionamiento de Claude con la `ANTHROPIC_API_KEY`.
-2. Probar el flujo de "Colectivizar" ideas desde el entorno empresa (debería ir al banco público).
-3. Ajustes finos de UI (colores corporativos dinámicos si fuera necesario).
-
-**IMPORTANTE**: Es necesario ejecutar `npm install @anthropic-ai/sdk` en el servidor, ya que no pude completar la instalación por restricciones de permisos en el entorno actual.
+1. Verificar `ANTHROPIC_API_KEY` en `.env.local` y en Vercel (variable de entorno para `feature/enterprise-environment`)
+2. Probar flujo completo local:
+   - Login → ver icono engranaje en PrivateHeader → ir a `/planes` → seleccionar Organización
+   - Usar código `IDEAS2024` → org creada → redirigir a `/org/[slug]`
+   - Chatear → verificar que Claude responde con el knowledge base como contexto
+3. Push a `feature/enterprise-environment` → preview en Vercel → probar en staging
+4. Cuando todo OK: merge `feature/enterprise-environment` → `develop`
 
 ## Bloqueos / pendientes
-- `knowledgeBase.embedding` sigue vacío (se rellenará en script D o manual).
-- Requiere `ANTHROPIC_API_KEY` en el entorno para probar Claude.
+- `knowledgeBase.embedding` vacío (relleno manual o script futuro — no bloquea el flujo)
+- Código de invitación hardcodeado `IDEAS2024` — suficiente para el piloto, cambiar antes de producción
+- Los logos de org en `PrivateHeader` asumen que `Organization.logoUrl` tiene un valor válido (el seed tiene uno de prueba)
