@@ -81,7 +81,7 @@ export default function PlanesPage() {
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Elige el modelo de IA (Claude, GPT-4o, DeepSeek…)</span></li>
             <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Gestor con mayor contexto</span></li>
           </ul>
-          <p className="mt-4 text-[#C5A47E] font-medium text-sm">€9 / mes</p>
+          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar precio</p>
         </button>
 
         {/* Organización */}
