@@ -16,11 +16,48 @@ export default function PlanesPage() {
   const [emails, setEmails] = useState<string[]>(Array(10).fill(""));
   const [showCodeField, setShowCodeField] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleEmail = (index: number, value: string) => {
     const next = [...emails];
     next[index] = value;
     setEmails(next);
+  };
+
+  const handleActivateCode = async () => {
+    if (!orgName || !orgContext || !inviteCode) {
+      setError("Por favor rellena el nombre, el contexto y el código.");
+      return;
+    }
+
+    setLoading(true);
+    setError(null);
+
+    try {
+      const res = await fetch("/api/organizations/setup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: orgName,
+          context: orgContext,
+          emails,
+          inviteCode
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Error al crear la organización");
+      }
+
+      // Éxito: Redirigir al entorno de la nueva organización
+      window.location.href = `/org/${data.slug}`;
+    } catch (err: any) {
+      setError(err.message);
+      setLoading(false);
+    }
   };
 
   return (
@@ -110,16 +147,23 @@ export default function PlanesPage() {
         <div className="w-full max-w-2xl bg-white rounded-2xl border border-[#E8E5E0] p-8 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <h3 className="text-base font-medium text-[#2a2a2a] tracking-tight">Configura tu organización</h3>
 
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl">
+              {error}
+            </div>
+          )}
+
           {/* Org Name */}
           <div>
             <label htmlFor="org-name" className="block text-xs uppercase tracking-widest text-[#999] mb-2">Nombre de la organización</label>
             <input
               id="org-name"
               type="text"
+              disabled={loading}
               value={orgName}
               onChange={e => setOrgName(e.target.value)}
               placeholder="Ej: Acme Corp"
-              className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8]"
+              className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
             />
           </div>
 
@@ -129,11 +173,12 @@ export default function PlanesPage() {
             <p className="text-xs text-[#aaa] mb-2">Este texto especializa a la IA en el contexto de tu organización.</p>
             <textarea
               id="org-context"
+              disabled={loading}
               value={orgContext}
               onChange={e => setOrgContext(e.target.value)}
               placeholder="Ej: Somos una startup de logística fundada en 2020. Nuestros principales retos son la optimización de rutas y la reducción de costes operativos…"
               rows={5}
-              className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] resize-none"
+              className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] resize-none disabled:opacity-50"
             />
           </div>
 
@@ -146,10 +191,11 @@ export default function PlanesPage() {
                   key={i}
                   id={`email-${i + 1}`}
                   type="email"
+                  disabled={loading}
                   value={email}
                   onChange={e => handleEmail(i, e.target.value)}
                   placeholder={`correo${i + 1}@empresa.com`}
-                  className="w-full border border-[#E8E5E0] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[#ccc] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8]"
+                  className="w-full border border-[#E8E5E0] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[#ccc] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
                 />
               ))}
             </div>
@@ -161,14 +207,16 @@ export default function PlanesPage() {
               <>
                 <button
                   id="btn-pagar"
-                  className="w-full bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium py-3.5 rounded-xl transition-colors"
+                  disabled={loading}
+                  className="w-full bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium py-3.5 rounded-xl transition-colors disabled:opacity-50"
                 >
                   Contratar programa
                 </button>
                 <button
                   id="btn-codigo"
+                  disabled={loading}
                   onClick={() => setShowCodeField(true)}
-                  className="w-full text-sm text-[#999] hover:text-[#555] transition-colors py-1"
+                  className="w-full text-sm text-[#999] hover:text-[#555] transition-colors py-1 disabled:opacity-50"
                 >
                   Tengo un código de invitación →
                 </button>
@@ -178,20 +226,24 @@ export default function PlanesPage() {
                 <input
                   id="invite-code"
                   type="text"
+                  disabled={loading}
                   value={inviteCode}
                   onChange={e => setInviteCode(e.target.value)}
                   placeholder="Introduce tu código"
-                  className="w-full border border-[#C5A47E] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none transition-colors bg-white text-center tracking-widest uppercase"
+                  className="w-full border border-[#C5A47E] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none transition-colors bg-white text-center tracking-widest uppercase disabled:opacity-50"
                 />
                 <button
                   id="btn-activar-codigo"
-                  className="w-full bg-[#C5A47E] hover:bg-[#b8956e] text-white text-sm font-medium py-3.5 rounded-xl transition-colors"
+                  disabled={loading}
+                  onClick={handleActivateCode}
+                  className="w-full bg-[#C5A47E] hover:bg-[#b8956e] text-white text-sm font-medium py-3.5 rounded-xl transition-colors disabled:opacity-50"
                 >
-                  Activar código
+                  {loading ? "Creando..." : "Activar código"}
                 </button>
                 <button
+                  disabled={loading}
                   onClick={() => setShowCodeField(false)}
-                  className="w-full text-sm text-[#bbb] hover:text-[#888] transition-colors py-1"
+                  className="w-full text-sm text-[#bbb] hover:text-[#888] transition-colors py-1 disabled:opacity-50"
                 >
                   ← Volver
                 </button>

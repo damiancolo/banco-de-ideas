@@ -1,0 +1,86 @@
+import { NextResponse } from "next/server";
+import { auth } from "@/auth";
+import { connectDB } from "@/lib/mongodb";
+import Organization from "@/lib/models/Organization";
+import Membership from "@/lib/models/Membership";
+import mongoose from "mongoose";
+
+export async function POST(req: Request) {
+  try {
+    const session = await auth();
+    if (!session?.user) {
+      return NextResponse.json({ error: "No autorizado" }, { status: 401 });
+    }
+
+    const { name, context, emails, inviteCode } = await req.json();
+
+    // Validación básica del código (hardcoded para el piloto)
+    if (inviteCode !== "IDEAS2024") {
+      return NextResponse.json({ error: "Código de invitación inválido" }, { status: 400 });
+    }
+
+    if (!name || !context) {
+      return NextResponse.json({ error: "Faltan datos obligatorios" }, { status: 400 });
+    }
+
+    await connectDB();
+
+    // 1. Crear la Organización
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    
+    // Verificar si el slug existe
+    const existingOrg = await Organization.findOne({ slug });
+    const finalSlug = existingOrg ? `${slug}-${Math.floor(Math.random() * 1000)}` : slug;
+
+    const newOrg = await Organization.create({
+      name,
+      slug: finalSlug,
+      aiProvider: 'deepseek',
+      aiModel: 'deepseek-chat',
+      status: 'active',
+      programStartDate: new Date(),
+      programEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días de prueba
+      knowledgeBase: [
+        {
+          filename: 'contexto_inicial.txt',
+          content: context,
+          uploadedAt: new Date()
+        }
+      ]
+    });
+
+    // 2. Crear membresía para el creador (como admin)
+    await Membership.create({
+      userId: session.user.id,
+      organizationId: newOrg._id,
+      role: 'admin',
+      status: 'active'
+    });
+
+    // 3. Crear membresías para los emails invitados
+    const validEmails = emails.filter((e: string) => e && e.includes('@'));
+    
+    for (const email of validEmails) {
+      // Intentar encontrar al usuario por email para obtener su ID real
+      // Nota: Esto asume que el sistema de auth usa el email como identificador o permite buscarlo
+      const userDoc = await mongoose.connection.db.collection('users').findOne({ email });
+      
+      await Membership.create({
+        userId: userDoc ? userDoc._id.toString() : email, // Si no existe, guardamos el email temporalmente
+        organizationId: newOrg._id,
+        role: 'participant',
+        status: 'active'
+      });
+    }
+
+    return NextResponse.json({ 
+      success: true, 
+      slug: finalSlug,
+      message: "Organización creada con éxito" 
+    });
+
+  } catch (error: any) {
+    console.error("Error en setup de organización:", error);
+    return NextResponse.json({ error: "Error interno del servidor" }, { status: 500 });
+  }
+}
