@@ -20,7 +20,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { name, context, emails, inviteCode } = await req.json();
+    const { name, context, emails, inviteCode, files } = await req.json();
+    // files: Array<{ filename: string; content: string }> — opcional
 
     const validCode = process.env.SETUP_INVITE_CODE;
     if (!validCode || inviteCode !== validCode) {
@@ -57,11 +58,14 @@ export async function POST(req: Request) {
       programStartDate: new Date(),
       programEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días de prueba
       knowledgeBase: [
-        {
-          filename: 'contexto_inicial.txt',
-          content: context,
+        // Contexto libre del formulario (solo si no está vacío)
+        ...(context?.trim() ? [{ filename: 'contexto_inicial.txt', content: context.trim(), uploadedAt: new Date() }] : []),
+        // Archivos subidos
+        ...((files as Array<{ filename: string; content: string }> | undefined) ?? []).map(f => ({
+          filename: f.filename,
+          content: f.content,
           uploadedAt: new Date()
-        }
+        }))
       ]
     });
 

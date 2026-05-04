@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 
 const CHECK_ICON = (
@@ -18,6 +18,9 @@ export default function PlanesPage() {
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<Array<{ filename: string; content: string }>>([]);
+  const [uploadingFile, setUploadingFile] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleEmail = (index: number, value: string) => {
     const next = [...emails];
@@ -25,9 +28,37 @@ export default function PlanesPage() {
     setEmails(next);
   };
 
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+
+    setUploadingFile(true);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      const res = await fetch('/api/extract-text', { method: 'POST', body: formData });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Error al procesar el archivo');
+      setUploadedFiles(prev => [...prev, { filename: data.filename, content: data.content }]);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setUploadingFile(false);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
   const handleActivateCode = async () => {
-    if (!orgName || !orgContext || !inviteCode) {
-      setError("Por favor rellena el nombre, el contexto y el código.");
+    if (!orgName || !inviteCode) {
+      setError("Por favor rellena el nombre y el código.");
+      return;
+    }
+    if (!orgContext.trim() && uploadedFiles.length === 0) {
+      setError("Añade al menos un documento o texto en la sección DATA.");
       return;
     }
 
@@ -41,6 +72,7 @@ export default function PlanesPage() {
         body: JSON.stringify({
           name: orgName,
           context: orgContext,
+          files: uploadedFiles,
           emails,
           inviteCode
         })
@@ -52,7 +84,6 @@ export default function PlanesPage() {
         throw new Error(data.error || "Error al crear la organización");
       }
 
-      // Éxito: Redirigir al entorno de la nueva organización
       window.location.href = `/org/${data.slug}`;
     } catch (err: any) {
       setError(err.message);
@@ -169,17 +200,70 @@ export default function PlanesPage() {
 
           {/* Data Upload / Context */}
           <div>
-            <label htmlFor="org-context" className="block text-xs uppercase tracking-widest text-[#999] mb-2">DATA</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-xs uppercase tracking-widest text-[#999]">DATA</label>
+              <div className="flex items-center gap-2">
+                {uploadingFile && (
+                  <span className="text-[10px] text-[#C5A47E] animate-pulse">Procesando...</span>
+                )}
+                <button
+                  type="button"
+                  disabled={loading || uploadingFile}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1 text-xs text-[#C5A47E] hover:text-[#b8956e] transition-colors disabled:opacity-40"
+                  title="Subir archivo (.txt, .md, .pdf)"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Añadir archivo
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt,.md,.pdf"
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
+            </div>
+
             <p className="text-xs text-[#aaa] mb-3">
-              Espacio para cargar material de la empresa: descripciones de procesos, archivos o texto para especializar el modelo.
+              Material para especializar la IA: procesos, contexto de la empresa, documentación interna.
             </p>
+
+            {/* Chips de archivos subidos */}
+            {uploadedFiles.length > 0 && (
+              <div className="flex flex-wrap gap-2 mb-3">
+                {uploadedFiles.map((f, i) => (
+                  <span key={i} className="inline-flex items-center gap-1.5 bg-[#F0EBE3] text-[#7a6248] text-xs px-3 py-1.5 rounded-full">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/>
+                    </svg>
+                    {f.filename}
+                    <button
+                      type="button"
+                      onClick={() => removeFile(i)}
+                      disabled={loading}
+                      className="ml-0.5 text-[#C5A47E] hover:text-[#b8956e] disabled:opacity-40"
+                      aria-label="Eliminar archivo"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                      </svg>
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
+
             <textarea
               id="org-context"
               disabled={loading}
               value={orgContext}
               onChange={e => setOrgContext(e.target.value)}
-              placeholder="Pega aquí el texto o describe el material de la empresa..."
-              rows={6}
+              placeholder="O pega texto directamente: descripciones, procesos, contexto..."
+              rows={4}
               className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] resize-none disabled:opacity-50"
             />
             <p className="text-[10px] text-red-400/80 mt-2 italic">
