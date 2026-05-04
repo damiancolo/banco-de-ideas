@@ -31,8 +31,8 @@ if (TARGET === 'production') {
     uri = process.env.MONGODB_URI;
     if (!uri) { console.error('❌ MONGODB_URI no está definida en .env.local'); process.exit(1); }
 } else if (TARGET === 'staging') {
-    uri = process.env.MONGODB_URI_ENTERPRISE_DEV || process.env.MONGODB_URI_PRUEBAS;
-    if (!uri) { console.error('❌ MONGODB_URI_ENTERPRISE_DEV no está definida en .env.local'); process.exit(1); }
+    uri = process.env.MONGODB_URI_PRUEBAS;
+    if (!uri) { console.error('❌ MONGODB_URI_PRUEBAS no está definida en .env.local'); process.exit(1); }
 } else {
     console.error(`❌ MIGRATION_TARGET="${TARGET}" no es válido. Usa "staging" o "production".`);
     process.exit(1);

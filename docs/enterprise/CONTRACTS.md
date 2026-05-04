@@ -119,17 +119,18 @@ interface IIdeaScope {
 
 ---
 
-## Datos del entorno de prueba (creados en Parte A)
+## Datos del entorno de prueba (en `banco-ideas-pruebas`)
 
 | Dato | Valor |
 |------|-------|
 | Org slug | `test-org` |
-| Org ID | `69f86417eca9095f996452d5` |
-| Org name | `Empresa de Prueba` |
-| Membership ID | `69f86417eca9095f996452d6` |
+| Org ID | `69f865afac962f2952a38494` |
+| Org name | `[TEST] Empresa de Prueba` |
+| Membership ID | `69f865cdb09d9bdc6ececf42` |
 | userId en membership | `69c445498c64f2b33a5565b3` (Damián, Google OAuth) |
 | aiProvider | `claude` |
 | aiModel | `claude-opus-4-6` |
+| BD | `banco-ideas-pruebas` (= `MONGODB_URI` en Vercel preview) |
 
 ---
 
@@ -170,7 +171,9 @@ interface AIProvider {
 
 | Variable | Cuándo se necesita | Descripción |
 |----------|--------------------|-------------|
-| `MONGODB_URI_ENTERPRISE_DEV` | Desde Parte A | URI a `banco-ideas-enterprise-dev` |
+| `MONGODB_URI` | Siempre | BD principal — contiene Organization, Membership y todo lo demás |
 | `ANTHROPIC_API_KEY` | Desde Parte B.3 | Ya configurada en Vercel (production + preview) |
 | `DEEPSEEK_API_KEY` | Ya existe | Reutilizado en B.4 |
 | `OPENAI_API_KEY` | Ya existe | Reutilizado en B.4 y embeddings |
+
+> **Nota local:** en `.env.local`, `MONGODB_URI` apunta a producción. Para desarrollo local sobre datos de prueba, usar `MONGODB_URI_PRUEBAS` en los scripts. Los endpoints de Next.js en dev siguen usando `MONGODB_URI` (ver AGENTS.md para cambiar localmente si se necesita).

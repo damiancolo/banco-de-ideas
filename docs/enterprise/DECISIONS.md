@@ -68,6 +68,19 @@ Las ideas de empresa también llevan `organizationId`.
 
 ---
 
+## Decisiones de arquitectura (revisiones)
+
+### BD única para Enterprise
+**Decisión:** las colecciones `Organization` y `Membership` viven en la BD principal (`MONGODB_URI`), no en una BD de staging separada.
+
+**Por qué:** simplifica los endpoints (una sola conexión MongoDB), evita duplicar configuración, y refleja cómo funcionará en producción. Las organizaciones de prueba se identifican por convención: slug empezando por `test-` y nombre prefijado con `[TEST]`.
+
+**Cuándo se decidió:** después de la Parte A, antes de empezar B.1.
+
+**Implicación para scripts locales:** los scripts usan `MONGODB_URI_PRUEBAS` localmente (que equivale al `MONGODB_URI` que usa Vercel en preview). Nunca escriben en la `MONGODB_URI` local (que apunta a producción).
+
+---
+
 ## Decisiones fuera de alcance (postergadas)
 
 | Tema | Razón del aplazamiento |
