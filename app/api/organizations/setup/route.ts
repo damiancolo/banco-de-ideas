@@ -20,8 +20,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
     }
 
-    const { name, context, emails, inviteCode, files } = await req.json();
-    // files: Array<{ filename: string; content: string }> — opcional
+    const { name, context, emails, inviteCode, files, logoBase64 } = await req.json();
 
     const validCode = process.env.SETUP_INVITE_CODE;
     if (!validCode || inviteCode !== validCode) {
@@ -51,6 +50,7 @@ export async function POST(req: Request) {
     const newOrg = await Organization.create({
       name,
       slug: finalSlug,
+      logoUrl: logoBase64 || '',
       aiProvider: 'deepseek',
       aiModel: 'deepseek-chat',
       status: 'active',

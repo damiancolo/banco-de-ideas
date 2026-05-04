@@ -20,7 +20,10 @@ export default function PlanesPage() {
   const [error, setError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<Array<{ filename: string; content: string }>>([]);
   const [uploadingFile, setUploadingFile] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const handleEmail = (index: number, value: string) => {
     const next = [...emails];
@@ -29,23 +32,33 @@ export default function PlanesPage() {
   };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
     e.target.value = '';
 
     setUploadingFile(true);
+    setError(null);
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-      const res = await fetch('/api/extract-text', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Error al procesar el archivo');
-      setUploadedFiles(prev => [...prev, { filename: data.filename, content: data.content }]);
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        const res = await fetch('/api/extract-text', { method: 'POST', body: formData });
+        const data = await res.json();
+        if (!res.ok) throw new Error(`${file.name}: ${data.error || 'Error al procesar'}`);
+        setUploadedFiles(prev => [...prev, { filename: data.filename, content: data.content }]);
+      }
     } catch (err: any) {
       setError(err.message);
     } finally {
       setUploadingFile(false);
     }
+  };
+
+  const handleLogoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoFile(file);
+    setLogoPreview(URL.createObjectURL(file));
   };
 
   const removeFile = (index: number) => {
@@ -66,6 +79,17 @@ export default function PlanesPage() {
     setError(null);
 
     try {
+      // Convertir logo a base64 si existe
+      let logoBase64: string | undefined;
+      if (logoFile) {
+        logoBase64 = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(logoFile);
+        });
+      }
+
       const res = await fetch("/api/organizations/setup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,6 +97,7 @@ export default function PlanesPage() {
           name: orgName,
           context: orgContext,
           files: uploadedFiles,
+          logoBase64,
           emails,
           inviteCode
         })
@@ -184,52 +209,69 @@ export default function PlanesPage() {
             </div>
           )}
 
-          {/* Org Name */}
+          {/* Org Name + Logo */}
           <div>
             <label htmlFor="org-name" className="block text-xs uppercase tracking-widest text-[#999] mb-2">Nombre de la organización</label>
-            <input
-              id="org-name"
-              type="text"
-              disabled={loading}
-              value={orgName}
-              onChange={e => setOrgName(e.target.value)}
-              placeholder="Ej: Acme Corp"
-              className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
-            />
+            <div className="flex items-center gap-3">
+              {/* Logo upload */}
+              <button
+                type="button"
+                disabled={loading}
+                onClick={() => logoInputRef.current?.click()}
+                className="flex-shrink-0 w-12 h-12 rounded-xl border border-[#E8E5E0] bg-[#FAFAF8] flex items-center justify-center hover:border-[#C5A47E] transition-colors disabled:opacity-50 overflow-hidden"
+                title="Subir logo"
+              >
+                {logoPreview ? (
+                  <img src={logoPreview} alt="Logo" className="w-full h-full object-cover" />
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C5A47E" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                )}
+              </button>
+              <input ref={logoInputRef} type="file" accept="image/*" className="hidden" onChange={handleLogoSelect} />
+              <input
+                id="org-name"
+                type="text"
+                disabled={loading}
+                value={orgName}
+                onChange={e => setOrgName(e.target.value)}
+                placeholder="Ej: Acme Corp"
+                className="flex-1 border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
+              />
+            </div>
           </div>
 
           {/* Data Upload / Context */}
           <div>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center gap-2 mb-2">
               <label className="text-xs uppercase tracking-widest text-[#999]">DATA</label>
-              <div className="flex items-center gap-2">
-                {uploadingFile && (
-                  <span className="text-[10px] text-[#C5A47E] animate-pulse">Procesando...</span>
-                )}
-                <button
-                  type="button"
-                  disabled={loading || uploadingFile}
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex items-center gap-1 text-xs text-[#C5A47E] hover:text-[#b8956e] transition-colors disabled:opacity-40"
-                  title="Subir archivo (.txt, .md, .pdf)"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                  </svg>
-                  Añadir archivo
-                </button>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".txt,.md,.pdf"
-                  className="hidden"
-                  onChange={handleFileSelect}
-                />
-              </div>
+              <button
+                type="button"
+                disabled={loading || uploadingFile}
+                onClick={() => fileInputRef.current?.click()}
+                className="flex items-center justify-center w-4 h-4 rounded-full border border-[#C5A47E] text-[#C5A47E] hover:bg-[#C5A47E] hover:text-white transition-colors disabled:opacity-40"
+                title="Añadir archivos (.txt, .md, .pdf)"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                </svg>
+              </button>
+              {uploadingFile && (
+                <span className="text-[10px] text-[#C5A47E] animate-pulse">Procesando...</span>
+              )}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".txt,.md,.pdf"
+                multiple
+                className="hidden"
+                onChange={handleFileSelect}
+              />
             </div>
 
             <p className="text-xs text-[#aaa] mb-3">
-              Material para especializar la IA: procesos, contexto de la empresa, documentación interna.
+              Material para especializar la IA: procesos, contexto de la empresa, documentación interna, página web del proyecto.
             </p>
 
             {/* Chips de archivos subidos */}
