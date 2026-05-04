@@ -59,7 +59,10 @@ export async function getIdeas(): Promise<SavedIdea[]> {
     try {
         await connectDB();
 
-        const ideas = await Idea.find({ $or: [{ userId: null }, { userId: { $exists: false } }] })
+        const ideas = await Idea.find({
+            $or: [{ userId: null }, { userId: { $exists: false } }],
+            $nor: [{ 'scope.type': 'organization' }, { 'scope.type': 'private' }]
+        })
             .sort({ createdAt: -1 })
             .lean()
             .exec();
@@ -350,7 +353,7 @@ export async function searchIdeasByKeywords(query: string): Promise<SavedIdea[]>
 export async function getUserIdeas(userId: string): Promise<SavedIdea[]> {
     try {
         await connectDB();
-        const ideas = await Idea.find({ userId })
+        const ideas = await Idea.find({ userId, $nor: [{ 'scope.type': 'organization' }] })
             .sort({ createdAt: -1 })
             .lean()
             .exec();

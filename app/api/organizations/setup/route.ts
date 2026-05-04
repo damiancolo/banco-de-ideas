@@ -4,9 +4,17 @@ import { connectDB } from "@/lib/mongodb";
 import Organization from "@/lib/models/Organization";
 import Membership from "@/lib/models/Membership";
 import mongoose from "mongoose";
+import { checkRateLimit } from "@/lib/rate-limit";
+import { getIp } from "@/lib/request-utils";
 
 export async function POST(req: Request) {
   try {
+    const ip = getIp(req);
+    const rateLimit = await checkRateLimit(ip, 'org-setup', 3, 60);
+    if (!rateLimit.success) {
+      return NextResponse.json({ error: "Demasiados intentos. Inténtalo más tarde." }, { status: 429 });
+    }
+
     const session = await auth();
     if (!session?.user) {
       return NextResponse.json({ error: "No autorizado" }, { status: 401 });
@@ -14,8 +22,8 @@ export async function POST(req: Request) {
 
     const { name, context, emails, inviteCode } = await req.json();
 
-    // Validación básica del código (hardcoded para el piloto)
-    if (inviteCode !== "IDEAS2024") {
+    const validCode = process.env.SETUP_INVITE_CODE;
+    if (!validCode || inviteCode !== validCode) {
       return NextResponse.json({ error: "Código de invitación inválido" }, { status: 400 });
     }
 
