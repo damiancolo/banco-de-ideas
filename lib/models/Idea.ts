@@ -9,6 +9,12 @@ export interface IComment {
     createdAt: Date;
 }
 
+export interface IIdeaScope {
+    type: 'public' | 'private' | 'organization';
+    userId?: string | null;                       // String (NextAuth JWT id)
+    organizationId?: mongoose.Types.ObjectId | null;
+}
+
 /**
  * Interfaz que define la estructura de una Idea en la base de datos
  */
@@ -19,9 +25,32 @@ export interface IIdea extends Document {
     deletionAttempts: number;
     comments: IComment[];
     userId?: string | null;
+    scope: IIdeaScope;
     createdAt: Date;
     updatedAt: Date;
 }
+
+// Nested schema for scope — needed because "type" is a reserved word in Mongoose
+const IdeaScopeSchema = new Schema<IIdeaScope>(
+    {
+        type: {
+            type: String,
+            enum: ['public', 'private', 'organization'],
+            required: true,
+            default: 'public',
+        },
+        userId: {
+            type: String,
+            default: null,
+        },
+        organizationId: {
+            type: Schema.Types.ObjectId,
+            ref: 'Organization',
+            default: null,
+        },
+    },
+    { _id: false }
+);
 
 /**
  * Esquema de Mongoose para el modelo Idea
@@ -64,7 +93,11 @@ const IdeaSchema = new Schema<IIdea>(
         comments: [{
             text: { type: String, required: true },
             createdAt: { type: Date, default: Date.now }
-        }]
+        }],
+        scope: {
+            type: IdeaScopeSchema,
+            default: () => ({ type: 'public' }),
+        },
     },
     {
         timestamps: true, // Añade createdAt y updatedAt automáticamente
@@ -81,6 +114,9 @@ IdeaSchema.index({ createdAt: -1 });
 
 // Índice compuesto para ideas privadas por usuario
 IdeaSchema.index({ userId: 1, category: 1, createdAt: -1 });
+
+// Índice para ideas organizacionales
+IdeaSchema.index({ 'scope.type': 1, 'scope.organizationId': 1, createdAt: -1 });
 
 // Índice de texto para búsqueda futura (opcional, comentado por ahora)
 // IdeaSchema.index({ text: 'text' });

@@ -10,7 +10,9 @@
     "sync-db": "node scripts/sync-staging-db.js",
     "embeddings": "node scripts/generate-embeddings.js",
     "migrate": "node scripts/migrate-localstorage.js",
-    "map-project": "node scripts/map-project.js"
+    "map-project": "node scripts/map-project.js",
+    "migrate:scope": "node scripts/migrate-ideas-scope.js",
+    "seed:enterprise": "node scripts/seed-enterprise-test.js"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",
