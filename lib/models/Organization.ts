@@ -17,6 +17,7 @@ export interface IOrganization extends Document {
     programStartDate: Date;
     programEndDate: Date;
     status: 'active' | 'ended' | 'archived';
+    createdViaInvite: boolean;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -79,6 +80,10 @@ const OrganizationSchema = new Schema<IOrganization>(
             default: 'active',
             required: true,
             index: true,
+        },
+        createdViaInvite: {
+            type: Boolean,
+            default: false,
         },
     },
     {

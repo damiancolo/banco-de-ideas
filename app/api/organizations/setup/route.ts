@@ -33,6 +33,13 @@ export async function POST(req: Request) {
 
     await connectDB();
 
+    // Verificar que el código no se haya usado más de 5 veces
+    const maxUses = parseInt(process.env.SETUP_INVITE_MAX_USES ?? '5', 10);
+    const usedCount = await Organization.countDocuments({ createdViaInvite: true });
+    if (usedCount >= maxUses) {
+      return NextResponse.json({ error: "El código de invitación ya no está disponible." }, { status: 403 });
+    }
+
     // 1. Crear la Organización
     const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
     
@@ -46,6 +53,7 @@ export async function POST(req: Request) {
       aiProvider: 'deepseek',
       aiModel: 'deepseek-chat',
       status: 'active',
+      createdViaInvite: true,
       programStartDate: new Date(),
       programEndDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 días de prueba
       knowledgeBase: [
