@@ -110,6 +110,14 @@ export default function Home() {
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
             </Link>
+            <Link href="/planes" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"></path>
+                <path d="M12 2v2M12 20v2M2 12h2M20 12h2"></path>
+                <path d="M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"></path>
+              </svg>
+            </Link>
           </div>
         }
       />
