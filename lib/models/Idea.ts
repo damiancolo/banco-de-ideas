@@ -12,7 +12,7 @@ export interface IComment {
 export interface IIdeaScope {
     type: 'public' | 'private' | 'organization';
     userId?: string | null;                       // String (NextAuth JWT id)
-    organizationId?: mongoose.Types.ObjectId | null;
+    organizationId?: mongoose.Types.ObjectId | string | null;
 }
 
 /**
