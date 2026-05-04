@@ -63,7 +63,7 @@ export async function POST(req: Request) {
     for (const email of validEmails) {
       // Intentar encontrar al usuario por email para obtener su ID real
       // Nota: Esto asume que el sistema de auth usa el email como identificador o permite buscarlo
-      const userDoc = await mongoose.connection.db.collection('users').findOne({ email });
+      const userDoc = await mongoose.connection.db?.collection('users').findOne({ email });
       
       await Membership.create({
         userId: userDoc ? userDoc._id.toString() : email, // Si no existe, guardamos el email temporalmente
