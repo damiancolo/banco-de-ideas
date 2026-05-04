@@ -41,8 +41,8 @@ const OrganizationSchema = new mongoose.Schema(
         name: String,
         slug: { type: String, unique: true },
         logoUrl: String,
-        aiProvider: { type: String, default: 'claude' },
-        aiModel: { type: String, default: 'claude-opus-4-6' },
+        aiProvider: { type: String, default: 'deepseek' },
+        aiModel: { type: String, default: 'deepseek-chat' },
         knowledgeBase: [
             {
                 filename: String,
@@ -89,8 +89,8 @@ async function run() {
     const orgData = {
         name: '[TEST] Empresa de Prueba',
         logoUrl: 'https://placehold.co/64x64?text=TEST',
-        aiProvider: 'claude',
-        aiModel: 'claude-opus-4-6',
+        aiProvider: 'deepseek',
+        aiModel: 'deepseek-chat',
         status: 'active',
         programStartDate: now,
         programEndDate: thirtyDaysLater,

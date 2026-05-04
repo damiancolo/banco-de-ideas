@@ -53,13 +53,13 @@ const OrganizationSchema = new Schema<IOrganization>(
         aiProvider: {
             type: String,
             enum: ['deepseek', 'claude', 'openai'],
-            default: 'claude',
+            default: 'deepseek',
             required: true,
         },
         aiModel: {
             type: String,
             required: true,
-            default: 'claude-opus-4-6',
+            default: 'deepseek-chat',
         },
         knowledgeBase: {
             type: [KnowledgeBaseDocSchema],
