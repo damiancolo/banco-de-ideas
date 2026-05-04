@@ -244,30 +244,32 @@ export default function PlanesPage() {
 
           {/* Data Upload / Context */}
           <div>
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center justify-between mb-2">
               <label className="text-xs uppercase tracking-widest text-[#999]">DATA</label>
-              <button
-                type="button"
-                disabled={loading || uploadingFile}
-                onClick={() => fileInputRef.current?.click()}
-                className="flex items-center justify-center w-4 h-4 rounded-full border border-[#C5A47E] text-[#C5A47E] hover:bg-[#C5A47E] hover:text-white transition-colors disabled:opacity-40"
-                title="Añadir archivos (.txt, .md, .pdf)"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-                </svg>
-              </button>
-              {uploadingFile && (
-                <span className="text-[10px] text-[#C5A47E] animate-pulse">Procesando...</span>
-              )}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".txt,.md,.pdf"
-                multiple
-                className="hidden"
-                onChange={handleFileSelect}
-              />
+              <div className="flex items-center gap-2">
+                {uploadingFile && (
+                  <span className="text-[10px] text-[#C5A47E] animate-pulse">Procesando...</span>
+                )}
+                <button
+                  type="button"
+                  disabled={loading || uploadingFile}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#C5A47E] text-[#C5A47E] text-xs font-medium hover:bg-[#C5A47E] hover:text-white transition-colors disabled:opacity-40"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+                  </svg>
+                  Añadir archivos
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".txt,.md,.pdf"
+                  multiple
+                  className="hidden"
+                  onChange={handleFileSelect}
+                />
+              </div>
             </div>
 
             <p className="text-xs text-[#aaa] mb-3">
