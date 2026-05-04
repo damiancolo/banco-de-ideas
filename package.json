@@ -15,6 +15,7 @@
     "seed:enterprise": "node scripts/seed-enterprise-test.js"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.36.3",
     "@auth/mongodb-adapter": "^3.11.1",
     "@tailwindcss/typography": "^0.5.19",
     "mongoose": "^9.0.1",

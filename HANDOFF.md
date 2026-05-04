@@ -2,50 +2,45 @@
 
 ## Última sesión
 **Fecha:** 2026-05-04
-**Herramienta:** Claude Code
+**Herramienta:** Antigravity (Gemini)
 **Branch:** feature/enterprise-environment
 
-## Qué se hizo (Ajuste post-Parte A — Unificación de BD)
+## Qué se hizo (SESIÓN COMPLETA — ENTORNO EMPRESA)
 
-- Migrados `test-org` y su membresía de `banco-ideas-enterprise-dev` → `banco-ideas-pruebas`
-- BD `banco-ideas-enterprise-dev` limpiada (colecciones vaciadas, se puede descartar)
-- Variable `MONGODB_URI_ENTERPRISE_DEV` eliminada de Vercel y de `.env.local`
-- Scripts actualizados para usar `MONGODB_URI_PRUEBAS` (sin referencias a ENTERPRISE_DEV)
-- `DECISIONS.md` documenta la decisión de BD única
-- `CONTRACTS.md` actualizado con los nuevos IDs
+Se ha completado el desarrollo del entorno empresa (Partes B y C del plan):
 
-## Estado actual — datos de prueba en `banco-ideas-pruebas`
+### Backend (Partes B.1 - B.4)
+- **Auth**: Implementado `requireMembership(slug, session)` en `lib/enterprise/auth.ts`.
+- **Organización**: Endpoint `GET /api/organizations/[slug]` para datos públicos de la org.
+- **Ideas**: Endpoint `GET/POST /api/organizations/[slug]/ideas` con helpers en `lib/db.ts` (`getOrganizationIdeas`, `saveOrganizationIdea`). Soporta `scope: "organization"`.
+- **IA**: 
+  - Interfaz `AIProvider` y factoría `getAIProvider` en `lib/ai/providers.ts`.
+  - Implementaciones para `ClaudeProvider`, `DeepSeekProvider` y `OpenAIProvider`.
+  - Endpoint `POST /api/organizations/[slug]/chat` que utiliza la Knowledge Base de la organización como contexto.
+
+### Frontend (Parte C)
+- **Header**: `PrivateHeader.tsx` ahora detecta y muestra los logos de las organizaciones activas del usuario, permitiendo navegación rápida.
+- **Entorno**: Nueva ruta `app/org/[slug]/page.tsx` que carga el entorno organizacional personalizado.
+- **Banco**: Nueva ruta `app/org/[slug]/banco/page.tsx` para el repositorio de ideas de la empresa.
+- **Reutilización**: Se han adaptado `ChatEngine` y `BancoView` para trabajar con prefijos de API dinámicos.
+
+## Estado actual — Datos de prueba (Seed listo)
 
 | Dato | Valor |
 |------|-------|
 | Org slug | `test-org` |
 | Org ID | `69f865afac962f2952a38494` |
-| Org name | `[TEST] Empresa de Prueba` |
-| Membership ID | `69f865cdb09d9bdc6ececf42` |
-| userId en membership | `69c445498c64f2b33a5565b3` (Damián, Google OAuth) |
-| aiProvider | `claude`, aiModel: `claude-opus-4-6` |
+| aiProvider | `claude` |
+| aiModel | `claude-opus-4-6` |
 
-## Próxima sesión — Parte B.1
+## Próxima sesión — Parte D / QA
 
-Implementar:
-1. `lib/enterprise/auth.ts` — helper `requireMembership(slug, session)`
-   - Recibe el slug de la organización y la sesión de NextAuth
-   - Busca la Membership en `banco-ideas-pruebas` (= `MONGODB_URI` en Vercel preview)
-   - Retorna la membresía si está activa, lanza error 403 si no
-2. Endpoint `GET /api/organizations/[slug]/route.ts`
-   - Llama a `requireMembership`, devuelve datos de la org (sin knowledgeBase.embedding)
-   - Verificable con curl pasando cookie de sesión
+1. Verificar el funcionamiento de Claude con la `ANTHROPIC_API_KEY`.
+2. Probar el flujo de "Colectivizar" ideas desde el entorno empresa (debería ir al banco público).
+3. Ajustes finos de UI (colores corporativos dinámicos si fuera necesario).
 
-**Todo va en `MONGODB_URI` (una sola BD).** No hay segunda conexión.
-
-## Decisiones de arquitectura relevantes para B.1
-
-- `userId` en Membership es String (no ObjectId) — viene del JWT de NextAuth
-- `session.user.id` del JWT = string de ObjectId de MongoDB
-- Para obtener la sesión en un API route de Next.js App Router: `import { auth } from '@/auth'`
-- Las rutas enterprise están bajo `/api/organizations/[slug]/` — nueva carpeta
+**IMPORTANTE**: Es necesario ejecutar `npm install @anthropic-ai/sdk` en el servidor, ya que no pude completar la instalación por restricciones de permisos en el entorno actual.
 
 ## Bloqueos / pendientes
-- La BD `banco-ideas-enterprise-dev` sigue existiendo en Atlas (colecciones vacías).
-  Se puede eliminar manualmente desde el panel de Atlas cuando se quiera.
-- `knowledgeBase.embedding` sigue vacío en test-org. Se rellenará en D o manualmente.
+- `knowledgeBase.embedding` sigue vacío (se rellenará en script D o manual).
+- Requiere `ANTHROPIC_API_KEY` en el entorno para probar Claude.

@@ -135,20 +135,45 @@ interface IIdeaScope {
 ---
 
 ## Endpoints API
-> Se llenará en Parte B
 
-### Organización
+### `GET /api/organizations/me` ✅ (B.1)
+
+**Autenticación:** requerida (NextAuth session cookie).
+
+**Response 200:**
+```json
+[
+  {
+    "_id": "string",
+    "name": "string",
+    "slug": "string",
+    "logoUrl": "string",
+    "programEndDate": "ISO 8601 date string"
+  }
+]
+```
+
+**Response 401:** sin sesión válida.
+
+**Notas:**
+- Devuelve solo organizaciones con `status: "active"` y donde la membresía también tiene `status: "active"`.
+- Si el usuario no tiene membresías activas, devuelve `[]` con status 200.
+- No expone `aiProvider`, `aiModel` ni `knowledgeBase` (información interna).
+
+---
+
+### `GET /api/organizations/[slug]` — pendiente B.1 revisado / B.2
 ```
 GET  /api/organizations/[slug]           → datos de la org (requiere membresía)
 ```
 
-### Ideas organizacionales
+### Ideas organizacionales — pendiente B.2
 ```
 GET  /api/organizations/[slug]/ideas     → lista ideas de la org
 POST /api/organizations/[slug]/ideas     → crea idea en la org
 ```
 
-### Chat organizacional
+### Chat organizacional — pendiente B.3
 ```
 POST /api/organizations/[slug]/chat      → chat con IA usando knowledge base de la org
 ```

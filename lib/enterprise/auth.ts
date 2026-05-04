@@ -94,3 +94,28 @@ export async function requireActiveMembership(
     const found = memberships.find(m => m.organization.slug === organizationSlug);
     return found ? { membership: found } : null;
 }
+
+// ----------------------------------------------------------------
+// requireMembership
+// ----------------------------------------------------------------
+
+/**
+ * Verifies the user has an active membership via their NextAuth session.
+ * Throws an error if not authenticated or not authorized.
+ */
+export async function requireMembership(
+    organizationSlug: string,
+    session: any
+): Promise<ActiveMembership> {
+    const userId = session?.user?.id;
+    if (!userId) {
+        throw new Error('UNAUTHORIZED');
+    }
+    
+    const result = await requireActiveMembership(userId, organizationSlug);
+    if (!result) {
+        throw new Error('FORBIDDEN');
+    }
+    
+    return result.membership;
+}
