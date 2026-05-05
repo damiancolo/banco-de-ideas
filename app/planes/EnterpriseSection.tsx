@@ -101,6 +101,11 @@ const CSS = `
 .ent-root .ent-final h2 em { font-style: italic; color: #7a1a2e; }
 .ent-root .ent-footer { margin-top: 40px; padding: 24px 0; border-top: 0.5px solid #ddd7cb; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 12px; }
 .ent-root .ent-footer span { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: #8a7f72; }
+.ent-root .ent-manifesto { background: #181714; border-radius: 16px; padding: 56px 48px; margin: 0 auto; text-align: center; }
+.ent-root .ent-manifesto-pre { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; letter-spacing: 0.22em; color: #8a7f72; margin-bottom: 32px; }
+.ent-root .ent-manifesto p { font-family: 'Fraunces', serif; font-size: clamp(22px,3.5vw,34px); font-weight: 300; line-height: 1.35; letter-spacing: -0.02em; color: #f2ede3; }
+.ent-root .ent-manifesto p mark { background: none; color: #c9a87a; font-style: italic; }
+@media (max-width: 700px) { .ent-root .ent-manifesto { padding: 40px 28px; } }
 @media (max-width: 700px) {
   .ent-root .ent-container { padding: 0 24px; }
   .ent-root .ent-hero { padding-top: 60px; }
@@ -232,8 +237,12 @@ export default function EnterpriseSection() {
         <section className="ent-bridge">
           <div className="ent-bridge-pre">Para este problema tenemos una</div>
           <div className="ent-bridge-h"><em>idea.</em></div>
-          <p style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(16px,2vw,19px)", fontWeight: 300, fontStyle: "italic", lineHeight: 1.6, letterSpacing: "-0.015em", color: "#8a7f72", maxWidth: 640, margin: "32px auto 0" }}>El programa organizaciones de unbancodeideas.com es una iniciativa de microconcursos para que los integrantes de la organización sean los protagonistas de los cambios, se motiven en repensar los procesos y acompañen a la organización a una transformación inteligente.</p>
         </section>
+
+        <div className="ent-manifesto">
+          <div className="ent-manifesto-pre">El programa · Organizaciones</div>
+          <p>Una iniciativa de <mark>microconcursos</mark> para que los integrantes de la organización sean los <mark>protagonistas de los cambios</mark>, se motiven en repensar los procesos y acompañen a la organización a una <mark>transformación inteligente.</mark></p>
+        </div>
 
         <hr className="ent-hr" />
 
@@ -348,6 +357,23 @@ export default function EnterpriseSection() {
 
         <hr className="ent-hr" />
 
+        <section>
+          <div className="ent-label">Programa de IA para empresas · unbancodeideas.com</div>
+          <div style={{ border: '0.5px solid #ddd7cb', borderRadius: 12, padding: 40, marginTop: 28 }}>
+            <div className="ent-price-badge">Programa Piloto</div>
+            <div className="ent-price-name">Banco de Ideas Organizaciones</div>
+            <div className="ent-price-desc">30 días · 10 participantes · Hasta 3 premios</div>
+            <ul className="ent-price-features">
+              <li><span className="ent-pf-dot">✦</span> IA entrenada y experta en los procesos de tu empresa</li>
+              <li><span className="ent-pf-dot">✦</span> Workspace privado con 10 participantes y 3 premios configurables</li>
+              <li><span className="ent-pf-dot">✦</span> Sistema de propuesta, debate y voto de ideas</li>
+              <li><span className="ent-pf-dot">✦</span> Reporte ejecutivo final + sello "Cero despidos por IA"</li>
+            </ul>
+            <a href="mailto:hola@unbancodeideas.com?subject=Quiero%20contratar%20el%20piloto%20Organizaciones" className="ent-btn" style={{ width: '100%', justifyContent: 'center' }}>Empezar el piloto →</a>
+          </div>
+        </section>
+
+        <hr className="ent-hr" />
 
         <section className="ent-final">
           <h2>Programa de IA para organizaciones<br /><em>Un Banco de Ideas.</em></h2>

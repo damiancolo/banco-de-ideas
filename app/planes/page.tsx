@@ -318,6 +318,9 @@ export default function PlanesPage() {
               rows={4}
               className="w-full border border-[#E8E5E0] rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] resize-none disabled:opacity-50"
             />
+            <p className="text-[10px] text-[#bbb] mt-2 italic">
+              * No subir información sensible o confidencial.
+            </p>
           </div>
 
           {/* Emails */}
