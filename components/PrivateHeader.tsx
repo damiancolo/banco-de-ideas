@@ -52,17 +52,23 @@ export default function PrivateHeader() {
                     {orgs.length > 0 && (
                         <div className="flex items-center gap-2 ml-2 pl-3 border-l border-gray-200">
                             {orgs.map(org => (
-                                <Link 
-                                    key={org._id} 
+                                <Link
+                                    key={org._id}
                                     href={`/org/${org.slug}`}
                                     title={org.name}
-                                    className="transition-transform hover:scale-110"
+                                    className="transition-opacity hover:opacity-70"
                                 >
-                                    <img 
-                                        src={org.logoUrl} 
-                                        alt={org.name} 
-                                        className="w-7 h-7 rounded bg-gray-50 object-contain border border-gray-100"
-                                    />
+                                    {org.logoUrl ? (
+                                        <img
+                                            src={org.logoUrl}
+                                            alt={org.name}
+                                            className="w-7 h-7 rounded bg-gray-50 object-contain border border-gray-100"
+                                        />
+                                    ) : (
+                                        <span className="text-[10px] text-gray-400 hover:text-[#C5A47E] transition-colors font-medium tracking-wide leading-none">
+                                            {org.name.length > 12 ? org.name.slice(0, 12) + '…' : org.name}
+                                        </span>
+                                    )}
                                 </Link>
                             ))}
                         </div>
