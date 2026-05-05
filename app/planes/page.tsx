@@ -14,7 +14,8 @@ export default function PlanesPage() {
   const [selectedPlan, setSelectedPlan] = useState<"gratis" | "pro" | "org">("gratis");
   const [orgName, setOrgName] = useState("");
   const [orgContext, setOrgContext] = useState("");
-  const [emails, setEmails] = useState<string[]>(Array(10).fill(""));
+  const [organizerEmail, setOrganizerEmail] = useState("");
+  const [prizes, setPrizes] = useState<string[]>(["", "", ""]);
   const [showCodeField, setShowCodeField] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -36,12 +37,6 @@ export default function PlanesPage() {
       document.head.appendChild(link);
     }
   }, []);
-
-  const handleEmail = (index: number, value: string) => {
-    const next = [...emails];
-    next[index] = value;
-    setEmails(next);
-  };
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
@@ -82,6 +77,10 @@ export default function PlanesPage() {
       setError("Por favor rellena el nombre y el código.");
       return;
     }
+    if (!organizerEmail || !organizerEmail.includes('@')) {
+      setError("Introduce un email válido como organizador.");
+      return;
+    }
     if (!orgContext.trim() && uploadedFiles.length === 0) {
       setError("Añade al menos un documento o texto en la sección DATA.");
       return;
@@ -110,7 +109,8 @@ export default function PlanesPage() {
           context: orgContext,
           files: uploadedFiles,
           logoBase64,
-          emails,
+          organizerEmail,
+          prizes,
           inviteCode
         })
       });
@@ -330,21 +330,44 @@ export default function PlanesPage() {
             </p>
           </div>
 
-          {/* Emails */}
+          {/* Organizador */}
           <div>
-            <label className="block text-xs uppercase tracking-widest text-[#999] mb-2">Participantes (hasta 10)</label>
+            <label htmlFor="organizer-email" className="block text-xs uppercase tracking-widest text-[#999] mb-1">Organizador del programa</label>
+            <p className="text-xs text-[#aaa] mb-2">Tu email — con él accederás al entorno una vez que inicies sesión con Google.</p>
+            <div className="relative">
+              <input
+                id="organizer-email"
+                type="email"
+                disabled={loading}
+                value={organizerEmail}
+                onChange={e => setOrganizerEmail(e.target.value)}
+                placeholder="tu@empresa.com"
+                className="w-full border-2 border-[#7a1a2e]/30 rounded-xl px-4 py-3 text-sm text-[#333] placeholder-[#bbb] focus:outline-none focus:border-[#7a1a2e] transition-colors bg-white disabled:opacity-50"
+              />
+              <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-medium tracking-widest uppercase text-[#7a1a2e]/60">Admin</span>
+            </div>
+          </div>
+
+          {/* Premios */}
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-[#999] mb-1">Premios del programa</label>
+            <p className="text-xs text-[#aaa] mb-3">Define qué recibirán las tres mejores ideas. Una cena, días libres, un bono — tú decides.</p>
             <div className="space-y-2">
-              {emails.map((email, i) => (
-                <input
-                  key={i}
-                  id={`email-${i + 1}`}
-                  type="email"
-                  disabled={loading}
-                  value={email}
-                  onChange={e => handleEmail(i, e.target.value)}
-                  placeholder={`correo${i + 1}@empresa.com`}
-                  className="w-full border border-[#E8E5E0] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[#ccc] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
-                />
+              {prizes.map((prize, i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <span className="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-medium"
+                    style={{ background: i === 0 ? '#c9a87a' : i === 1 ? '#b8b0a4' : '#a8856a', color: '#fff' }}>
+                    {i + 1}
+                  </span>
+                  <input
+                    type="text"
+                    disabled={loading}
+                    value={prize}
+                    onChange={e => { const next = [...prizes]; next[i] = e.target.value; setPrizes(next); }}
+                    placeholder={i === 0 ? 'Ej: Cena para dos personas' : i === 1 ? 'Ej: Día libre extra' : 'Ej: Bono de 50€'}
+                    className="flex-1 border border-[#E8E5E0] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[#ccc] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
+                  />
+                </div>
               ))}
             </div>
           </div>
