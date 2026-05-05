@@ -2,7 +2,7 @@
 
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 
 interface Organization {
     _id: string;
@@ -13,12 +13,21 @@ interface Organization {
 
 interface Props {
     /** When set, shows the org name/logo instead of the personal user name */
-    activeOrg?: { name: string; logoUrl?: string };
+    activeOrg?: { name: string; logoUrl?: string; inviteUrl?: string };
 }
 
 export default function PrivateHeader({ activeOrg }: Props = {}) {
     const { data: session } = useSession();
     const [orgs, setOrgs] = useState<Organization[]>([]);
+    const [copied, setCopied] = useState(false);
+
+    const handleCopyInvite = useCallback(() => {
+        if (!activeOrg?.inviteUrl) return;
+        navigator.clipboard.writeText(activeOrg.inviteUrl).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+        });
+    }, [activeOrg?.inviteUrl]);
 
     useEffect(() => {
         if (session?.user) {
@@ -90,6 +99,15 @@ export default function PrivateHeader({ activeOrg }: Props = {}) {
                     )}
                 </div>
                 <div className="flex items-center gap-4">
+                    {activeOrg?.inviteUrl && (
+                        <button
+                            onClick={handleCopyInvite}
+                            title="Copiar link de invitación"
+                            className="text-xs text-gray-400 hover:text-[#C5A47E] transition-colors border border-gray-200 hover:border-[#C5A47E] rounded-md px-2 py-1"
+                        >
+                            {copied ? '✓ Copiado' : '+ Invitar'}
+                        </button>
+                    )}
                     <Link
                         href="/planes"
                         className="text-sm text-gray-400 hover:text-[#C5A47E] transition-colors"
