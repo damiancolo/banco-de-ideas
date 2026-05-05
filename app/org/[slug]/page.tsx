@@ -13,7 +13,13 @@ export default async function OrgPage({ params }: { params: Promise<{ slug: stri
 
     try {
         const membership = await requireMembership(slug, session);
-        return <OrgEnvironment organization={membership.organization} userName={session.user.name ?? undefined} />;
+        return (
+            <OrgEnvironment
+                organization={membership.organization}
+                userName={session.user.name ?? undefined}
+                role={membership.role}
+            />
+        );
     } catch (error) {
         // Not a member or other error
         redirect("/privado");

@@ -47,9 +47,12 @@ export async function POST(req: Request) {
     const existingOrg = await Organization.findOne({ slug });
     const finalSlug = existingOrg ? `${slug}-${Math.floor(Math.random() * 1000)}` : slug;
 
+    const joinToken = `${Math.random().toString(36).slice(2, 6)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
+
     const newOrg = await Organization.create({
       name,
       slug: finalSlug,
+      joinToken,
       logoUrl: logoBase64 || '',
       aiProvider: 'deepseek',
       aiModel: 'deepseek-chat',
@@ -93,10 +96,11 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       slug: finalSlug,
-      message: "Organización creada con éxito" 
+      joinToken,
+      message: "Organización creada con éxito"
     });
 
   } catch (error: any) {

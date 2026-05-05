@@ -121,7 +121,8 @@ export default function PlanesPage() {
         throw new Error(data.error || "Error al crear la organización");
       }
 
-      window.location.href = `/org/${data.slug}`;
+      // Pass joinToken so OrgEnvironment can show the invite banner immediately
+      window.location.href = `/org/${data.slug}${data.joinToken ? `?nuevo=1` : ''}`;
     } catch (err: any) {
       setError(err.message);
       setLoading(false);

@@ -12,6 +12,7 @@ export type OrgPublicFields = {
     name: string;
     slug: string;
     logoUrl: string;
+    joinToken?: string;
     aiProvider: 'deepseek' | 'claude' | 'openai';
     aiModel: string;
     programEndDate: Date;
@@ -52,7 +53,7 @@ export async function getActiveMemberships(userId: string): Promise<ActiveMember
         path: 'organizationId',
         model: Organization,
         match: { status: 'active' },
-        select: 'name slug logoUrl aiProvider aiModel programEndDate status',
+        select: 'name slug logoUrl joinToken aiProvider aiModel programEndDate status',
     });
 
     // populate with match: returns null for non-matching docs — filter those out
@@ -68,6 +69,7 @@ export async function getActiveMemberships(userId: string): Promise<ActiveMember
                     name: org.name,
                     slug: org.slug,
                     logoUrl: org.logoUrl,
+                    joinToken: org.joinToken,
                     aiProvider: org.aiProvider,
                     aiModel: org.aiModel,
                     programEndDate: org.programEndDate,

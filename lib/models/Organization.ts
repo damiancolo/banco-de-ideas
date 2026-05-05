@@ -11,6 +11,7 @@ export interface IOrganization extends Document {
     name: string;
     slug: string;
     logoUrl: string;
+    joinToken: string;
     aiProvider: 'deepseek' | 'claude' | 'openai';
     aiModel: string;
     knowledgeBase: IKnowledgeBaseDoc[];
@@ -45,6 +46,12 @@ const OrganizationSchema = new Schema<IOrganization>(
             trim: true,
             lowercase: true,
             unique: true,
+            index: true,
+        },
+        joinToken: {
+            type: String,
+            unique: true,
+            sparse: true,
             index: true,
         },
         logoUrl: {

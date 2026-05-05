@@ -2,6 +2,8 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { getMongoClient } from '@/lib/auth-client';
+import { connectDB } from '@/lib/mongodb';
+import Membership from '@/lib/models/Membership';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: MongoDBAdapter(getMongoClient()),
@@ -44,6 +46,21 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         signIn: '/privado',
     },
     callbacks: {
+        async signIn({ user }) {
+            // Claim memberships stored with email as userId (from setup before user existed)
+            if (user?.id && user?.email) {
+                try {
+                    await connectDB();
+                    await Membership.updateMany(
+                        { userId: user.email },
+                        { $set: { userId: user.id } }
+                    );
+                } catch {
+                    // Non-blocking: login proceeds even if claim fails
+                }
+            }
+            return true;
+        },
         async jwt({ token, user }) {
             if (user) {
                 token.id = user.id;
