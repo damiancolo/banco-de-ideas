@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import EnterpriseSection from "./EnterpriseSection";
 
 const CHECK_ICON = (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#C5A47E] flex-shrink-0 mt-0.5">
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ color: "#7a1a2e", flexShrink: 0, marginTop: "2px" }}>
     <polyline points="20 6 9 17 4 12" />
   </svg>
 );
@@ -25,6 +25,17 @@ export default function PlanesPage() {
   const [logoFile, setLogoFile] = useState<File | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const id = "planes-google-fonts";
+    if (!document.getElementById(id)) {
+      const link = document.createElement("link");
+      link.id = id;
+      link.rel = "stylesheet";
+      link.href = "https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,300;0,400;0,500;1,300;1,400&family=JetBrains+Mono:wght@400&display=swap";
+      document.head.appendChild(link);
+    }
+  }, []);
 
   const handleEmail = (index: number, value: string) => {
     const next = [...emails];
@@ -132,8 +143,8 @@ export default function PlanesPage() {
 
       {/* Header */}
       <div className="mb-10 text-center">
-        <p className="text-xs tracking-[0.25em] uppercase text-[#999] mb-2">unbancodeideas</p>
-        <h1 className="text-2xl font-light text-[#2a2a2a] tracking-tight">Programas</h1>
+        <p style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.22em", color: "#8a7f72", marginBottom: "12px" }}>unbancodeideas</p>
+        <h1 style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 300, color: "#181714", letterSpacing: "-0.03em", lineHeight: 1.05 }}>Programas</h1>
       </div>
 
       {/* Plan Cards */}
@@ -142,67 +153,69 @@ export default function PlanesPage() {
         <button
           id="plan-gratis"
           onClick={() => setSelectedPlan("gratis")}
-          className={`text-left rounded-2xl p-6 border transition-all duration-300 ${
-            selectedPlan === "gratis"
-              ? "border-[#C5A47E] bg-white shadow-md"
-              : "border-[#E8E5E0] bg-white/50 hover:bg-white hover:shadow-sm"
-          }`}
+          className="text-left rounded-2xl p-6 border transition-all duration-300"
+          style={{
+            borderColor: selectedPlan === "gratis" ? "#7a1a2e" : "#ddd7cb",
+            background: selectedPlan === "gratis" ? "#fff" : "rgba(250,248,243,0.6)",
+            boxShadow: selectedPlan === "gratis" ? "0 4px 20px rgba(122,26,46,0.08)" : "none",
+          }}
         >
-          <span className="text-[10px] uppercase tracking-widest text-[#aaa] font-medium">Gratis</span>
-          <h2 className="text-lg font-medium text-[#2a2a2a] mt-1 mb-3">Entorno privado</h2>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.2em", color: "#8a7f72" }}>Gratis</span>
+          <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: "22px", fontWeight: 300, color: "#181714", letterSpacing: "-0.025em", lineHeight: 1.1, margin: "6px 0 14px" }}>Entorno privado</h2>
           <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Banco de ideas personal</span></li>
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>IA DeepSeek como gestor</span></li>
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Bisociaciones y análisis</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>Banco de ideas personal</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>IA DeepSeek como gestor</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>Bisociaciones y análisis</span></li>
           </ul>
-          {/* No price info */}
         </button>
 
         {/* Pro */}
         <button
           id="plan-pro"
           onClick={() => setSelectedPlan("pro")}
-          className={`text-left rounded-2xl p-6 border transition-all duration-300 ${
-            selectedPlan === "pro"
-              ? "border-[#C5A47E] bg-white shadow-md"
-              : "border-[#E8E5E0] bg-white/50 hover:bg-white hover:shadow-sm"
-          }`}
+          className="text-left rounded-2xl p-6 border transition-all duration-300"
+          style={{
+            borderColor: selectedPlan === "pro" ? "#7a1a2e" : "#ddd7cb",
+            background: selectedPlan === "pro" ? "#fff" : "rgba(250,248,243,0.6)",
+            boxShadow: selectedPlan === "pro" ? "0 4px 20px rgba(122,26,46,0.08)" : "none",
+          }}
         >
-          <span className="text-[10px] uppercase tracking-widest text-[#C5A47E] font-medium">Pro</span>
-          <h2 className="text-lg font-medium text-[#2a2a2a] mt-1 mb-3">Entorno avanzado</h2>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.2em", color: "#7a1a2e" }}>Pro</span>
+          <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: "22px", fontWeight: 300, color: "#181714", letterSpacing: "-0.025em", lineHeight: 1.1, margin: "6px 0 14px" }}>Entorno avanzado</h2>
           <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Todo lo del plan Gratis</span></li>
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Elige el modelo de IA (Claude, GPT, DeepSeek…)</span></li>
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Gestor con mayor contexto</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>Todo lo del plan Gratis</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>Elige el modelo de IA (Claude, GPT, DeepSeek…)</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>Gestor con mayor contexto</span></li>
           </ul>
-          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar</p>
+          <p style={{ marginTop: "16px", fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", color: "#7a1a2e" }}>Consultar →</p>
         </button>
 
         {/* Organización */}
         <button
           id="plan-org"
           onClick={() => setSelectedPlan("org")}
-          className={`text-left rounded-2xl p-6 border transition-all duration-300 ${
-            selectedPlan === "org"
-              ? "border-[#C5A47E] bg-white shadow-md"
-              : "border-[#E8E5E0] bg-white/50 hover:bg-white hover:shadow-sm"
-          }`}
+          className="text-left rounded-2xl p-6 border transition-all duration-300"
+          style={{
+            borderColor: selectedPlan === "org" ? "#7a1a2e" : "#ddd7cb",
+            background: selectedPlan === "org" ? "#fff" : "rgba(250,248,243,0.6)",
+            boxShadow: selectedPlan === "org" ? "0 4px 20px rgba(122,26,46,0.08)" : "none",
+          }}
         >
-          <span className="text-[10px] uppercase tracking-widest text-[#888] font-medium">Organización</span>
-          <h2 className="text-lg font-medium text-[#2a2a2a] mt-1 mb-3">Entorno empresa</h2>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.2em", color: "#8a7f72" }}>Organización</span>
+          <h2 style={{ fontFamily: "'Fraunces', serif", fontSize: "22px", fontWeight: 300, color: "#181714", letterSpacing: "-0.025em", lineHeight: 1.1, margin: "6px 0 14px" }}>Entorno empresa</h2>
           <ul className="space-y-2">
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Espacio privado corporativo</span></li>
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>IA especializada en tu empresa</span></li>
-            <li className="flex items-start gap-2 text-sm text-[#555]">{CHECK_ICON}<span>Hasta 10 participantes</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>Espacio privado corporativo</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>IA especializada en tu empresa</span></li>
+            <li className="flex items-start gap-2" style={{ fontSize: "13px", color: "#8a7f72" }}>{CHECK_ICON}<span>Hasta 10 participantes</span></li>
           </ul>
-          <p className="mt-4 text-[#C5A47E] font-medium text-sm">Consultar</p>
+          <p style={{ marginTop: "16px", fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.15em", color: "#7a1a2e" }}>Consultar →</p>
         </button>
       </div>
 
       {/* Org Form — visible only when org is selected */}
       {selectedPlan === "org" && (
         <div className="w-full max-w-2xl bg-white rounded-2xl border border-[#E8E5E0] p-8 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-          <h3 className="text-base font-medium text-[#2a2a2a] tracking-tight">Configura tu organización</h3>
+          <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: "20px", fontWeight: 400, color: "#181714", letterSpacing: "-0.02em" }}>Configura tu organización</h3>
 
           {error && (
             <div className="p-3 bg-red-50 border border-red-100 text-red-600 text-xs rounded-xl">
@@ -341,7 +354,8 @@ export default function PlanesPage() {
               <>
                 <a
                   href="mailto:damianlafferranderie@gmail.com?subject=Consulta Programa Organización"
-                  className="w-full bg-[#2a2a2a] hover:bg-[#111] text-white text-center text-sm font-medium py-4 px-6 rounded-xl transition-all shadow-sm hover:shadow-md block"
+                  className="w-full text-center block rounded-xl transition-all"
+                  style={{ background: "#181714", color: "#fff", padding: "16px 24px", fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.18em" }}
                 >
                   Consultar
                 </a>
@@ -391,7 +405,8 @@ export default function PlanesPage() {
         <div className="w-full max-w-2xl text-center mt-4">
           <a
             href="mailto:damianlafferranderie@gmail.com?subject=Consulta Plan Personal"
-            className="inline-block bg-[#2a2a2a] hover:bg-[#111] text-white text-sm font-medium px-12 py-4 rounded-xl transition-all shadow-sm hover:shadow-md"
+            className="inline-block rounded-xl transition-all"
+            style={{ background: "#181714", color: "#fff", padding: "16px 48px", fontFamily: "'JetBrains Mono', monospace", fontSize: "11px", textTransform: "uppercase", letterSpacing: "0.18em" }}
           >
             Consultar
           </a>
