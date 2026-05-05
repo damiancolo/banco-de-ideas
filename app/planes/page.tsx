@@ -16,6 +16,7 @@ export default function PlanesPage() {
   const [orgContext, setOrgContext] = useState("");
   const [organizerEmail, setOrganizerEmail] = useState("");
   const [prizes, setPrizes] = useState<string[]>(["", "", ""]);
+  const [emails, setEmails] = useState<string[]>(Array(10).fill(""));
   const [showCodeField, setShowCodeField] = useState(false);
   const [inviteCode, setInviteCode] = useState("");
   const [loading, setLoading] = useState(false);
@@ -111,6 +112,7 @@ export default function PlanesPage() {
           logoBase64,
           organizerEmail,
           prizes,
+          emails,
           inviteCode
         })
       });
@@ -364,10 +366,29 @@ export default function PlanesPage() {
                     disabled={loading}
                     value={prize}
                     onChange={e => { const next = [...prizes]; next[i] = e.target.value; setPrizes(next); }}
-                    placeholder={i === 0 ? 'Ej: Cena para dos personas' : i === 1 ? 'Ej: Día libre extra' : 'Ej: Bono de 50€'}
+                    placeholder={i === 0 ? 'Ej: Cena para dos personas' : i === 1 ? 'Ej: Día libre extra' : 'Ej: Un kilo de helado'}
                     className="flex-1 border border-[#E8E5E0] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[#ccc] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
                   />
                 </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Participantes */}
+          <div>
+            <label className="block text-xs uppercase tracking-widest text-[#999] mb-1">Participantes</label>
+            <p className="text-xs text-[#aaa] mb-3">Emails de las personas que recibirán el link de acceso (hasta 10).</p>
+            <div className="space-y-2">
+              {emails.map((email, i) => (
+                <input
+                  key={i}
+                  type="email"
+                  disabled={loading}
+                  value={email}
+                  onChange={e => { const next = [...emails]; next[i] = e.target.value; setEmails(next); }}
+                  placeholder={`participante${i + 1}@empresa.com`}
+                  className="w-full border border-[#E8E5E0] rounded-xl px-4 py-2.5 text-sm text-[#333] placeholder-[#ccc] focus:outline-none focus:border-[#C5A47E] transition-colors bg-[#FAFAF8] disabled:opacity-50"
+                />
               ))}
             </div>
           </div>

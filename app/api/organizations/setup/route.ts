@@ -76,6 +76,18 @@ export async function POST(req: Request) {
       status: 'active'
     });
 
+    // Membresías para emails de participantes invitados
+    const validEmails = (emails as string[] ?? []).filter((e: string) => e && e.includes('@'));
+    for (const email of validEmails) {
+      const userDoc = await mongoose.connection.db?.collection('users').findOne({ email: email.trim().toLowerCase() });
+      await Membership.create({
+        userId: userDoc ? userDoc._id.toString() : email.trim().toLowerCase(),
+        organizationId: newOrg._id,
+        role: 'participant',
+        status: 'active'
+      });
+    }
+
     return NextResponse.json({
       success: true,
       slug: finalSlug,
