@@ -218,6 +218,12 @@ export default function PlanesPage() {
         <div className="w-full max-w-2xl bg-white rounded-2xl border border-[#E8E5E0] p-8 shadow-sm space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
           <h3 style={{ fontFamily: "'Fraunces', serif", fontSize: "20px", fontWeight: 400, color: "#181714", letterSpacing: "-0.02em" }}>Configura tu organización</h3>
 
+          {error && (
+            <p className="text-xs text-[#7a1a2e] bg-[#fdf5f5] border border-[#f0d8d8] rounded-xl px-4 py-3">
+              {error}
+            </p>
+          )}
+
           {/* Org Name + Logo */}
           <div>
             <label htmlFor="org-name" className="block text-xs uppercase tracking-widest text-[#999] mb-2">Nombre de la organización</label>
