@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@/auth";
 import { connectDB } from "@/lib/mongodb";
 import Organization from "@/lib/models/Organization";
 import Membership from "@/lib/models/Membership";
@@ -67,10 +68,13 @@ export async function POST(req: Request) {
       ]
     });
 
-    // Membresía del organizador — por email (se reclamará al hacer login con Google)
+    // Membresía del organizador — usar ID real si ya está logueado, si no usar email (se reclamará al login)
+    const session = await auth();
     const organizerDoc = await mongoose.connection.db?.collection('users').findOne({ email: organizerEmail.trim().toLowerCase() });
+    const adminUserId = session?.user?.id ?? (organizerDoc ? organizerDoc._id.toString() : organizerEmail.trim().toLowerCase());
+
     await Membership.create({
-      userId: organizerDoc ? organizerDoc._id.toString() : organizerEmail.trim().toLowerCase(),
+      userId: adminUserId,
       organizationId: newOrg._id,
       role: 'admin',
       status: 'active'

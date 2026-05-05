@@ -1,5 +1,8 @@
 import { NextResponse } from 'next/server';
+import { auth } from '@/auth';
 import { getCurrentUserId, getActiveMemberships } from '@/lib/enterprise/auth';
+import { connectDB } from '@/lib/mongodb';
+import Membership from '@/lib/models/Membership';
 
 export async function GET() {
     const userId = await getCurrentUserId();
@@ -9,9 +12,19 @@ export async function GET() {
     }
 
     try {
+        await connectDB();
+
+        // Claim any memberships stored with the user's email (e.g. created before first login)
+        const session = await auth();
+        if (session?.user?.email) {
+            await Membership.updateMany(
+                { userId: session.user.email },
+                { $set: { userId } }
+            );
+        }
+
         const memberships = await getActiveMemberships(userId);
 
-        // Strip internal fields — UI only needs what it renders and what builds links
         const organizations = memberships.map(m => ({
             _id: m.organization._id,
             name: m.organization.name,

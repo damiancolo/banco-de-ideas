@@ -8,7 +8,7 @@ export default async function OrgPage({ params }: { params: Promise<{ slug: stri
     const session = await auth();
 
     if (!session?.user) {
-        redirect("/privado");
+        redirect(`/privado?callbackUrl=/org/${slug}`);
     }
 
     try {
@@ -21,7 +21,6 @@ export default async function OrgPage({ params }: { params: Promise<{ slug: stri
             />
         );
     } catch (error) {
-        // Not a member or other error
-        redirect("/privado");
+        redirect(`/privado?callbackUrl=/org/${slug}`);
     }
 }
