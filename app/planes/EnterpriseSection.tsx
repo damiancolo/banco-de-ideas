@@ -369,7 +369,7 @@ export default function EnterpriseSection() {
               <li><span className="ent-pf-dot">✦</span> Sistema de propuesta, debate y voto de ideas</li>
               <li><span className="ent-pf-dot">✦</span> Reporte ejecutivo final + sello "Cero despidos por IA"</li>
             </ul>
-            <a href="mailto:hola@unbancodeideas.com?subject=Quiero%20contratar%20el%20piloto%20Organizaciones" className="ent-btn" style={{ width: '100%', justifyContent: 'center' }}>Empezar el piloto →</a>
+            <a href="mailto:damianlafferranderie@gmail.com?subject=Quiero%20contratar%20el%20piloto%20Organizaciones" className="ent-btn" style={{ width: '100%', justifyContent: 'center' }}>Empezar el piloto →</a>
           </div>
         </section>
 
@@ -377,7 +377,7 @@ export default function EnterpriseSection() {
 
         <section className="ent-final">
           <h2>Programa de IA para organizaciones<br /><em>Un Banco de Ideas.</em></h2>
-          <a href="mailto:hola@unbancodeideas.com?subject=Quiero%20contratar%20el%20piloto%20Organizaciones" className="ent-btn" style={{ margin: '0 auto' }}>Contratar el piloto →</a>
+          <a href="mailto:damianlafferranderie@gmail.com?subject=Quiero%20contratar%20el%20piloto%20Organizaciones" className="ent-btn" style={{ margin: '0 auto' }}>Contratar el piloto →</a>
         </section>
 
         <footer className="ent-footer">
