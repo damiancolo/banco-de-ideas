@@ -232,6 +232,7 @@ export default function EnterpriseSection() {
         <section className="ent-bridge">
           <div className="ent-bridge-pre">Para este problema tenemos una</div>
           <div className="ent-bridge-h"><em>idea.</em></div>
+          <p style={{ fontFamily: "'Fraunces', serif", fontSize: "clamp(16px,2vw,19px)", fontWeight: 300, fontStyle: "italic", lineHeight: 1.6, letterSpacing: "-0.015em", color: "#8a7f72", maxWidth: 640, margin: "32px auto 0" }}>El programa organizaciones de unbancodeideas.com es una iniciativa de microconcursos para que los integrantes de la organización sean los protagonistas de los cambios, se motiven en repensar los procesos y acompañen a la organización a una transformación inteligente.</p>
         </section>
 
         <hr className="ent-hr" />
@@ -334,7 +335,7 @@ export default function EnterpriseSection() {
             <div className="ent-seal-label">Compromiso · Sello del programa</div>
             <h3>Cero <span>despidos</span></h3>
             <div className="ent-seal-sub">por causa de la IA</div>
-            <div className="ent-seal-footer">Banco de Ideas Enterprise</div>
+            <div className="ent-seal-footer">Banco de Ideas Organizaciones</div>
           </div>
           <div className="ent-commitment-text">
             <div className="ent-label">El compromiso que cambia todo</div>
@@ -347,32 +348,10 @@ export default function EnterpriseSection() {
 
         <hr className="ent-hr" />
 
-        <section>
-          <div className="ent-label">Programa de IA para empresas · unbancodeideas.com</div>
-          <div style={{ border: '0.5px solid #ddd7cb', borderRadius: 12, padding: 40, marginTop: 28 }}>
-            <div className="ent-price-badge">Programa Piloto</div>
-            <div className="ent-price-name">Banco de Ideas Enterprise</div>
-            <div className="ent-price-desc">30 días · 10 participantes · Hasta 3 premios</div>
-            <div className="ent-price-row">
-              <span className="ent-price-currency">€</span>
-              <span className="ent-price-number">200</span>
-              <span className="ent-price-unit">/ ciclo</span>
-            </div>
-            <ul className="ent-price-features">
-              <li><span className="ent-pf-dot">✦</span> IA entrenada y experta en los procesos de tu empresa</li>
-              <li><span className="ent-pf-dot">✦</span> Workspace privado con 10 participantes y 3 premios configurables</li>
-              <li><span className="ent-pf-dot">✦</span> Sistema de propuesta, debate y voto de ideas</li>
-              <li><span className="ent-pf-dot">✦</span> Reporte ejecutivo final + sello "Cero despidos por IA"</li>
-            </ul>
-            <a href="mailto:hola@unbancodeideas.com?subject=Quiero%20contratar%20el%20piloto%20Enterprise" className="ent-btn" style={{ width: '100%', justifyContent: 'center' }}>Empezar el piloto →</a>
-          </div>
-        </section>
-
-        <hr className="ent-hr" />
 
         <section className="ent-final">
           <h2>Programa de IA para organizaciones<br /><em>Un Banco de Ideas.</em></h2>
-          <a href="mailto:hola@unbancodeideas.com?subject=Quiero%20contratar%20el%20piloto%20Enterprise" className="ent-btn" style={{ margin: '0 auto' }}>Contratar el piloto →</a>
+          <a href="mailto:hola@unbancodeideas.com?subject=Quiero%20contratar%20el%20piloto%20Organizaciones" className="ent-btn" style={{ margin: '0 auto' }}>Contratar el piloto →</a>
         </section>
 
         <footer className="ent-footer">
