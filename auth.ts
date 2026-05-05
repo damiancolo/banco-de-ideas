@@ -2,8 +2,6 @@ import NextAuth from 'next-auth';
 import Google from 'next-auth/providers/google';
 import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { getMongoClient } from '@/lib/auth-client';
-import { connectDB } from '@/lib/mongodb';
-import Membership from '@/lib/models/Membership';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     adapter: MongoDBAdapter(getMongoClient()),
@@ -12,7 +10,6 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     })],
     session: { strategy: 'jwt' },
     trustHost: true,
-    debug: true,
     logger: {
         error(error) {
             // Serialize cause deeply
@@ -50,6 +47,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             // Claim memberships stored with email as userId (from setup before user existed)
             if (user?.id && user?.email) {
                 try {
+                    const { connectDB } = await import('@/lib/mongodb');
+                    const { default: Membership } = await import('@/lib/models/Membership');
                     await connectDB();
                     await Membership.updateMany(
                         { userId: user.email },
