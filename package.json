@@ -10,16 +10,19 @@
     "sync-db": "node scripts/sync-staging-db.js",
     "embeddings": "node scripts/generate-embeddings.js",
     "migrate": "node scripts/migrate-localstorage.js",
-    "map-project": "node scripts/map-project.js"
+    "map-project": "node scripts/map-project.js",
+    "migrate:scope": "node scripts/migrate-ideas-scope.js",
+    "seed:enterprise": "node scripts/seed-enterprise-test.js"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.90.0",
+    "@anthropic-ai/sdk": "^0.36.3",
     "@auth/mongodb-adapter": "^3.11.1",
     "@tailwindcss/typography": "^0.5.19",
     "mongoose": "^9.0.1",
     "next": "16.0.10",
     "next-auth": "^5.0.0-beta.30",
     "openai": "^6.10.0",
+    "pdf-parse": "^2.4.5",
     "react": "19.2.1",
     "react-dom": "19.2.1",
     "react-markdown": "^10.1.0",
@@ -35,7 +38,6 @@
     "dotenv": "^17.2.3",
     "eslint": "^9",
     "eslint-config-next": "16.0.10",
-    "sharp": "^0.34.5",
     "tailwindcss": "^4",
     "typescript": "^5"
   },

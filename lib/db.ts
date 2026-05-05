@@ -59,7 +59,10 @@ export async function getIdeas(): Promise<SavedIdea[]> {
     try {
         await connectDB();
 
-        const ideas = await Idea.find({ $or: [{ userId: null }, { userId: { $exists: false } }] })
+        const ideas = await Idea.find({
+            $or: [{ userId: null }, { userId: { $exists: false } }],
+            $nor: [{ 'scope.type': 'organization' }, { 'scope.type': 'private' }]
+        })
             .sort({ createdAt: -1 })
             .lean()
             .exec();
@@ -350,7 +353,7 @@ export async function searchIdeasByKeywords(query: string): Promise<SavedIdea[]>
 export async function getUserIdeas(userId: string): Promise<SavedIdea[]> {
     try {
         await connectDB();
-        const ideas = await Idea.find({ userId })
+        const ideas = await Idea.find({ userId, $nor: [{ 'scope.type': 'organization' }] })
             .sort({ createdAt: -1 })
             .lean()
             .exec();
@@ -488,5 +491,63 @@ export async function addPrivateComment(id: string, text: string, userId: string
     } catch (error) {
         console.error('Error adding private comment:', error);
         return false;
+    }
+}
+
+// =============================================
+// Funciones para ideas organizacionales (Enterprise)
+// =============================================
+
+/**
+ * Obtiene todas las ideas de una organización específica
+ */
+export async function getOrganizationIdeas(organizationId: string): Promise<SavedIdea[]> {
+    try {
+        await connectDB();
+        const ideas = await Idea.find({
+            'scope.type': 'organization',
+            'scope.organizationId': organizationId
+        })
+            .sort({ createdAt: -1 })
+            .lean()
+            .exec();
+        return ideas.map(idea => toSavedIdea(idea));
+    } catch (error) {
+        console.error('Error fetching organization ideas:', error);
+        return [];
+    }
+}
+
+/**
+ * Guarda una idea organizacional
+ */
+export async function saveOrganizationIdea(
+    text: string,
+    category: 'user' | 'bisociation',
+    organizationId: string,
+    userId?: string
+): Promise<SavedIdea> {
+    if (!text || typeof text !== 'string') {
+        throw new Error('El texto de la idea es requerido');
+    }
+    const trimmedText = text.trim();
+    if (trimmedText.length === 0) throw new Error('La idea no puede estar vacía');
+    if (trimmedText.length > 1500) throw new Error('La idea no puede exceder 1500 caracteres');
+
+    try {
+        await connectDB();
+        const idea = await Idea.create({
+            text: trimmedText,
+            category,
+            userId: userId || null,
+            scope: {
+                type: 'organization',
+                organizationId
+            }
+        });
+        return toSavedIdea(idea);
+    } catch (error) {
+        console.error('Error saving organization idea:', error);
+        throw new Error('No se pudo guardar la idea de la organización.');
     }
 }
