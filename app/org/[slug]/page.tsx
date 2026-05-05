@@ -11,16 +11,28 @@ export default async function OrgPage({ params }: { params: Promise<{ slug: stri
         redirect(`/privado?callbackUrl=/org/${slug}`);
     }
 
+    let membership;
     try {
-        const membership = await requireMembership(slug, session);
-        return (
-            <OrgEnvironment
-                organization={membership.organization}
-                userName={session.user.name ?? undefined}
-                role={membership.role}
-            />
-        );
-    } catch (error) {
+        membership = await requireMembership(slug, session);
+    } catch (error: any) {
+        console.error('[OrgPage] requireMembership error:', error?.message ?? error);
         redirect(`/privado?callbackUrl=/org/${slug}`);
     }
+
+    // Serialize only the fields OrgEnvironment needs (no Date objects)
+    const org = {
+        _id: membership.organization._id,
+        name: membership.organization.name,
+        slug: membership.organization.slug,
+        logoUrl: membership.organization.logoUrl ?? '',
+        joinToken: membership.organization.joinToken,
+    };
+
+    return (
+        <OrgEnvironment
+            organization={org}
+            userName={session!.user!.name ?? undefined}
+            role={membership.role}
+        />
+    );
 }
