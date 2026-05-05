@@ -11,7 +11,12 @@ interface Organization {
     logoUrl: string;
 }
 
-export default function PrivateHeader() {
+interface Props {
+    /** When set, shows the org name/logo instead of the personal user name */
+    activeOrg?: { name: string; logoUrl?: string };
+}
+
+export default function PrivateHeader({ activeOrg }: Props = {}) {
     const { data: session } = useSession();
     const [orgs, setOrgs] = useState<Organization[]>([]);
 
@@ -35,16 +40,26 @@ export default function PrivateHeader() {
             <div className="max-w-xl mx-auto flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <Link href="/privado" className="flex items-center gap-2 hover:opacity-80 transition-opacity">
-                        {session.user.image && (
-                            <img
-                                src={session.user.image}
-                                alt=""
-                                className="w-8 h-8 rounded-full"
-                                referrerPolicy="no-referrer"
-                            />
+                        {activeOrg ? (
+                            activeOrg.logoUrl ? (
+                                <img
+                                    src={activeOrg.logoUrl}
+                                    alt={activeOrg.name}
+                                    className="w-8 h-8 rounded bg-gray-50 object-contain border border-gray-100"
+                                />
+                            ) : null
+                        ) : (
+                            session.user.image && (
+                                <img
+                                    src={session.user.image}
+                                    alt=""
+                                    className="w-8 h-8 rounded-full"
+                                    referrerPolicy="no-referrer"
+                                />
+                            )
                         )}
                         <span className="text-sm font-medium text-gray-700 hidden sm:block">
-                            {session.user.name}
+                            {activeOrg ? activeOrg.name : session.user.name}
                         </span>
                     </Link>
 

@@ -63,11 +63,17 @@ export default function OrgEnvironment({
             <ChatEngine
                 apiPrefix={`/api/organizations/${organization.slug}`}
                 userName={userName}
-                headerSlot={<PrivateHeader />}
+                headerSlot={<PrivateHeader activeOrg={{ name: organization.name, logoUrl: organization.logoUrl }} />}
                 footerSlot={
                     <div className="pb-8 flex items-center gap-4">
                         <Link href={`/org/${organization.slug}/banco`} title="Repositorio de la empresa" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
-                            <img src={organization.logoUrl} alt={organization.name} className="w-6 h-6 object-contain rounded-sm" />
+                            {organization.logoUrl ? (
+                                <img src={organization.logoUrl} alt={organization.name} className="w-6 h-6 object-contain rounded-sm" />
+                            ) : (
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                                </svg>
+                            )}
                         </Link>
                         <Link href="/privado" title="Espacio personal" className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
