@@ -14,7 +14,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Demasiados intentos. Inténtalo más tarde." }, { status: 429 });
     }
 
-    const { name, context, organizerEmail, prizes, inviteCode, files, logoBase64 } = await req.json();
+    const { name, context, organizerEmail, prizes, emails, inviteCode, files, logoBase64 } = await req.json();
 
     const validCode = process.env.SETUP_INVITE_CODE;
     if (!validCode || inviteCode !== validCode) {
