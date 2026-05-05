@@ -2,6 +2,7 @@
 
 import { useState, useRef } from "react";
 import Link from "next/link";
+import EnterpriseSection from "./EnterpriseSection";
 
 const CHECK_ICON = (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-[#C5A47E] flex-shrink-0 mt-0.5">
@@ -396,6 +397,11 @@ export default function PlanesPage() {
           </a>
         </div>
       )}
+
+      {/* Enterprise landing section */}
+      <div className="w-full mt-16">
+        <EnterpriseSection />
+      </div>
     </main>
   );
 }
