@@ -785,7 +785,7 @@ export default function ChatEngine({
               type="text"
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
-              placeholder={isRecording ? "Grabando..." : (inputValue.trim() || !voiceEnabled) ? "Escribe aquí..." : "idea..."}
+              placeholder={isRecording ? "Grabando..." : (inputValue.trim() || !voiceEnabled) ? "Escribe aquí..." : "Guarda aquí tu idea..."}
               className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
               disabled={loading || isTranscribing}
               autoFocus={!hasInteracted}
