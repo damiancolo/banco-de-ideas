@@ -455,6 +455,22 @@ export async function searchUserIdeasByKeywords(query: string, userId: string): 
 }
 
 /**
+ * Borra una idea privada (verificando ownership)
+ */
+export async function deletePrivateIdea(id: string, userId: string): Promise<boolean> {
+    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) return false;
+
+    try {
+        await connectDB();
+        const result = await Idea.findOneAndDelete({ _id: id, userId });
+        return !!result;
+    } catch (error) {
+        console.error('Error deleting private idea:', error);
+        return false;
+    }
+}
+
+/**
  * Highlight una idea privada (verificando ownership)
  */
 export async function highlightPrivateIdea(id: string, userId: string): Promise<boolean> {

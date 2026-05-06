@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { requireAuth } from '@/lib/auth-utils';
-import { getUserIdeas, savePrivateIdea, highlightPrivateIdea } from '@/lib/db';
+import { getUserIdeas, savePrivateIdea, highlightPrivateIdea, deletePrivateIdea } from '@/lib/db';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 
@@ -75,9 +75,18 @@ export async function DELETE(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
+        const action = searchParams.get('action');
 
         if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) {
             return NextResponse.json({ error: 'ID inválido' }, { status: 400 });
+        }
+
+        if (action === 'delete') {
+            const success = await deletePrivateIdea(id, userId);
+            if (!success) {
+                return NextResponse.json({ error: 'Idea no encontrada' }, { status: 404 });
+            }
+            return NextResponse.json({ success: true });
         }
 
         const success = await highlightPrivateIdea(id, userId);

@@ -45,6 +45,7 @@ export default async function PrivadoBancoPage() {
                 isConnected={connected}
                 apiPrefix="/api/privado"
                 userName={session.user.name ?? undefined}
+                allowDelete={true}
             />
         </main>
     );
