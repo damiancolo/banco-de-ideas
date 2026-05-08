@@ -222,7 +222,7 @@ export default function PlanesPage() {
           className="flex-1 text-center rounded-xl transition-all"
           style={{ background: "#181714", color: "#fff", padding: "15px 12px", fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.13em", textDecoration: "none", display: "block" }}
         >
-          Lo que un director necesita saber
+          Justificación del programa para empresas
         </Link>
         <Link
           href="/planes/paso-a-paso"
