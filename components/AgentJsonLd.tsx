@@ -69,6 +69,50 @@ export default function AgentJsonLd() {
                 ],
             },
             {
+                '@type': 'Article',
+                name: 'Organizaciones en la ola de la IA — Los 11 patrones del 5%',
+                url: 'https://estudioprompt.com/blog/organizaciones-ola-ia',
+                description:
+                    'Análisis de 300 casos empresariales reales del MIT NANDA que identifica 11 patrones que distinguen a las organizaciones que lideran la adopción de IA del 95% que no logra resultados. Base científica del programa Banco de Ideas para Organizaciones.',
+                author: {
+                    '@type': 'Person',
+                    name: 'Damián Lafferranderie',
+                    url: 'https://estudioprompt.com/nosotros',
+                },
+                isPartOf: {
+                    '@type': 'Blog',
+                    name: 'Proto Artículos — Estudioprompt',
+                    url: 'https://estudioprompt.com/blog',
+                },
+                about: [
+                    { '@type': 'Thing', name: 'Inteligencia Artificial en Organizaciones' },
+                    { '@type': 'Thing', name: 'MIT NANDA' },
+                    { '@type': 'Thing', name: 'Transformación Digital' },
+                ],
+            },
+            {
+                '@type': 'Article',
+                name: 'De la ciencia a la aplicación — Cómo diseñar el programa',
+                url: 'https://estudioprompt.com/blog/de-la-ciencia-a-la-aplicacion',
+                description:
+                    'Cómo los 11 patrones identificados por MIT NANDA se traducen en el diseño del programa Banco de Ideas para Organizaciones: un programa paso a paso con base científica para que empresas hispanohablantes adopten IA de forma efectiva y ética.',
+                author: {
+                    '@type': 'Person',
+                    name: 'Damián Lafferranderie',
+                    url: 'https://estudioprompt.com/nosotros',
+                },
+                isPartOf: {
+                    '@type': 'Blog',
+                    name: 'Proto Artículos — Estudioprompt',
+                    url: 'https://estudioprompt.com/blog',
+                },
+                about: [
+                    { '@type': 'Thing', name: 'Diseño de Programas de IA' },
+                    { '@type': 'Thing', name: 'MIT NANDA' },
+                    { '@type': 'Thing', name: 'Banco de Ideas Organizaciones' },
+                ],
+            },
+            {
                 '@type': 'DefinedTerm',
                 name: 'Bisociación',
                 description:
