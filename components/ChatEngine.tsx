@@ -76,6 +76,7 @@ export default function ChatEngine({
   const [thinkingIndex, setThinkingIndex] = useState(0);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
@@ -111,6 +112,13 @@ export default function ChatEngine({
       if (menuLeaveTimeoutRef.current) clearTimeout(menuLeaveTimeoutRef.current);
     };
   }, []);
+
+  // Reset textarea height when input is cleared (after send)
+  useEffect(() => {
+    if (!inputValue && textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
+  }, [inputValue]);
 
   // Rotar mensajes de "pensando" mientras loading
   useEffect(() => {
@@ -700,11 +708,11 @@ export default function ChatEngine({
         <form
           onSubmit={handleSendMessage}
           className={`bg-white w-full rounded-3xl shadow-sm border border-black/5 p-4 md:p-8 flex flex-col justify-end transition-all duration-500 relative
-              ${hasInteracted ? 'h-[160px]' : 'h-[320px] shadow-xl'}
+              ${hasInteracted ? 'min-h-[160px]' : 'min-h-[320px] shadow-xl'}
               ${isRecording ? 'ring-2 ring-red-400 translate-y-[-4px]' : ''}
             `}
         >
-          <div className="flex items-center gap-2 md:gap-4 w-full">
+          <div className="flex items-end gap-2 md:gap-4 w-full">
             {/* Mode Selector Button */}
             <div
               className="relative"
@@ -781,12 +789,23 @@ export default function ChatEngine({
             </div>
 
             {/* Input */}
-            <input
-              type="text"
+            <textarea
+              ref={textareaRef}
+              rows={1}
               value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                e.target.style.height = 'auto';
+                e.target.style.height = e.target.scrollHeight + 'px';
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
               placeholder={isRecording ? "Grabando..." : (inputValue.trim() || !voiceEnabled) ? "Escribe aquí..." : "Guarda aquí tu idea..."}
-              className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium h-12 min-w-0 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
+              className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium min-w-0 resize-none overflow-hidden leading-tight py-1 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
               disabled={loading || isTranscribing}
               autoFocus={!hasInteracted}
             />
