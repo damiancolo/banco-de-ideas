@@ -1,8 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getIdeas, getIdeasByCategory, highlightIdea, saveIdea } from '@/lib/db';
+import { getIdeas, getIdeasByCategory, highlightIdea, deletePublicIdea, saveIdea } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { auth } from '@/auth';
+
+const ADMIN_EMAIL = 'damianlafferranderie@gmail.com';
 
 /**
  * GET /api/ideas?category=user|bisociation
@@ -61,16 +64,7 @@ export async function DELETE(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
         const id = searchParams.get('id');
-        const ip = getIp(request);
-
-        // Rate Limiting para Highlights: 10 por minuto
-        const rateLimit = await checkRateLimit(ip, 'highlight', 10, 60);
-        if (!rateLimit.success) {
-            return NextResponse.json(
-                { error: 'Demasiados resaltados por ahora. Intenta de nuevo en un minuto.' },
-                { status: 429 }
-            );
-        }
+        const action = searchParams.get('action');
 
         // Validar que se proporcionó un ID
         if (!id) {
@@ -88,9 +82,34 @@ export async function DELETE(request: Request) {
             );
         }
 
-        const deleted = await highlightIdea(id);
+        // Borrado real: solo admin
+        if (action === 'delete') {
+            const session = await auth();
+            if (session?.user?.email !== ADMIN_EMAIL) {
+                return NextResponse.json({ error: 'No autorizado' }, { status: 403 });
+            }
 
-        if (deleted) {
+            const deleted = await deletePublicIdea(id);
+            if (deleted) {
+                return NextResponse.json({ success: true, message: 'Idea borrada', id });
+            } else {
+                return NextResponse.json({ error: 'Idea no encontrada' }, { status: 404 });
+            }
+        }
+
+        // Comportamiento por defecto: resaltar (highlight)
+        const ip = getIp(request);
+        const rateLimit = await checkRateLimit(ip, 'highlight', 10, 60);
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: 'Demasiados resaltados por ahora. Intenta de nuevo en un minuto.' },
+                { status: 429 }
+            );
+        }
+
+        const highlighted = await highlightIdea(id);
+
+        if (highlighted) {
             return NextResponse.json({
                 success: true,
                 message: 'Idea resaltada exitosamente',
@@ -98,10 +117,7 @@ export async function DELETE(request: Request) {
             });
         } else {
             return NextResponse.json(
-                {
-                    error: 'Idea no encontrada',
-                    message: `No se encontró una idea con ID: ${id}`
-                },
+                { error: 'Idea no encontrada' },
                 { status: 404 }
             );
         }

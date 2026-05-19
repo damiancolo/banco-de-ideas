@@ -212,6 +212,22 @@ export async function saveIdeas(
 }
 
 /**
+ * Borra una idea pública por ID (solo admin)
+ */
+export async function deletePublicIdea(id: string): Promise<boolean> {
+    if (!id || !/^[0-9a-fA-F]{24}$/.test(id)) return false;
+
+    try {
+        await connectDB();
+        const result = await Idea.findByIdAndDelete(id);
+        return !!result;
+    } catch (error) {
+        console.error('Error deleting public idea:', error);
+        return false;
+    }
+}
+
+/**
  * Registra un resaltado para una idea (incrementa contador)
  */
 export async function highlightIdea(id: string): Promise<boolean> {

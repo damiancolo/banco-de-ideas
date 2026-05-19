@@ -1,14 +1,17 @@
 import { getIdeas } from '@/lib/db';
 import { isDBConnected } from '@/lib/mongodb';
+import { auth } from '@/auth';
 import Link from 'next/link';
 import BancoView from '@/components/BancoView';
 
 export const dynamic = 'force-dynamic';
 
+const ADMIN_EMAIL = 'damianlafferranderie@gmail.com';
+
 export default async function BancoPage() {
-    // Cargar ideas desde MongoDB en el servidor
-    const ideas = await getIdeas();
+    const [ideas, session] = await Promise.all([getIdeas(), auth()]);
     const connected = isDBConnected();
+    const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
     return (
         <main className="min-h-screen bg-[#F8F5F0] p-6 md:p-12 relative">
@@ -34,7 +37,7 @@ export default async function BancoPage() {
                 </div>
             </div>
 
-            <BancoView initialIdeas={ideas} isConnected={connected} />
+            <BancoView initialIdeas={ideas} isConnected={connected} allowDelete={isAdmin} />
         </main>
     );
 }
