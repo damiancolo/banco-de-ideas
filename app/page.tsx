@@ -53,7 +53,7 @@ export default function Home() {
   }, []);
 
   return (
-    <main className="min-h-screen flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
+    <main className="min-h-dvh flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
       {/* Semantic Content for SEO & Screen Readers */}
       <div className="sr-only">
         <h1>Banco de Ideas - Potenciando la Creatividad con IA</h1>
