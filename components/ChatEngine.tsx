@@ -653,6 +653,12 @@ export default function ChatEngine({
     });
   };
 
+  const handleCalendizar = (text: string) => {
+    const title = text.slice(0, 80);
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(title)}&details=${encodeURIComponent(text)}`;
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <>
       {headerSlot}
@@ -672,6 +678,9 @@ export default function ChatEngine({
                 onSpeak={msg.role === 'assistant' ? handleTTS : undefined}
                 onColectivizar={msg.role === 'assistant' && msg.colectivizable && apiPrefix === '/api/privado'
                   ? (mode) => handleColectivizar(msg.colectivizableText ?? msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''), mode)
+                  : undefined}
+                onCalendizar={msg.role === 'assistant' && msg.colectivizable
+                  ? () => handleCalendizar(msg.colectivizableText ?? msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''))
                   : undefined}
               />
             ))}
