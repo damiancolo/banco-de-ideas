@@ -44,7 +44,7 @@ export default function AboutPage() {
                         ¿Dónde guardas tus ideas? El bloc de notas, el Google Tasks, un grupo contigo mismo en WhatsApp... <span className="font-semibold">unbancodeideas.com</span> intenta ser la herramienta definitiva para este caso de uso. Pero su gran plus es la posibilidad de inspirarse, cocrear y compartir con otros y sus ideas.
                     </p>
                     <p className="text-lg text-gray-700 leading-relaxed">
-                        Queremos que las ideas tengan acción directa, así que también la aplicamos como metaidea, por lo que el banco de ideas tiene funcionalidades que alguna vez fueron ideas, el banco de ideas evoluciona y tiene funcionalidades.
+                        Queremos que las ideas tengan acción directa, así que también la aplicamos como metaidea, por lo que el banco de ideas tiene funcionalidades que alguna vez fueron ideas, el banco de ideas evoluciona.
                     </p>
                 </div>
 
