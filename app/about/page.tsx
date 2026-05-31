@@ -57,7 +57,7 @@ export default function AboutPage() {
                 <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificación</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        Esta herramienta viene a solucionar un problema concreto, ¿donde guardar las ideas?, generalmente la gente guarda sus ideas en un cuaderno, una agenda, un bloc de notas en el móvil, un .doc, un grupo de whatsapp con sigo mismo; <span className="font-semibold">unbancodeideas.com</span> busca ser la herramienta para guardar ideas.
+                        ¿Dónde guardas tus ideas? El bloc de notas, el Google Tasks, un grupo contigo mismo en WhatsApp... <span className="font-semibold">unbancodeideas.com</span> intenta ser la herramienta definitiva para este caso de uso. Pero su gran plus es la posibilidad de inspirarse, cocrear y compartir con otros y sus ideas.
                     </p>
                     <p className="text-lg text-gray-700 leading-relaxed">
                         Queremos que las ideas tengan acción directa, así que también la aplicamos como metaidea, por lo que el banco de ideas tiene funcionalidades que alguna vez fueron ideas, el banco de ideas evoluciona y tiene funcionalidades.
