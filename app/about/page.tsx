@@ -37,8 +37,19 @@ export default function AboutPage() {
                     <p className="text-xl text-gray-600 font-light">Solsticio de Invierno 2025</p>
                 </div>
 
+                {/* Justification - first thing to read */}
+                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificación</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        ¿Dónde guardas tus ideas? El bloc de notas, el Google Tasks, un grupo contigo mismo en WhatsApp... <span className="font-semibold">unbancodeideas.com</span> intenta ser la herramienta definitiva para este caso de uso. Pero su gran plus es la posibilidad de inspirarse, cocrear y compartir con otros y sus ideas.
+                    </p>
+                    <p className="text-lg text-gray-700 leading-relaxed">
+                        Queremos que las ideas tengan acción directa, así que también la aplicamos como metaidea, por lo que el banco de ideas tiene funcionalidades que alguna vez fueron ideas, el banco de ideas evoluciona y tiene funcionalidades.
+                    </p>
+                </div>
+
                 {/* El Banco de Ideas - Introduction */}
-                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">El Banco de Ideas</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-4">
                         Creemos que las ideas son el capital más importante de la humanidad y que la inteligencia artificial es un catalizador de su potencial. Es urgente y necesario comenzar a explorar este maridaje por lo que proponemos un espacio para experimentar con las posibilidades. Este espacio se llama <span className="font-semibold text-[#C5A47E]">unban code Ideas.com</span>
@@ -46,21 +57,10 @@ export default function AboutPage() {
                 </div>
 
                 {/* Description */}
-                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Descripción del Banco de Ideas</h2>
                     <p className="text-lg text-gray-700 leading-relaxed">
                         El Banco de Ideas es un espacio diseñado para facilitar la generación y desarrollo de ideas individuales y colectivas. Utiliza tecnologías avanzadas de inteligencia artificial para asistir a los usuarios en la creación, co-creación, refinamiento, expansión y colectivización de las Ideas.
-                    </p>
-                </div>
-
-                {/* Justification */}
-                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificación</h2>
-                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        ¿Dónde guardas tus ideas? El bloc de notas, el Google Tasks, un grupo contigo mismo en WhatsApp... <span className="font-semibold">unbancodeideas.com</span> intenta ser la herramienta definitiva para este caso de uso. Pero su gran plus es la posibilidad de inspirarse, cocrear y compartir con otros y sus ideas.
-                    </p>
-                    <p className="text-lg text-gray-700 leading-relaxed">
-                        Queremos que las ideas tengan acción directa, así que también la aplicamos como metaidea, por lo que el banco de ideas tiene funcionalidades que alguna vez fueron ideas, el banco de ideas evoluciona y tiene funcionalidades.
                     </p>
                 </div>
 
