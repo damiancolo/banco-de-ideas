@@ -37,8 +37,19 @@ export default function AboutPageCA() {
                     <p className="text-xl text-gray-600 font-light">Solstici d&apos;Hivern 2025</p>
                 </div>
 
+                {/* Justification - first thing to read */}
+                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificació</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        On guardes les teves idees? 📝 Un bloc de notes, ✅ el Google Tasks, 💬 un grup de WhatsApp amb tu mateix... 💡 <span className="font-semibold">unbancodeideas.com</span> intenta ser l&apos;eina definitiva per a aquest cas d&apos;ús. Però el seu gran plus és la possibilitat d&apos;inspirar-se, cocreuar i compartir amb altres i les seves idees.
+                    </p>
+                    <p className="text-lg text-gray-700 leading-relaxed">
+                        Volem que les idees tinguin acció directa, així que també l&apos;apliquem com a meta-idea, per la qual cosa el banc d&apos;idees té funcionalitats que algun cop van ser idees; el banc d&apos;idees evoluciona.
+                    </p>
+                </div>
+
                 {/* El Banco de Ideas - Introduction */}
-                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">El Banc d&apos;Idees</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-4">
                         Creiem que les idees són el capital més important de la humanitat i que la intel·ligència artificial és un catalitzador del seu potencial. És urgent i necessari començar a explorar aquest maridatge, per la qual cosa proposem un espai per experimentar amb les possibilitats. Aquest espai es diu <span className="font-semibold text-[#C5A47E]">unban code Ideas.com</span>
@@ -46,21 +57,10 @@ export default function AboutPageCA() {
                 </div>
 
                 {/* Description */}
-                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Descripció del Banc d&apos;Idees</h2>
                     <p className="text-lg text-gray-700 leading-relaxed">
                         El Banc d&apos;Idees és un espai dissenyat per facilitar la generació i el desenvolupament d&apos;idees individuals i col·lectives. Utilitza tecnologies avançades d&apos;intel·ligència artificial per assistir els usuaris en la creació, co-creació, refinament, expansió i col·lectivització de les Idees.
-                    </p>
-                </div>
-
-                {/* Justification */}
-                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificació</h2>
-                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        On guardes les teves idees? Un bloc de notes, el Google Tasks, un grup de WhatsApp amb tu mateix... <span className="font-semibold">unbancodeideas.com</span> intenta ser l&apos;eina definitiva per a aquest cas d&apos;ús. Però el seu gran plus és la possibilitat d&apos;inspirar-se, cocreuar i compartir amb altres i les seves idees.
-                    </p>
-                    <p className="text-lg text-gray-700 leading-relaxed">
-                        Volem que les idees tinguin acció directa, així que també l&apos;apliquem com a meta-idea, per la qual cosa el banc d&apos;idees té funcionalitats que algun cop van ser idees; el banc d&apos;idees evoluciona i té funcionalitats.
                     </p>
                 </div>
 

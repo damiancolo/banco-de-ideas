@@ -37,8 +37,19 @@ export default function AboutPageEN() {
                     <p className="text-xl text-gray-600 font-light">Winter Solstice 2025</p>
                 </div>
 
+                {/* Justification - first thing to read */}
+                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justification</h2>
+                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
+                        Where do you save your ideas? 📝 A notes app, ✅ Google Tasks, 💬 a WhatsApp group with yourself... 💡 <span className="font-semibold">unbancodeideas.com</span> aims to be the definitive tool for this use case. But its big plus is the ability to get inspired, co-create and share with others and their ideas.
+                    </p>
+                    <p className="text-lg text-gray-700 leading-relaxed">
+                        We want ideas to have direct action, so we also apply it as a meta-idea, which is why the idea bank has features that were once ideas; the idea bank evolves.
+                    </p>
+                </div>
+
                 {/* El Banco de Ideas - Introduction */}
-                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-100">
+                <div className="bg-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">The Idea Bank</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-4">
                         We believe that ideas are humanity&apos;s most important capital and that artificial intelligence is a catalyst for their potential. It is urgent and necessary to start exploring this marriage, so we propose a space to experiment with the possibilities. This space is called <span className="font-semibold text-[#C5A47E]">unban code Ideas.com</span>
@@ -46,21 +57,10 @@ export default function AboutPageEN() {
                 </div>
 
                 {/* Description */}
-                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-150">
+                <div className="bg-gradient-to-br from-gray-50 to-white rounded-3xl p-8 md:p-12 shadow-xl border border-gray-100 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Idea Bank Description</h2>
                     <p className="text-lg text-gray-700 leading-relaxed">
                         The Idea Bank is a space designed to facilitate the generation and development of individual and collective ideas. It uses advanced artificial intelligence technologies to assist users in the creation, co-creation, refinement, expansion, and collectivization of Ideas.
-                    </p>
-                </div>
-
-                {/* Justification */}
-                <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
-                    <h2 className="text-3xl font-bold text-gray-900 mb-6">Justification</h2>
-                    <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        Where do you save your ideas? A notes app, Google Tasks, a WhatsApp group with yourself... <span className="font-semibold">unbancodeideas.com</span> aims to be the definitive tool for this use case. But its big plus is the ability to get inspired, co-create and share with others and their ideas.
-                    </p>
-                    <p className="text-lg text-gray-700 leading-relaxed">
-                        We want ideas to have direct action, so we also apply it as a meta-idea, which is why the idea bank has features that were once ideas; the idea bank evolves and has functionality.
                     </p>
                 </div>
 
