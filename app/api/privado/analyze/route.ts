@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { auth } from '@/auth';
 import { requireAuth } from '@/lib/auth-utils';
 import { savePrivateIdea, savePrivateIdeas } from '@/lib/db';
 import { logger } from '@/lib/logger';
@@ -22,11 +23,18 @@ type ChatMessage = {
 
 export async function POST(request: Request) {
     let userId: string;
+    let userEmail: string | null | undefined;
     try {
         userId = await requireAuth();
+        const session = await auth();
+        userEmail = session?.user?.email;
     } catch {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
+
+    const OWNER_MODEL = 'claude-opus-4-8';
+    const DEFAULT_MODEL = 'claude-opus-4-6';
+    const claudeModel = userEmail === 'damianlafferranderie@gmail.com' ? OWNER_MODEL : DEFAULT_MODEL;
 
     try {
         const ip = getIp(request);
@@ -97,7 +105,7 @@ export async function POST(request: Request) {
                 ];
 
                 const completion = await anthropic.messages.create({
-                    model: 'claude-opus-4-6',
+                    model: claudeModel,
                     max_tokens: 1024,
                     system: PROMPTS.SIMILAR,
                     messages: userMessages,
@@ -154,7 +162,7 @@ export async function POST(request: Request) {
             ];
 
             const completion = await anthropic.messages.create({
-                model: 'claude-opus-4-6',
+                model: claudeModel,
                 max_tokens: 2048,
                 system: PROMPTS.ANALYSIS,
                 messages: userMessages,
@@ -173,7 +181,7 @@ export async function POST(request: Request) {
             ];
 
             const completion = await anthropic.messages.create({
-                model: 'claude-opus-4-6',
+                model: claudeModel,
                 max_tokens: 1024,
                 system: PROMPTS.CHAT,
                 messages: userMessages,
