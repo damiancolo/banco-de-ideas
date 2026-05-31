@@ -57,7 +57,7 @@ export default function AboutPageEN() {
                 <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Justification</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        This tool comes to solve a specific problem: where to save ideas? Generally, people save their ideas in a notebook, a planner, a mobile note app, a .doc, or a WhatsApp group with themselves; <span className="font-semibold">unbancodeideas.com</span> aims to be the tool for saving ideas.
+                        Where do you save your ideas? A notes app, Google Tasks, a WhatsApp group with yourself... <span className="font-semibold">unbancodeideas.com</span> aims to be the definitive tool for this use case. But its big plus is the ability to get inspired, co-create and share with others and their ideas.
                     </p>
                     <p className="text-lg text-gray-700 leading-relaxed">
                         We want ideas to have direct action, so we also apply it as a meta-idea, which is why the idea bank has features that were once ideas; the idea bank evolves and has functionality.

@@ -57,7 +57,7 @@ export default function AboutPageCA() {
                 <div className="bg-gradient-to-br from-[#C5A47E]/5 to-transparent rounded-3xl p-8 md:p-12 shadow-xl border border-[#C5A47E]/10 mb-8 animate-in fade-in slide-in-from-bottom duration-700 delay-200">
                     <h2 className="text-3xl font-bold text-gray-900 mb-6">Justificació</h2>
                     <p className="text-lg text-gray-700 leading-relaxed mb-6">
-                        Aquesta eina ve a solucionar un problema concret: on guardar les idees? Generalment, la gent guarda les seves idees en un quadern, una agenda, un bloc de notes al mòbil, un .doc, o un grup de WhatsApp amb si mateix; <span className="font-semibold">unbancodeideas.com</span> busca ser l&apos;eina per guardar idees.
+                        On guardes les teves idees? Un bloc de notes, el Google Tasks, un grup de WhatsApp amb tu mateix... <span className="font-semibold">unbancodeideas.com</span> intenta ser l&apos;eina definitiva per a aquest cas d&apos;ús. Però el seu gran plus és la possibilitat d&apos;inspirar-se, cocreuar i compartir amb altres i les seves idees.
                     </p>
                     <p className="text-lg text-gray-700 leading-relaxed">
                         Volem que les idees tinguin acció directa, així que també l&apos;apliquem com a meta-idea, per la qual cosa el banc d&apos;idees té funcionalitats que algun cop van ser idees; el banc d&apos;idees evoluciona i té funcionalitats.
