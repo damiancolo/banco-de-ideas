@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { auth } from '@/auth';
 import { requireAuth } from '@/lib/auth-utils';
-import { savePrivateIdea, savePrivateIdeas } from '@/lib/db';
+import { savePrivateIdea, saveIdeas } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { PROMPTS, API } from '@/lib/constants';
 import { checkRateLimit } from '@/lib/rate-limit';
@@ -135,7 +135,7 @@ export async function POST(request: Request) {
                         category: 'bisociation' as const
                     }));
                     try {
-                        await savePrivateIdeas(ideasToSave, userId);
+                        await saveIdeas(ideasToSave);
                     } catch (err: unknown) {
                         logger.error('Error guardando bisociaciones privadas:', err);
                     }
