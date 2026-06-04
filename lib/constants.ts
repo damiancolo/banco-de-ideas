@@ -24,7 +24,7 @@ export const KEYWORDS = {
  * API configuration
  */
 export const API = {
-    MODEL: 'deepseek-chat',
+    MODEL: 'deepseek-v4-pro',
     MAX_IDEA_LENGTH: 2000,
     MIN_IDEA_LENGTH: 1
 } as const;

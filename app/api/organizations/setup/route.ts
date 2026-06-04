@@ -53,7 +53,7 @@ export async function POST(req: Request) {
       prizes: validPrizes,
       logoUrl: logoBase64 || '',
       aiProvider: 'deepseek',
-      aiModel: 'deepseek-chat',
+      aiModel: 'deepseek-v4-pro',
       status: 'active',
       createdViaInvite: true,
       programStartDate: new Date(),

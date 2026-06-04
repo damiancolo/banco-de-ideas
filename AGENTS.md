@@ -6,7 +6,7 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Base de datos**: MongoDB Atlas (Mongoose 9)
-- **IA chat/análisis**: DeepSeek `deepseek-chat` (V3.2) vía SDK OpenAI-compatible
+- **IA chat/análisis**: DeepSeek `deepseek-v4-pro` vía SDK OpenAI-compatible
 - **IA voz**: OpenAI Whisper-1 (STT), TTS-1 Shimmer (TTS), text-embedding-3-small (embeddings)
 - **Auth**: NextAuth v5 beta (next-auth@5.0.0-beta) + @auth/mongodb-adapter + Google OAuth
 - **Estilos**: TailwindCSS 4

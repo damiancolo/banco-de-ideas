@@ -69,7 +69,7 @@ const OrganizationSchema = new Schema<IOrganization>(
         aiModel: {
             type: String,
             required: true,
-            default: 'deepseek-chat',
+            default: 'deepseek-v4-pro',
         },
         knowledgeBase: {
             type: [KnowledgeBaseDocSchema],

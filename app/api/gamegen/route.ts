@@ -7,7 +7,7 @@ export const maxDuration = 300;
 
 // ── Modelo ────────────────────────────────────────────────────────────────
 // Cambiar aquí cuando haya un modelo mejor/más barato disponible
-const MODEL = 'deepseek-chat';
+const MODEL = 'deepseek-v4-pro';
 
 const client = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY!,

@@ -106,7 +106,7 @@ export function getAIProvider(org: { aiProvider: string, aiModel: string }): AIP
             }
             return new OpenAICompatibleProvider(
                 process.env.DEEPSEEK_API_KEY, 
-                org.aiModel || 'deepseek-chat', 
+                org.aiModel || 'deepseek-v4-pro',
                 'https://api.deepseek.com'
             );
 
