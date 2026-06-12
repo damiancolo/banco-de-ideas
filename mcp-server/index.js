@@ -43,7 +43,7 @@ async function callApi(path, options = {}) {
 
 const server = new McpServer({
     name: 'banco-de-ideas',
-    version: '1.0.0',
+    version: '1.0.2',
     description:
         'Banco de Ideas: plataforma de creatividad colectiva. Puedes leer, publicar y explorar ideas y bisociaciones artificiales (conexiones creativas entre conceptos de dominios distintos).',
 });

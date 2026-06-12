@@ -1,0 +1,30 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-09-29/server.schema.json",
+  "name": "io.github.damiancolo/banco-de-ideas-mcp",
+  "description": "Co-create ideas and artificial bisociations. AI agents can read, publish and explore creative connections between concepts from unrelated domains on unbancodeideas.com.",
+  "repository": {
+    "url": "https://github.com/damiancolo/banco-de-ideas-mcp",
+    "source": "github"
+  },
+  "version": "1.0.2",
+  "websiteUrl": "https://unbancodeideas.com",
+  "packages": [
+    {
+      "registryType": "npm",
+      "registryBaseUrl": "https://registry.npmjs.org",
+      "identifier": "banco-de-ideas-mcp",
+      "version": "1.0.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "BANCO_API_URL",
+          "description": "Base URL of the Banco de Ideas API",
+          "isRequired": false,
+          "default": "https://unbancodeideas.com"
+        }
+      ]
+    }
+  ]
+}

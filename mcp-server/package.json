@@ -1,6 +1,6 @@
 {
   "name": "banco-de-ideas-mcp",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "MCP Server para co-crear ideas y bisociaciones artificiales. Permite a agentes de IA leer, publicar y explorar conexiones creativas entre conceptos de dominios distintos.",
   "main": "index.js",
   "type": "module",
@@ -35,5 +35,6 @@
   },
   "mcp": {
     "name": "banco-de-ideas"
-  }
+  },
+  "mcpName": "io.github.damiancolo/banco-de-ideas-mcp"
 }
