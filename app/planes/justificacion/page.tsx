@@ -89,7 +89,7 @@ export default function JustificacionPage() {
                   color: "#3a3632",
                 }}
               >
-                95
+                88
                 <span style={{ fontSize: "0.45em", color: "#4a4440" }}>%</span>
               </div>
               <div
@@ -102,7 +102,7 @@ export default function JustificacionPage() {
                   marginTop: "12px",
                 }}
               >
-                fracasan
+                ya usan IA
               </div>
             </div>
             <div style={{ marginBottom: "8px" }}>
@@ -116,7 +116,7 @@ export default function JustificacionPage() {
                   color: "#c9a87a",
                 }}
               >
-                5<span style={{ fontSize: "0.5em" }}>%</span>
+                6<span style={{ fontSize: "0.5em" }}>%</span>
               </div>
               <div
                 style={{
@@ -128,7 +128,7 @@ export default function JustificacionPage() {
                   marginTop: "12px",
                 }}
               >
-                lo logran
+                capturan valor
               </div>
             </div>
           </div>
@@ -199,9 +199,11 @@ export default function JustificacionPage() {
                 textAlign: "justify",
               }}
             >
-              <strong>95 de cada 100 proyectos de IA en empresas fracasan.</strong>{" "}
-              Sin valor medible. Sin retorno. Sin impacto en la cuenta de
-              resultados.
+              <strong>
+                La adopción de IA es masiva. El valor es raro: el 88% de las
+                organizaciones ya la usa, pero solo un ~6% captura valor
+                significativo.
+              </strong>
             </p>
             <p
               style={{
@@ -212,9 +214,13 @@ export default function JustificacionPage() {
                 textAlign: "justify",
               }}
             >
-              No es una opinión. Es la conclusión de un estudio del MIT
-              publicado en 2025 sobre 300 despliegues reales en empresas de
-              todos los tamaños.
+              No es una opinión ni un solo estudio. McKinsey encuestó a casi
+              2.000 organizaciones en 105 países: 88% ya usa IA en alguna
+              función, pero solo el 39% reporta algún impacto en resultados, y
+              apenas un ~6% califica como «high performer». BCG midió lo mismo
+              en el puesto de trabajo. Y el MIT, en su análisis de 300
+              despliegues reales, llegó a la conclusión más citada: la inmensa
+              mayoría de los pilotos se estanca sin impacto observable.
             </p>
             <p
               style={{
@@ -224,8 +230,8 @@ export default function JustificacionPage() {
                 textAlign: "justify",
               }}
             >
-              Solo 5 de cada 100 lo consiguen. La pregunta evidente es{" "}
-              <strong style={{ color: "#181714" }}>qué hace ese 5%</strong>.
+              Solo ~6 de cada 100 lo consiguen. La pregunta evidente es{" "}
+              <strong style={{ color: "#181714" }}>qué hace ese 6%</strong>.
             </p>
           </section>
 
@@ -249,7 +255,7 @@ export default function JustificacionPage() {
                 marginBottom: "20px",
               }}
             >
-              Lo que distingue al 5%
+              Lo que distingue al 6%
             </div>
             <p
               style={{
@@ -277,6 +283,10 @@ export default function JustificacionPage() {
             >
               {[
                 [
+                  "Rediseñan flujos de trabajo, no solo prueban herramientas.",
+                  "Es lo que más distingue a los high performers según McKinsey: son casi 3 veces más propensos a rediseñar intencionalmente cómo se hace el trabajo, en lugar de superponer una IA sobre el proceso de siempre.",
+                ],
+                [
                   "Las ideas vienen de los empleados, no de la dirección.",
                   "Los proyectos exitosos son los que propusieron las personas que ejecutan el trabajo. Las que saben dónde duele. La dirección ve ineficiencias en agregado; los empleados las viven en detalle.",
                 ],
@@ -290,7 +300,7 @@ export default function JustificacionPage() {
                 ],
                 [
                   "Sus empleados se sienten seguros.",
-                  "Nadie propone cómo automatizar su propio trabajo si teme que ese trabajo se use contra él. Sin garantía explícita de empleo, lo que se recoge son ideas decorativas.",
+                  "Nadie propone cómo automatizar su propio trabajo si teme que ese trabajo se use contra él. El miedo es real y está medido: según BCG, en las empresas que más avanzan con IA el 46% de los empleados teme por su puesto. Y el apoyo visible del liderazgo sube del 15% al 55% la proporción de empleados positivos hacia la IA. Sin garantía explícita, lo que se recoge son ideas decorativas.",
                 ],
               ].map(([title, body], i) => (
                 <div key={i}>
@@ -381,9 +391,10 @@ export default function JustificacionPage() {
                 textAlign: "justify",
               }}
             >
-              Por eso el 95% fracasa. No por falta de tecnología. Por falta de
-              un lugar donde las personas que conocen el trabajo puedan proponer
-              cómo mejorarlo, y al hacerlo no se sientan expuestas.
+              Por eso la mayoría adopta IA pero no captura valor. No por falta
+              de tecnología. Por falta de un lugar donde las personas que
+              conocen el trabajo puedan proponer cómo mejorarlo, y al hacerlo
+              no se sientan expuestas.
             </p>
           </section>
 
@@ -435,7 +446,7 @@ export default function JustificacionPage() {
                 "IA entrenada con la documentación de su empresa. No una IA genérica. Una que conoce sus procesos, su lenguaje, sus áreas de mejora.",
                 "Premios visibles desde el inicio. Definidos por la dirección.",
                 "Compromiso firmado de cero despidos por IA. Si una función se automatiza, la organización reasigna o amplía el rol. Es la condición de entrada al programa.",
-                "Reporte ejecutivo final. Con todas las propuestas, las tres ganadoras y recomendaciones de implementación.",
+                "Reporte ejecutivo final. Con todas las propuestas, las tres ganadoras y recomendaciones de implementación: no solo qué herramienta probar, sino qué flujo de trabajo rediseñar primero.",
               ].map((item, i) => (
                 <div
                   key={i}

@@ -156,11 +156,11 @@ export default function EnterpriseSection() {
       const winVal = document.getElementById('ent-winVal') as HTMLElement | null;
       if (!donutFill || !failBar || !winBar || !failVal || !winVal) return;
       const circumference = 2 * Math.PI * 50;
-      donutFill.style.strokeDasharray = `${circumference * 0.05} ${circumference}`;
-      failBar.style.width = '95%';
-      winBar.style.width = '5%';
-      animateCounter(failVal, 95, '%', 2000);
-      animateCounter(winVal, 5, '%', 2000);
+      donutFill.style.strokeDasharray = `${circumference * 0.06} ${circumference}`;
+      failBar.style.width = '88%';
+      winBar.style.width = '6%';
+      animateCounter(failVal, 88, '%', 2000);
+      animateCounter(winVal, 6, '%', 2000);
     };
 
     const el = statVisualRef.current;
@@ -187,9 +187,14 @@ export default function EnterpriseSection() {
 
         <section>
           <div className="ent-label">El punto de partida</div>
-          <div className="ent-stat-n">95<span>%</span></div>
-          <p className="ent-stat-copy">de los proyectos de IA en empresas fracasan sin generar valor medible. El MIT analizó 300 despliegues reales y el diagnóstico es claro.</p>
-          <a href="https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/" target="_blank" rel="noopener" className="ent-source-link">MIT NANDA — Fortune, agosto 2025 ↗</a>
+          <div className="ent-stat-n">88<span>%</span></div>
+          <p className="ent-stat-copy">de las organizaciones ya usa IA en alguna función. Pero solo el 39% reporta algún impacto en resultados, y apenas un ~6% captura valor significativo. <strong style={{ color: '#181714', fontWeight: 500 }}>La adopción es masiva. El valor es raro.</strong></p>
+          <p className="ent-stat-copy" style={{ marginBottom: 18 }}>Lo dicen tres investigaciones independientes: McKinsey encuestó a ~2.000 organizaciones en 105 países, BCG midió la adopción en el puesto de trabajo, y el MIT analizó 300 despliegues reales.</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 20px' }}>
+            <a href="https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai" target="_blank" rel="noopener" className="ent-source-link">McKinsey — The State of AI 2025 ↗</a>
+            <a href="https://www.bcg.com/publications/2025/ai-at-work-momentum-builds-but-gaps-remain" target="_blank" rel="noopener" className="ent-source-link">BCG — AI at Work 2025 ↗</a>
+            <a href="https://fortune.com/2025/08/18/mit-report-95-percent-generative-ai-pilots-at-companies-failing-cfo/" target="_blank" rel="noopener" className="ent-source-link">MIT NANDA — Fortune 2025 ↗</a>
+          </div>
 
           <div className="ent-stat-visual" ref={statVisualRef}>
             <div className="ent-donut-wrap">
@@ -198,25 +203,25 @@ export default function EnterpriseSection() {
                 <circle className="ent-donut-fill" id="ent-donutFill" cx="65" cy="65" r="50" />
               </svg>
               <div className="ent-donut-label">
-                <div className="ent-donut-pct">5%</div>
-                <div className="ent-donut-sub">éxito</div>
+                <div className="ent-donut-pct">6%</div>
+                <div className="ent-donut-sub">valor real</div>
               </div>
             </div>
             <div className="ent-stat-right">
               <div className="ent-counter-item">
                 <div className="ent-counter-val" id="ent-failVal">0%</div>
                 <div className="ent-counter-bar-track"><div className="ent-counter-bar-fill ent-fail" id="ent-failBar" /></div>
-                <div className="ent-counter-label">Sin retorno medible</div>
+                <div className="ent-counter-label">Ya usan IA en alguna función</div>
               </div>
               <div className="ent-counter-item">
                 <div className="ent-counter-val ent-win" id="ent-winVal">0%</div>
                 <div className="ent-counter-bar-track"><div className="ent-counter-bar-fill ent-win" id="ent-winBar" /></div>
-                <div className="ent-counter-label">Generan impacto real</div>
+                <div className="ent-counter-label">Capturan valor significativo</div>
               </div>
               <div className="ent-five-callout">
                 <div className="ent-five-callout-dot" />
-                <div className="ent-five-callout-pct">5%</div>
-                <div className="ent-five-callout-text">Solo 5 de cada 100 lo logran</div>
+                <div className="ent-five-callout-pct">~6%</div>
+                <div className="ent-five-callout-text">Solo 6 de cada 100 capturan valor real</div>
               </div>
             </div>
           </div>
@@ -225,11 +230,14 @@ export default function EnterpriseSection() {
         <hr className="ent-hr" />
 
         <section>
-          <div className="ent-label">El patrón del 5%</div>
-          <h2 className="ent-h2">Dentro de ese 5%, hay una <em>coincidencia</em>.</h2>
-          <p className="ent-body">Los proyectos exitosos tienen algo en común: <strong>los empleados propusieron las soluciones</strong>. No bajaron de la dirección. Surgieron de quienes conocen los procesos, detectan las fricciones y saben dónde una IA bien aplicada cambia algo de verdad.</p>
-          <p className="ent-body">La investigación en innovación organizacional lo confirma: las ideas que emergen desde dentro son las que perduran.</p>
-          <a href="https://www.london.edu/think/employee-led-innovation" target="_blank" rel="noopener" className="ent-source-link">London Business School — Employee-led innovation ↗</a>
+          <div className="ent-label">El patrón del 6%</div>
+          <h2 className="ent-h2">Dentro de ese 6%, hay una <em>coincidencia</em>.</h2>
+          <p className="ent-body">Las organizaciones que capturan valor no se distinguen por la herramienta que compran: <strong>rediseñan la forma de trabajar</strong>. Según McKinsey, los high performers son casi 3 veces más propensos a rediseñar intencionalmente sus flujos de trabajo en lugar de solo probar tecnología.</p>
+          <p className="ent-body">Y hay una segunda coincidencia: <strong>los empleados propusieron las soluciones</strong>. No bajaron de la dirección. Surgieron de quienes conocen los procesos, detectan las fricciones y saben dónde una IA bien aplicada cambia algo de verdad. La investigación en innovación organizacional lo confirma: las ideas que emergen desde dentro son las que perduran.</p>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 20px' }}>
+            <a href="https://www.mckinsey.com/capabilities/quantumblack/our-insights/the-state-of-ai" target="_blank" rel="noopener" className="ent-source-link">McKinsey — The State of AI 2025 ↗</a>
+            <a href="https://www.london.edu/think/employee-led-innovation" target="_blank" rel="noopener" className="ent-source-link">London Business School — Employee-led innovation ↗</a>
+          </div>
         </section>
 
         <hr className="ent-hr" />

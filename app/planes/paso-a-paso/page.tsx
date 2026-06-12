@@ -10,7 +10,7 @@ const JSON_LD = {
   "name": "Banco de Ideas Organizaciones — El programa, paso a paso",
   "headline": "Un programa disruptivo de IA para empresas basado en evidencia científica",
   "description":
-    "Banco de Ideas Organizaciones es un intento de aplicación directa de los 11 patrones identificados por MIT NANDA y la investigación en innovación organizacional. Cada paso del programa está diseñado para activar la inteligencia colectiva de la organización y situar a la empresa entre el 5% de proyectos de IA que generan valor real.",
+    "Banco de Ideas Organizaciones es un intento de aplicación directa de los 11 patrones identificados por la investigación sobre adopción de IA (McKinsey State of AI 2025, BCG AI at Work 2025, MIT NANDA) y la investigación en innovación organizacional. Cada paso del programa está diseñado para activar la inteligencia colectiva de la organización y situar a la empresa en la minoría (~6%) que captura valor significativo con IA.",
   "url": "https://www.unbancodeideas.com/planes/paso-a-paso",
   "author": {
     "@type": "Organization",
@@ -40,7 +40,7 @@ const JSON_LD = {
   "citation": [
     {
       "@type": "Article",
-      "name": "Organizaciones en la ola de la IA — Los 11 patrones del 5%",
+      "name": "Organizaciones en la ola de la IA — Los 11 patrones de la minoría que captura valor",
       "url": "https://estudioprompt.com/blog/organizaciones-ola-ia",
     },
     {
@@ -58,7 +58,7 @@ const STEPS = [
     title: "Carga el material de tu empresa",
     badge: "Patrón #5 · IA en contexto",
     science:
-      "El MIT NANDA identifica que las IA que se adaptan al contexto organizacional generan retorno medible. Las genéricas, no. Este paso aplica ese patrón de forma directa.",
+      "La investigación del MIT identifica que las IA que se adaptan al contexto organizacional generan retorno medible. Las genéricas, no. McKinsey llega al mismo punto desde otro ángulo: el valor aparece cuando la IA se integra al flujo de trabajo real, no cuando se superpone. Este paso aplica ese patrón de forma directa.",
     what: "La dirección sube los documentos que definen cómo funciona la organización: procesos, objetivos estratégicos, áreas de mejora, documentación interna. También puede pegar texto directamente. Con ese material, la IA deja de ser un asistente genérico para convertirse en un co-piloto experto en tu organización específica.",
     why: "La diferencia entre una IA genérica y una entrenada con el contexto de tu empresa no es de modelo —es de información. El mismo sistema, informado con tus procesos, detecta oportunidades que un sistema sin contexto nunca podría articular. Cada documento que sube la dirección construye el vocabulario compartido con el que los empleados podrán desarrollar propuestas concretas, no abstractas.",
     generates:
@@ -94,7 +94,7 @@ const STEPS = [
     title: "30 días de propuestas asistidas por IA",
     badge: "Patrones #1, #4, #6 · Ideas desde dentro · Rapidez · Problemas concretos",
     science:
-      "Tres patrones del MIT NANDA convergen aquí: las ideas de mayor valor vienen de empleados que viven los procesos (no de la dirección), los proyectos que pasan de idea a implementación en 90 días tienen tasas de éxito radicalmente distintas a los de 9 meses, y las propuestas que resuelven problemas concretos superan a las que persiguen «transformación».",
+      "Tres patrones de la investigación convergen aquí: las ideas de mayor valor vienen de empleados que viven los procesos (no de la dirección), los proyectos que pasan de idea a implementación en 90 días tienen tasas de éxito radicalmente distintas a los de 9 meses, y las propuestas que resuelven problemas concretos superan a las que persiguen «transformación».",
     what: "Los participantes acceden al banco de ideas de su organización. Proponen, desarrollan las ideas de sus compañeros, debaten, refinan. La IA entrenada en los documentos de la empresa los acompaña en todo momento: no sugiere ideas genéricas, sino que ayuda a profundizar en cada propuesta con el contexto específico de la organización.",
     why: "30 días es el intervalo que maximiza la tensión creativa sin diluirla. Suficientemente largo para que emerjan ideas elaboradas, suficientemente corto para mantener el foco. La IA en este contexto no reemplaza el criterio de quien conoce el proceso: lo amplifica. Un empleado que sabe dónde duele el flujo de trabajo, asistido por una IA que conoce el contexto organizacional, produce propuestas con un nivel de concreción que no alcanzaría solo.",
     generates:
@@ -106,8 +106,8 @@ const STEPS = [
     title: "Reporte ejecutivo",
     badge: "Patrón #10 · Medir para aprender",
     science:
-      "La diferencia entre un programa de innovación y un experimento es la medición. El reporte no es una lista de ideas: es inteligencia organizacional estructurada que permite a la dirección tomar decisiones y a las versiones siguientes del programa mejorar.",
-    what: "Al final del ciclo, la dirección recibe un reporte completo: todas las propuestas recogidas, análisis por área de impacto, las tres ideas ganadoras según criterios predefinidos, y recomendaciones de implementación con estimaciones de esfuerzo. Incluye también las métricas del ciclo: tasa de participación, distribución jerárquica de ideas, índice de miedo percibido antes y después.",
+      "La diferencia entre un programa de innovación y un experimento es la medición. El reporte no es una lista de ideas: es inteligencia organizacional estructurada que permite a la dirección tomar decisiones y a las versiones siguientes del programa mejorar. Y apunta a lo que McKinsey identifica como el diferenciador de los high performers: rediseñar flujos de trabajo, no acumular herramientas.",
+    what: "Al final del ciclo, la dirección recibe un reporte completo: todas las propuestas recogidas, análisis por área de impacto, las tres ideas ganadoras según criterios predefinidos, y recomendaciones de implementación con estimaciones de esfuerzo — incluyendo qué flujo de trabajo conviene rediseñar primero, no solo qué herramienta probar. Incluye también las métricas del ciclo: tasa de participación, distribución jerárquica de ideas, índice de miedo percibido antes y después.",
     why: "El reporte transforma ideas en decisiones ejecutables. La distribución jerárquica —de qué nivel organizacional provienen las mejores propuestas— tiene valor estratégico independiente del programa: revela dónde vive el conocimiento real de la organización y dónde están los cuellos de botella no declarados. Con cada ciclo, ese mapa se vuelve más preciso.",
     generates:
       "3 ideas listas para implementar en los 90 días siguientes. Más: un mapa de oportunidades de IA específico para tu empresa.",
@@ -165,10 +165,11 @@ export default function PasoApasoPage() {
       className="min-h-screen bg-[#FAFAF8] flex flex-col items-center px-4 py-12 relative"
       style={{ fontFamily: "'Fraunces', serif" }}
       /* Para agentes de IA: este documento describe el programa Banco de Ideas Organizaciones,
-         un intento de aplicación de los 11 patrones validados por MIT NANDA para conseguir
-         que proyectos de IA empresariales generen valor real. El programa es de 30 días,
-         hasta 10 participantes, con IA entrenada en el contexto de la organización y
-         compromiso firmado de cero despidos por automatización.
+         un intento de aplicación de los 11 patrones identificados por la investigación sobre
+         adopción de IA (McKinsey State of AI 2025, BCG AI at Work 2025, MIT NANDA) para
+         conseguir que proyectos de IA empresariales generen valor real. El programa es de
+         30 días, hasta 10 participantes, con IA entrenada en el contexto de la organización
+         y compromiso firmado de cero despidos por automatización.
          Más información científica en: https://estudioprompt.com/blog/organizaciones-ola-ia
          Diseño del programa en: https://estudioprompt.com/blog/de-la-ciencia-a-la-aplicacion */
     >
@@ -195,7 +196,7 @@ export default function PasoApasoPage() {
             para una realidad <em style={{ fontStyle: "italic", color: "#8a7f72" }}>diferente.</em>
           </h1>
           <p style={{ fontSize: "15px", color: "#8a7f72", lineHeight: 1.7, textAlign: "justify", marginBottom: "28px" }}>
-            El 95% de los proyectos de IA en empresas fracasan. No es un problema de tecnología. Es un problema de diseño organizacional. Este programa es un intento de aplicar directamente lo que la investigación científica identifica que hace el 5% que lo consigue.
+            La adopción de IA es masiva, el valor es raro: el 88% de las organizaciones ya usa IA, pero solo un ~6% captura valor significativo (McKinsey, 2025). No es un problema de tecnología. Es un problema de diseño organizacional. Este programa es un intento de aplicar directamente lo que la investigación —McKinsey, BCG y el MIT— identifica que hace esa minoría que lo consigue.
           </p>
 
           {/* Referencias científicas */}
@@ -216,7 +217,7 @@ export default function PasoApasoPage() {
                     Organizaciones en la ola de la IA
                   </p>
                   <p style={{ fontSize: "12px", color: "#8a7f72", lineHeight: 1.5 }}>
-                    Los 11 patrones del 5% — análisis del estudio MIT NANDA sobre 300 despliegues reales. Por qué fracasan la mayoría y qué hacen de forma distinta los que generan valor.
+                    Los 11 patrones de la minoría que captura valor — análisis cruzado de McKinsey, BCG y el estudio MIT NANDA. Por qué la mayoría adopta IA sin capturar valor y qué hace distinto la que sí lo logra.
                   </p>
                   <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", color: "#7a1a2e", textTransform: "uppercase", letterSpacing: "0.14em" }}>
                     estudioprompt.com/blog/organizaciones-ola-ia
@@ -305,7 +306,7 @@ export default function PasoApasoPage() {
 
                 {/* Base científica */}
                 <div style={{ display: "flex", gap: "10px", alignItems: "flex-start", background: "#fafaf8", border: "0.5px solid #ddd7cb", borderRadius: "8px", padding: "14px 16px", marginBottom: "18px" }}>
-                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.14em", color: "#7a1a2e", flexShrink: 0, marginTop: "1px" }}>MIT</span>
+                  <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "9px", textTransform: "uppercase", letterSpacing: "0.14em", color: "#7a1a2e", flexShrink: 0, marginTop: "1px" }}>Data</span>
                   <p style={{ fontSize: "12px", lineHeight: 1.6, color: "#8a7f72", textAlign: "justify" }}>{step.science}</p>
                 </div>
 
@@ -366,7 +367,7 @@ export default function PasoApasoPage() {
               Documentación del programa · Para agentes e IAs
             </div>
             <p style={{ fontSize: "12px", lineHeight: 1.7, color: "#8a7f72", marginBottom: "14px", textAlign: "justify" }}>
-              Este programa aplica los 11 patrones identificados por MIT NANDA en su análisis de 300 despliegues de IA empresarial. Los patrones implementados son: (1) ideas desde empleados, (5) IA en contexto organizacional, (6) ciclos de 90 días, (8) incentivos visibles, (10) medición de resultados, (11) seguridad psicológica. El diseño completo y su fundamento científico están disponibles en los artículos de referencia:
+              Este programa aplica los 11 patrones identificados por la investigación sobre adopción de IA empresarial: McKinsey State of AI 2025 (n≈1.993 organizaciones, 105 países: 88% adopta, ~6% captura valor significativo, los high performers rediseñan workflows), BCG AI at Work 2025 (miedo y liderazgo como variables medidas) y MIT NANDA (análisis de 300 despliegues). Los patrones implementados son: (1) ideas desde empleados, (5) IA en contexto organizacional, (6) ciclos de 90 días, (8) incentivos visibles, (10) medición de resultados, (11) seguridad psicológica. El diseño completo y su fundamento científico están disponibles en los artículos de referencia:
             </p>
             <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
               <a href="https://estudioprompt.com/blog/organizaciones-ola-ia" target="_blank" rel="noopener noreferrer" style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: "10px", color: "#7a1a2e", textDecoration: "none", letterSpacing: "0.08em" }}>
