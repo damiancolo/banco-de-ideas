@@ -119,6 +119,13 @@ export default function PrivateHeader({ activeOrg }: Props = {}) {
                         </svg>
                     </Link>
                     <Link
+                        href="/privado/cuenta"
+                        className="text-sm text-gray-400 hover:text-[#C5A47E] transition-colors"
+                        title="Mi cuenta y mis datos"
+                    >
+                        Mi cuenta
+                    </Link>
+                    <Link
                         href="/"
                         className="text-sm text-gray-400 hover:text-[#C5A47E] transition-colors"
                     >

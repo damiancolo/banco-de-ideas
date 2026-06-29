@@ -92,7 +92,8 @@ export default function Home() {
       <ChatEngine
         apiPrefix="/api"
         footerSlot={
-          <div className="pb-8 flex items-center gap-4">
+          <div className="pb-8 flex flex-col items-center gap-3">
+          <div className="flex items-center gap-4">
             {/* Bottom Icons: Folder + Analytics + Private Space */}
             <Link href="/banco" ref={bancoRef} className="opacity-80 text-[#333] hover:text-[#C5A47E] transition-colors">
               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
@@ -116,6 +117,10 @@ export default function Home() {
                 <circle cx="12" cy="12" r="3"></circle>
               </svg>
             </Link>
+          </div>
+          <Link href="/privacidad" className="text-[11px] text-gray-400 hover:text-[#C5A47E] transition-colors">
+            Privacidad
+          </Link>
           </div>
         }
       />
