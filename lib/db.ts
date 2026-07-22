@@ -93,7 +93,7 @@ export async function getSimilarityCorpus(
  */
 export async function savePrivateIdeaFromTask(params: {
     text: string;
-    originalText: string;
+    originalText?: string;
     userId: string;
     embedding?: number[];
     similarTo?: Array<{ ideaId: string; text: string; similarity: number }>;

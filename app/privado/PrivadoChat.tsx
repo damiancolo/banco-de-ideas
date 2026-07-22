@@ -8,7 +8,6 @@ import PWAInstallBanner from "@/components/PWAInstallBanner";
 
 type ImportedItem = {
     ideaId: string;
-    original: string;
     idea: string;
     similarTo: Array<{ text: string; similarity: number }>;
 };
@@ -180,7 +179,6 @@ export default function PrivadoChat({
                                         {result.items.map((it) => (
                                             <li key={it.ideaId} className="border border-gray-100 rounded-xl p-3">
                                                 <p className="text-sm text-gray-800">{it.idea}</p>
-                                                <p className="text-xs text-gray-400 mt-1 italic">del task: “{it.original}”</p>
                                                 {it.similarTo?.length > 0 && (
                                                     <p className="text-xs text-[#C5A47E] mt-1">
                                                         ≈ parecida a: {it.similarTo.map((s) => `“${s.text}” (${Math.round(s.similarity * 100)}%)`).join(" · ")}

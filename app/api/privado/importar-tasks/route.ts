@@ -3,7 +3,7 @@ import { auth } from '@/auth';
 import { connectDB } from '@/lib/mongodb';
 import ImportedTask from '@/lib/models/ImportedTask';
 import { listAllTasks, ReauthRequiredError, type GoogleTask } from '@/lib/google/tasks';
-import { developIdea } from '@/lib/ai/develop-idea';
+import { classifyTask } from '@/lib/ai/develop-idea';
 import { generateEmbedding, cosineSimilarity } from '@/lib/utils/embeddings';
 import { savePrivateIdeaFromTask, getSimilarityCorpus } from '@/lib/db';
 import { isOwnerEmail } from '@/lib/owner';
@@ -97,17 +97,17 @@ export async function POST() {
             await ImportedTask.bulkWrite(exclusionOps, { ordered: false });
         }
 
-        // 5. Desarrollar un lote con IA
+        // 5. Clasificar un lote con IA (solo decide idea/no-idea; NO reescribe)
         const batch = toDevelop.slice(0, BATCH);
         const corpus = batch.length ? await getSimilarityCorpus(userId) : [];
-        const imported: Array<{ ideaId: string; original: string; idea: string; similarTo: any[] }> = [];
+        const imported: Array<{ ideaId: string; idea: string; similarTo: any[] }> = [];
         const errors: Array<{ original: string; error: string }> = [];
 
         // Procesamiento EN PARALELO del lote: cada task es independiente.
         await Promise.all(batch.map(async (t) => {
             const raw = `${t.title || ''}${t.notes ? '\n' + t.notes : ''}`.trim();
             try {
-                const result = await developIdea(raw);
+                const result = await classifyTask(raw);
 
                 if ('descartar' in result) {
                     await ImportedTask.updateOne(
@@ -119,11 +119,11 @@ export async function POST() {
                     return;
                 }
 
-                const embedding = await generateEmbedding(result.idea);
+                // La idea entra TAL CUAL el texto de la task (sin reescribir).
+                const embedding = await generateEmbedding(raw);
                 const similarTo = topSimilar(embedding, corpus);
                 const saved = await savePrivateIdeaFromTask({
-                    text: result.idea,
-                    originalText: raw,
+                    text: raw,
                     userId,
                     embedding,
                     similarTo,
@@ -133,7 +133,7 @@ export async function POST() {
                     { $set: { userId, taskId: t.id, listId: t.listId, outcome: 'imported', ideaId: saved.id, processedAt: new Date() } },
                     { upsert: true }
                 );
-                imported.push({ ideaId: saved.id, original: raw, idea: result.idea, similarTo });
+                imported.push({ ideaId: saved.id, idea: raw, similarTo });
             } catch (err) {
                 // No registrar: la task se reintenta en la próxima corrida.
                 logger.error('Error importando task:', err);
