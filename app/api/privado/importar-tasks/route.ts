@@ -12,8 +12,10 @@ import { logger } from '@/lib/logger';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-// Tasks desarrolladas por invocación (cada una ~1 llamada a DeepSeek + 1 embedding).
-const BATCH = 8;
+// Tasks desarrolladas por invocación. Se procesan EN PARALELO, así que el
+// wall-clock ≈ la más lenta (no la suma). Con DeepSeek ~10s/llamada, 5 en
+// paralelo entra holgado en los 60s de Vercel. El cliente itera hasta agotar.
+const BATCH = 5;
 const SIMILARITY_THRESHOLD = 0.8;
 
 /** Exclusión determinista: entradas que no son ideas. Devuelve la razón o null. */
@@ -94,7 +96,8 @@ export async function POST() {
         const imported: Array<{ ideaId: string; original: string; idea: string; similarTo: any[] }> = [];
         const errors: Array<{ original: string; error: string }> = [];
 
-        for (const t of batch) {
+        // Procesamiento EN PARALELO del lote: cada task es independiente.
+        await Promise.all(batch.map(async (t) => {
             const raw = `${t.title || ''}${t.notes ? '\n' + t.notes : ''}`.trim();
             try {
                 const result = await developIdea(raw);
@@ -106,7 +109,7 @@ export async function POST() {
                         { upsert: true }
                     );
                     excluded.push({ original: raw, reason: `ai: ${result.descartar}` });
-                    continue;
+                    return;
                 }
 
                 const embedding = await generateEmbedding(result.idea);
@@ -129,7 +132,7 @@ export async function POST() {
                 logger.error('Error importando task:', err);
                 errors.push({ original: raw, error: err instanceof Error ? err.message : 'error desconocido' });
             }
-        }
+        }));
 
         const remaining = toDevelop.length - batch.length;
         // progressed = hubo algún avance real este call (para que el cliente no cicle si todo falla)
