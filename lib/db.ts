@@ -16,6 +16,12 @@ export type SavedIdea = {
         text: string;
         createdAt: string;
     }>;
+    /** Presente solo en ideas importadas (ej. desde Google Tasks) */
+    source?: 'google-tasks';
+    /** Texto crudo original de la fuente (ej. la entrada del Task) */
+    originalText?: string;
+    /** Ideas parecidas ya existentes; se muestra como marca, no filtra */
+    similarTo?: Array<{ ideaId: string; text: string; similarity: number }>;
 };
 
 /**
@@ -40,8 +46,72 @@ function toSavedIdea(doc: IIdea | Record<string, unknown>): SavedIdea {
             : d.createdAt as string,
         category: d.category as 'user' | 'bisociation',
         highlightCount: (d.deletionAttempts as number) || 0,
-        comments
+        comments,
+        ...(d.source ? { source: d.source as 'google-tasks' } : {}),
+        ...(d.originalText ? { originalText: d.originalText as string } : {}),
+        ...(Array.isArray(d.similarTo) && d.similarTo.length
+            ? {
+                similarTo: (d.similarTo as any[]).map((s) => ({
+                    ideaId: s.ideaId ? String(s.ideaId) : '',
+                    text: s.text as string,
+                    similarity: s.similarity as number,
+                })),
+            }
+            : {}),
     };
+}
+
+/**
+ * Trae un corpus de ideas con embedding para comparación de similitud:
+ * las públicas más las privadas del propio usuario. Limitado a las más
+ * recientes para acotar memoria/tiempo (el marcado de parecidas es best-effort).
+ */
+export async function getSimilarityCorpus(
+    userId: string,
+    limit = 500
+): Promise<Array<{ id: string; text: string; embedding: number[] }>> {
+    await connectDB();
+    const docs = await Idea.find({
+        embedding: { $exists: true, $ne: [] },
+        $or: [{ userId: null }, { userId }],
+    })
+        .select('text embedding')   // embedding es select:false; inclusión explícita lo trae
+        .sort({ createdAt: -1 })
+        .limit(limit)
+        .lean()
+        .exec();
+
+    return docs
+        .filter((d: any) => Array.isArray(d.embedding) && d.embedding.length)
+        .map((d: any) => ({ id: String(d._id), text: d.text as string, embedding: d.embedding as number[] }));
+}
+
+/**
+ * Guarda una idea privada importada (ej. desde Google Tasks) con todos sus
+ * metadatos de origen. A diferencia de savePrivateIdea, persiste embedding,
+ * texto original, fuente y las ideas parecidas detectadas.
+ */
+export async function savePrivateIdeaFromTask(params: {
+    text: string;
+    originalText: string;
+    userId: string;
+    embedding?: number[];
+    similarTo?: Array<{ ideaId: string; text: string; similarity: number }>;
+}): Promise<SavedIdea> {
+    const trimmed = params.text.trim();
+    if (!trimmed) throw new Error('La idea no puede estar vacía');
+
+    await connectDB();
+    const idea = await Idea.create({
+        text: trimmed.slice(0, 1500),
+        category: 'user',
+        userId: params.userId,
+        source: 'google-tasks',
+        originalText: params.originalText,
+        embedding: params.embedding,
+        similarTo: params.similarTo && params.similarTo.length ? params.similarTo : undefined,
+    });
+    return toSavedIdea(idea);
 }
 
 /**

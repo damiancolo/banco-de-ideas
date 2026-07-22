@@ -2,6 +2,7 @@ import { auth } from "@/auth";
 import Link from "next/link";
 import PrivadoChat from "./PrivadoChat";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { isOwnerEmail } from "@/lib/owner";
 
 export default async function PrivadoPage() {
     let session = null;
@@ -43,5 +44,13 @@ export default async function PrivadoPage() {
         );
     }
 
-    return <PrivadoChat userId={session.user.id!} userName={session.user.name ?? undefined} />;
+    const isOwner = isOwnerEmail(session.user.email);
+
+    return (
+        <PrivadoChat
+            userId={session.user.id!}
+            userName={session.user.name ?? undefined}
+            isOwner={isOwner}
+        />
+    );
 }

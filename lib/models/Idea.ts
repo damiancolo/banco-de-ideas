@@ -18,6 +18,12 @@ export interface IIdeaScope {
 /**
  * Interfaz que define la estructura de una Idea en la base de datos
  */
+export interface ISimilarRef {
+    ideaId: mongoose.Types.ObjectId | string;
+    text: string;
+    similarity: number;
+}
+
 export interface IIdea extends Document {
     text: string;
     category: 'user' | 'bisociation';
@@ -26,6 +32,9 @@ export interface IIdea extends Document {
     comments: IComment[];
     userId?: string | null;
     scope: IIdeaScope;
+    source?: 'google-tasks';                 // origen de la idea si fue importada
+    originalText?: string;                    // texto crudo original (ej. entrada del Task)
+    similarTo?: ISimilarRef[];                // ideas parecidas ya existentes (marcado, no filtro)
     createdAt: Date;
     updatedAt: Date;
 }
@@ -97,6 +106,25 @@ const IdeaSchema = new Schema<IIdea>(
         scope: {
             type: IdeaScopeSchema,
             default: () => ({ type: 'public' }),
+        },
+        source: {
+            type: String,
+            enum: ['google-tasks'],
+            required: false,
+        },
+        originalText: {
+            type: String,
+            required: false,
+        },
+        similarTo: {
+            type: [{
+                ideaId: { type: Schema.Types.ObjectId, ref: 'Idea' },
+                text: { type: String },
+                similarity: { type: Number },
+                _id: false,
+            }],
+            required: false,
+            default: undefined,
         },
     },
     {

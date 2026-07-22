@@ -53,6 +53,8 @@ interface ChatEngineProps {
   headerSlot?: React.ReactNode;
   footerSlot?: React.ReactNode;
   userName?: string;
+  /** Opciones extra que se agregan al fondo del menú "+" (ej. importar del Task) */
+  extraMenuOptions?: Array<{ emoji: string; label: string; onClick: () => void }>;
 }
 
 export default function ChatEngine({
@@ -60,6 +62,7 @@ export default function ChatEngine({
   headerSlot,
   footerSlot,
   userName,
+  extraMenuOptions,
 }: ChatEngineProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -793,6 +796,22 @@ export default function ChatEngine({
                     <span className="text-xl">🧠</span>
                     <span className="font-medium">Espíritu crítico</span>
                   </button>
+
+                  {extraMenuOptions && extraMenuOptions.length > 0 && (
+                    <>
+                      <div className="h-px bg-gray-100 my-1" />
+                      {extraMenuOptions.map((opt, i) => (
+                        <button
+                          key={i}
+                          onClick={() => { opt.onClick(); setShowModeMenu(false); }}
+                          className="w-full px-4 py-3 text-left text-sm flex items-center gap-3 hover:bg-gray-50 transition-colors text-gray-700"
+                        >
+                          <span className="text-xl">{opt.emoji}</span>
+                          <span className="font-medium">{opt.label}</span>
+                        </button>
+                      ))}
+                    </>
+                  )}
                 </div>
               )}
             </div>
