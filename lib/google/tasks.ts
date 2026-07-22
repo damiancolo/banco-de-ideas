@@ -70,7 +70,7 @@ async function fetchJson(url: string, token: string): Promise<any> {
 }
 
 /**
- * Lee TODAS las tasks de TODAS las listas del usuario (incluyendo completadas y ocultas).
+ * Lee las tasks ACTIVAS (no completadas) de TODAS las listas del usuario.
  */
 export async function listAllTasks(userId: string): Promise<GoogleTask[]> {
     const token = await getValidAccessToken(userId);
@@ -82,9 +82,10 @@ export async function listAllTasks(userId: string): Promise<GoogleTask[]> {
     for (const list of lists) {
         let pageToken: string | undefined;
         do {
+            // No traemos completadas: son ruido y disparan el volumen (miles).
             const params = new URLSearchParams({
-                showCompleted: 'true',
-                showHidden: 'true',
+                showCompleted: 'false',
+                showHidden: 'false',
                 maxResults: '100',
             });
             if (pageToken) params.set('pageToken', pageToken);

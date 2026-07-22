@@ -12,10 +12,10 @@ import { logger } from '@/lib/logger';
 export const runtime = 'nodejs';
 export const maxDuration = 60;
 
-// Tasks desarrolladas por invocación. Se procesan EN PARALELO, así que el
-// wall-clock ≈ la más lenta (no la suma). Con DeepSeek ~10s/llamada, 5 en
-// paralelo entra holgado en los 60s de Vercel. El cliente itera hasta agotar.
-const BATCH = 5;
+// Tasks desarrolladas por invocación, EN PARALELO (wall-clock ≈ la más lenta).
+// DeepSeek responde en ~4-6s; 10 en paralelo entra holgado en los 60s de Vercel.
+// El cliente itera hasta agotar.
+const BATCH = 10;
 const SIMILARITY_THRESHOLD = 0.8;
 
 /** Exclusión determinista: entradas que no son ideas. Devuelve la razón o null. */
@@ -73,21 +73,28 @@ export async function POST() {
 
         const unprocessed = tasks.filter((t) => !processedIds.has(t.id));
 
-        // 4. Exclusiones deterministas (baratas, se registran todas ahora)
+        // 4. Exclusiones deterministas. Se registran en UNA sola escritura en lote
+        //    (bulkWrite): hacerlo secuencial con miles de tasks disparaba el timeout.
         const excluded: Array<{ original: string; reason: string }> = [];
         const toDevelop: GoogleTask[] = [];
+        const exclusionOps: any[] = [];
         for (const t of unprocessed) {
             const reason = deterministicExclude(t);
             if (reason) {
-                await ImportedTask.updateOne(
-                    { userId, taskId: t.id },
-                    { $set: { userId, taskId: t.id, listId: t.listId, outcome: 'excluded', reason, processedAt: new Date() } },
-                    { upsert: true }
-                );
+                exclusionOps.push({
+                    updateOne: {
+                        filter: { userId, taskId: t.id },
+                        update: { $set: { userId, taskId: t.id, listId: t.listId, outcome: 'excluded', reason, processedAt: new Date() } },
+                        upsert: true,
+                    },
+                });
                 excluded.push({ original: t.title || '(vacío)', reason });
             } else {
                 toDevelop.push(t);
             }
+        }
+        if (exclusionOps.length) {
+            await ImportedTask.bulkWrite(exclusionOps, { ordered: false });
         }
 
         // 5. Desarrollar un lote con IA

@@ -21,12 +21,16 @@ humano-humano, humano-naturaleza o humano-IA.
 
 Recibís una entrada cruda de la lista de tareas personal del autor. Puede ser
 telegráfica (pocas palabras). Tu trabajo:
-1. Interpretá la semilla con generosidad: ¿qué idea podría llegar a ser?
-2. Desarrollala en 2-4 oraciones como idea del banco, en español, voz clara y
-   concreta, sin tono de marketing.
-3. Mantené la intención original; no inventes un proyecto distinto.
-4. Solo si la entrada es un trámite puro sin ninguna semilla conceptual posible,
-   descartala.
+1. Distinguí IDEA de TAREA OPERATIVA. Descartá (no desarrolles) todo lo que sea
+   un pendiente/recordatorio de gestión personal: reuniones, llamadas, mails,
+   turnos y citas, compras, pagos, trámites, "mandar/enviar/avisar/confirmar X",
+   arreglos, mudanzas, cosas con nombre propio de una gestión puntual. Eso NO es
+   una idea para el banco.
+2. Si en cambio hay una semilla conceptual —una propuesta, un proyecto, una
+   forma distinta de mirar algo, algo colaborativo o de bien común— interpretala
+   con generosidad: ¿qué idea metanoica simbiótica podría llegar a ser?
+3. Desarrollala en 2-4 oraciones como idea del banco, en español, voz clara y
+   concreta, sin tono de marketing. Mantené la intención original.
 
 Respondé SOLO JSON, sin texto adicional:
 {"idea": "<texto desarrollado>"}  o  {"descartar": "<razón breve>"}`;
@@ -49,7 +53,8 @@ export async function developIdea(rawText: string): Promise<DevelopResult> {
             ],
             response_format: { type: 'json_object' },
             temperature: 0.7,
-        });
+            max_tokens: 500,
+        }, { timeout: 30000, maxRetries: 0 });
         const content = response.choices[0]?.message?.content || '{}';
         const parsed = JSON.parse(content);
         if (typeof parsed.idea === 'string' && parsed.idea.trim()) {
