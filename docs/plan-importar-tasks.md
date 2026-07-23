@@ -30,8 +30,10 @@ Botón en el área privada que lee las Google Tasks del usuario autenticado, tra
 | Autonomía | El agente propone; el usuario aprueba/colectiviza manualmente después |
 | Destino | Ideas privadas (`userId` del usuario), nunca directo al banco público |
 | Disparo | Manual (botón), sin cron |
-| Filtro | **Inclusivo**: se transforma TODO salvo exclusiones deterministas (ver §6) |
-| Versiones | Se guardan ambas: texto original de la task + versión desarrollada por IA |
+| Filtro | **Inclusivo**: se procesa TODO salvo exclusiones deterministas (ver §6) |
+| Rol de la IA | **Solo clasifica** (`mantener`/`descartar`). NINGUNA API redacta ni reescribe |
+| Texto | La idea entra **tal cual el texto de la task** (título + notas), verbatim |
+| Completadas | No se traen (`showCompleted:false`): de 2358 tasks a 243 activas |
 | Duplicados | Se marcan ("parecida a X"), nunca se descartan por similitud |
 | Tasks en Google | Quedan intactas. Scope `tasks.readonly`. Sin escritura |
 | Idempotencia | Registro de tasks ya procesadas; re-ejecutar no duplica |
