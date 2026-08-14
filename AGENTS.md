@@ -7,10 +7,15 @@ Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, ana
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Base de datos**: MongoDB Atlas (Mongoose 9)
 - **IA chat/análisis**: DeepSeek `deepseek-v4-pro` vía SDK OpenAI-compatible
-- **IA voz**: OpenAI Whisper-1 (STT), TTS-1 Shimmer (TTS), text-embedding-3-small (embeddings)
+- **IA voz**: OpenAI Whisper-1 (STT), gpt-4o-mini-tts Shimmer (TTS), text-embedding-3-small (embeddings)
 - **Auth**: NextAuth v5 beta (next-auth@5.0.0-beta) + @auth/mongodb-adapter + Google OAuth
 - **Estilos**: TailwindCSS 4
 - **Deploy**: Vercel (auto-deploy desde GitHub)
+
+> **Modelos de IA**: se revisan cada 6 meses. El inventario completo con precios
+> y el porqué de cada elección está en `~/Desktop/programeitor/INTELIGENCIAS.md`
+> (o `/inteligencias` en Claude Code). Antes de cambiar un modelo por uno más
+> barato, leer allí qué protegía el que está puesto.
 
 ## Entornos
 
@@ -299,7 +304,7 @@ El plugin en `estudioprompt.com/wp-content/plugins/ai-bot-tracker/ai-bot-tracker
 Usuario habla/escribe
   -> Si voz: /api/transcribe (Whisper) -> texto
   -> Deteccion de intencion en cliente (keywords)
-  -> /api/analyze?action=similar|analysis|chat (DeepSeek deepseek-chat)
+  -> /api/analyze?action=similar|analysis|chat (DeepSeek deepseek-v4-pro)
   -> Si via voz: /api/speak (TTS) -> audio MP3
   -> Bisociaciones se guardan automaticamente en MongoDB
 ```
