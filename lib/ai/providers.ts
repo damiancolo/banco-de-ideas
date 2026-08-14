@@ -50,7 +50,13 @@ export class ClaudeProvider implements AIProvider {
 
         // @ts-ignore - content[0] is usually text
         const textBlock = response.content.find(block => block.type === 'text');
-        return textBlock && 'text' in textBlock ? textBlock.text : '';
+        const texto = textBlock && 'text' in textBlock ? textBlock.text : '';
+        // Una respuesta vacía no es una respuesta: si se devuelve '' el chat se
+        // queda mudo sin que nadie se entere. Que falle de forma visible.
+        if (!texto.trim()) {
+            throw new Error(`${this.model} devolvió una respuesta vacía (stop_reason: ${response.stop_reason})`);
+        }
+        return texto;
     }
 }
 
@@ -85,7 +91,15 @@ export class OpenAICompatibleProvider implements AIProvider {
             ],
         });
 
-        return response.choices[0]?.message?.content || '';
+        const texto = response.choices[0]?.message?.content || '';
+        // Mismo motivo que en ClaudeProvider. Pasa de verdad: los modelos de
+        // razonamiento consumen el presupuesto pensando y devuelven 200 con el
+        // contenido vacío, sin error ninguno.
+        if (!texto.trim()) {
+            const motivo = response.choices[0]?.finish_reason ?? 'desconocido';
+            throw new Error(`${this.model} devolvió una respuesta vacía (finish_reason: ${motivo})`);
+        }
+        return texto;
     }
 }
 
