@@ -116,9 +116,23 @@ export async function POST(request: Request) {
 
                 let result = [];
                 try {
-                    // Extract JSON from response (Claude may wrap it in markdown)
-                    const jsonMatch = content.match(/\{[\s\S]*\}|\[[\s\S]*\]/);
-                    const jsonStr = jsonMatch ? jsonMatch[0] : content;
+                    // Extraer el JSON de la respuesta. El modelo puede envolverlo
+                    // en un bloque markdown y puede devolver un objeto o un array
+                    // suelto, según el modelo y el día.
+                    //
+                    // El regex anterior — /\{[\s\S]*\}|\[[\s\S]*\]/ — probaba el
+                    // patrón de objeto primero, así que ante un array se comía los
+                    // corchetes de fuera y dejaba "{...}, {...}" : JSON inválido,
+                    // parseo fallido y lista vacía en pantalla. Hay que quedarse
+                    // con el delimitador que aparezca ANTES en el texto.
+                    const limpio = content.replace(/```(?:json)?/gi, '').trim();
+                    let jsonStr = limpio;
+                    const inicio = limpio.search(/[[{]/);
+                    if (inicio !== -1) {
+                        const cierre = limpio[inicio] === '[' ? ']' : '}';
+                        const fin = limpio.lastIndexOf(cierre);
+                        if (fin > inicio) jsonStr = limpio.slice(inicio, fin + 1);
+                    }
                     const parsed = JSON.parse(jsonStr);
                     if (Array.isArray(parsed)) {
                         result = parsed;
@@ -126,7 +140,10 @@ export async function POST(request: Request) {
                         result = parsed.ideas || parsed.result || parsed.bisociations || [];
                     }
                 } catch (parseErr) {
-                    logger.error('Error parsing Claude JSON:', parseErr);
+                    // Con el texto crudo delante, la próxima vez se ve en un
+                    // vistazo qué devolvió el modelo. Sin esto, un fallo de
+                    // parseo es una lista vacía en pantalla y nada más.
+                    logger.error(`Error parseando el JSON de Claude · respuesta cruda: ${content.slice(0, 500)}`, parseErr);
                 }
 
                 if (result.length > 0) {

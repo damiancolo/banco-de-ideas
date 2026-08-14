@@ -82,9 +82,24 @@ export async function POST(
 
             let result = [];
             try {
-                const jsonMatch = responseText.match(/\[[\s\S]*\]/);
-                if (jsonMatch) result = JSON.parse(jsonMatch[0]);
-            } catch { /* malformed JSON: return empty */ }
+                // Se pide un array, pero los modelos a veces lo envuelven en un
+                // objeto ({"ideas": [...]}) o en un bloque markdown. Buscar solo
+                // corchetes dejaba la lista vacía en esos casos, sin ningún aviso.
+                const limpio = responseText.replace(/```(?:json)?/gi, '').trim();
+                let jsonStr = limpio;
+                const inicio = limpio.search(/[[{]/);
+                if (inicio !== -1) {
+                    const cierre = limpio[inicio] === '[' ? ']' : '}';
+                    const fin = limpio.lastIndexOf(cierre);
+                    if (fin > inicio) jsonStr = limpio.slice(inicio, fin + 1);
+                }
+                const parsed = JSON.parse(jsonStr);
+                result = Array.isArray(parsed)
+                    ? parsed
+                    : (parsed.ideas || parsed.result || parsed.bisociations || []);
+            } catch (parseErr) {
+                logger.error(`Error parseando el JSON de la organización · respuesta cruda: ${responseText.slice(0, 500)}`, parseErr);
+            }
 
             // Save bisociations to org scope
             if (result.length > 0) {
