@@ -21,6 +21,19 @@ type ChatMessage = {
     plainText?: string;
 };
 
+/**
+ * Saca el texto de una respuesta de Anthropic.
+ *
+ * NO uses content[0]: desde claude-opus-5 el razonamiento viene activado por
+ * defecto (en opus-4.8 y anteriores venía apagado si no se pedía), así que el
+ * primer bloque suele ser `thinking` y el texto está más abajo. Asumir el
+ * índice cero devolvía null y dejaba la pantalla en blanco sin ningún error.
+ */
+function textoDe(completion: Anthropic.Message): string | null {
+    const bloque = completion.content.find((b) => b.type === 'text');
+    return bloque && 'text' in bloque ? bloque.text : null;
+}
+
 export async function POST(request: Request) {
     let userId: string;
     let userEmail: string | null | undefined;
@@ -111,7 +124,7 @@ export async function POST(request: Request) {
                     messages: userMessages,
                 });
 
-                const content = completion.content[0]?.type === 'text' ? completion.content[0].text : null;
+                const content = textoDe(completion);
                 if (!content) return NextResponse.json({ result: [] });
 
                 let result = [];
@@ -185,7 +198,7 @@ export async function POST(request: Request) {
                 messages: userMessages,
             });
 
-            const analysisContent = completion.content[0]?.type === 'text' ? completion.content[0].text : null;
+            const analysisContent = textoDe(completion);
             if (!analysisContent) {
                 return NextResponse.json({ error: 'La IA no pudo generar un análisis' }, { status: 500 });
             }
@@ -204,7 +217,7 @@ export async function POST(request: Request) {
                 messages: userMessages,
             });
 
-            const chatContent = completion.content[0]?.type === 'text' ? completion.content[0].text : null;
+            const chatContent = textoDe(completion);
             if (!chatContent) {
                 return NextResponse.json({ error: 'La IA no pudo generar una respuesta' }, { status: 500 });
             }
