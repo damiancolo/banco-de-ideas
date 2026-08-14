@@ -32,8 +32,8 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'No autorizado' }, { status: 401 });
     }
 
-    const OWNER_MODEL = 'claude-opus-4-8';
-    const DEFAULT_MODEL = 'claude-opus-4-6';
+    const OWNER_MODEL = 'claude-opus-5';
+    const DEFAULT_MODEL = 'claude-opus-5';
     const claudeModel = userEmail === 'damianlafferranderie@gmail.com' ? OWNER_MODEL : DEFAULT_MODEL;
 
     try {

@@ -32,7 +32,7 @@ export async function POST(req: Request) {
         logger.info(`Generating speech for text: ${text.substring(0, 50)}...`);
 
         const response = await openai.audio.speech.create({
-            model: "tts-1",
+            model: "gpt-4o-mini-tts",
             voice: "shimmer", // A pleasant secondary voice
             input: text,
         });
