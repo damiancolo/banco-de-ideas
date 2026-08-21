@@ -118,10 +118,14 @@ export async function POST(request: Request) {
                 } catch (err: unknown) {
                     const errorMessage = err instanceof Error ? err.message : "Error desconocido";
                     logger.error("Error saving idea:", errorMessage);
+                    // 200 con "Idea recibida (error al persistir)" era indistinguible del
+                    // éxito para quien llama: la idea se perdía en silencio. El cliente
+                    // celebra el guardado (sonido + lamparita), así que el fallo tiene que
+                    // llegar como fallo.
                     return NextResponse.json({
-                        result: "Idea recibida (error al persistir)",
+                        result: "No se pudo guardar la idea",
                         error: errorMessage
-                    });
+                    }, { status: 500 });
                 }
             }
         }

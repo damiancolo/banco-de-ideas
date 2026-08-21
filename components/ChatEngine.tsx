@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import { logger } from "@/lib/logger";
+import { playLightbulbOn } from "@/lib/sounds/lightbulb";
 import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 type Message = {
@@ -55,6 +56,8 @@ interface ChatEngineProps {
   userName?: string;
   /** Opciones extra que se agregan al fondo del menú "+" (ej. importar del Task) */
   extraMenuOptions?: Array<{ emoji: string; label: string; onClick: () => void }>;
+  /** Se llama cuando una idea entró de verdad en la base. La home enciende la lamparita. */
+  onIdeaSaved?: () => void;
 }
 
 export default function ChatEngine({
@@ -63,6 +66,7 @@ export default function ChatEngine({
   footerSlot,
   userName,
   extraMenuOptions,
+  onIdeaSaved,
 }: ChatEngineProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -73,6 +77,8 @@ export default function ChatEngine({
 
   const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
+
+  const [errorGuardado, setErrorGuardado] = useState(false);
 
   const [searchMode, setSearchMode] = useState<SearchMode>(null);
   const [showModeMenu, setShowModeMenu] = useState(false);
@@ -140,6 +146,26 @@ export default function ChatEngine({
     setVoiceEnabled(true);
     setInputValue("");
     setHasInteracted(false);
+  };
+
+  /**
+   * Crea o reanuda el AudioContext. Hay que llamarlo DENTRO del gesto del
+   * usuario (el envío del formulario), aunque el sonido suene después: iOS sólo
+   * habilita el audio si el contexto nació de un gesto. Devuelve el contexto
+   * para que quien lo necesite lo use ya listo.
+   */
+  const asegurarContextoAudio = (): AudioContext | null => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
+      }
+      if (audioContextRef.current.state === 'suspended') {
+        void audioContextRef.current.resume();
+      }
+      return audioContextRef.current;
+    } catch {
+      return null;
+    }
   };
 
   const stopSpeaking = () => {
@@ -255,6 +281,11 @@ export default function ChatEngine({
     }
 
     if (loading || isTranscribing) return;
+
+    // Dentro del gesto: el sonido del guardado llega ~300 ms después, con la
+    // respuesta del servidor, y para entonces ya sería tarde para abrirlo.
+    asegurarContextoAudio();
+    setErrorGuardado(false);
 
     if (!hasInteracted) setHasInteracted(true);
 
@@ -450,13 +481,18 @@ export default function ChatEngine({
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ action: "save", idea: userText }),
         }).then(res => {
-          if (!res.ok) {
-            logger.warn("No se pudo guardar en MongoDB.");
-          } else {
+          if (res.ok) {
             logger.info("Idea guardada exitosamente en MongoDB");
+            // La idea está en la base: recién ahora se enciende la lamparita.
+            playLightbulbOn(audioContextRef.current);
+            onIdeaSaved?.();
+          } else {
+            logger.warn("No se pudo guardar en MongoDB.");
+            setErrorGuardado(true);
           }
         }).catch(err => {
           logger.error("Error de red al guardar:", err);
+          setErrorGuardado(true);
         });
 
         const replyText = `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`;
@@ -885,6 +921,13 @@ export default function ChatEngine({
           </div>
           {/* Divider Line */}
           <div className="w-full h-px bg-gray-100 mt-6 mb-2"></div>
+
+          {/* Sin esto, una idea que no llega a la base se pierde en silencio */}
+          {errorGuardado && (
+            <div className="text-[11px] text-red-500 mt-1 font-medium" role="status">
+              No se pudo guardar la idea. Probá de nuevo.
+            </div>
+          )}
           {isRecording && (
             <div className="text-[10px] text-red-500 absolute bottom-2 left-8 animate-pulse font-bold tracking-wider">
               SOLTAR PARA ENVIAR • MOVER FUERA PARA CANCELAR

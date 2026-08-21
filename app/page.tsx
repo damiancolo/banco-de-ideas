@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ChatEngine from "@/components/ChatEngine";
+import Lightbulb from "@/components/Lightbulb";
 
 export default function Home() {
   const MESSAGES = [
@@ -32,6 +33,8 @@ export default function Home() {
   const [tooltipLeft, setTooltipLeft] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const bancoRef = useRef<HTMLAnchorElement>(null);
+  // Se incrementa cuando una idea entra de verdad en la base: enciende la lamparita.
+  const [ideasGuardadas, setIdeasGuardadas] = useState(0);
 
   useEffect(() => {
     if (bancoRef.current) {
@@ -63,18 +66,7 @@ export default function Home() {
         </p>
       </div>
 
-      {/* Top Link: Lightbulb Button */}
-      <Link
-        href="/about"
-        className="fixed top-10 left-1/2 -translate-x-1/2 z-[99999] p-4 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full cursor-pointer shadow-sm transition-all duration-300"
-        style={{ WebkitTapHighlightColor: 'transparent' }}
-      >
-        <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" className="text-gray-600 hover:text-[#C5A47E] transition-colors">
-          <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M9 18h6"></path>
-          <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M10 22h4"></path>
-          <path stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" d="M15.09 14c.18-.9.66-1.74 1.41-2.5A4.65 4.65 0 0 0 12 3.5a4.65 4.65 0 0 0-4.5 7.97c.75.76 1.23 1.6 1.41 2.5"></path>
-        </svg>
-      </Link>
+      <Lightbulb pulse={ideasGuardadas} />
 
       {/* Onboarding Tooltip */}
       {tooltipState !== "hidden" && tooltipLeft !== null && (
@@ -91,6 +83,7 @@ export default function Home() {
 
       <ChatEngine
         apiPrefix="/api"
+        onIdeaSaved={() => setIdeasGuardadas((n) => n + 1)}
         footerSlot={
           <div className="pb-8 flex flex-col items-center gap-3">
           <div className="flex items-center gap-4">

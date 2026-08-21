@@ -105,7 +105,9 @@ export async function POST(request: Request) {
                 } catch (err: unknown) {
                     const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
                     logger.error('Error saving private idea:', errorMessage);
-                    return NextResponse.json({ result: 'Idea recibida (error al persistir)', error: errorMessage });
+                    // Mismo motivo que en /api/analyze: un 200 con texto de error se lee
+                    // como éxito y la idea se pierde sin que nadie se entere.
+                    return NextResponse.json({ result: 'No se pudo guardar la idea', error: errorMessage }, { status: 500 });
                 }
             }
         }
