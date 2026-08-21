@@ -2,14 +2,19 @@ const mongoose = require('mongoose');
 require('dotenv').config({ path: '.env.local' });
 
 const PROD_URI = process.env.MONGODB_URI;
-// Prefer env var, fallback to hardcoded if necessary (though env var is recommended)
-const PRUEBAS_URI = process.env.MONGODB_URI_PRUEBAS || "mongodb+srv://bancodeideas:nvX3Di4ua3i4NceS@bancodeideas.0qdelgq.mongodb.net/banco-de-ideas-pruebas?retryWrites=true&w=majority&appName=bancodeideas";
+// Nunca una credencial en el codigo: este repo es publico.
+const PRUEBAS_URI = process.env.MONGODB_URI_PRUEBAS;
 
 async function sync() {
     console.log('🔄 Sincronizando datos de Producción a Pruebas...');
 
     if (!PROD_URI) {
         console.error('❌ Error: MONGODB_URI no está definida en .env.local');
+        process.exit(1);
+    }
+
+    if (!PRUEBAS_URI) {
+        console.error('❌ Error: MONGODB_URI_PRUEBAS no está definida en .env.local');
         process.exit(1);
     }
 

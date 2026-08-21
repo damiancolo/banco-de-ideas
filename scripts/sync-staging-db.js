@@ -2,10 +2,21 @@ const mongoose = require('mongoose');
 require('dotenv').config({ path: '.env.local' });
 
 const PROD_URI = process.env.MONGODB_URI;
-const STAGING_URI = "mongodb+srv://bancodeideas:nvX3Di4ua3i4NceS@bancodeideas.0qdelgq.mongodb.net/banco-ideas-staging?retryWrites=true&w=majority&appName=bancodeideas";
+// Nunca una credencial en el codigo: este repo es publico.
+const STAGING_URI = process.env.MONGODB_URI_STAGING;
 
 async function sync() {
     console.log('🔄 Sincronizando datos de Producción a Staging...');
+
+    if (!PROD_URI) {
+        console.error('❌ Error: MONGODB_URI no está definida en .env.local');
+        process.exit(1);
+    }
+
+    if (!STAGING_URI) {
+        console.error('❌ Error: MONGODB_URI_STAGING no está definida en .env.local');
+        process.exit(1);
+    }
 
     // Conectar a Prod
     const prodConn = await mongoose.createConnection(PROD_URI).asPromise();
