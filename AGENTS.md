@@ -24,9 +24,29 @@ Todo en un solo proyecto Vercel: `banco-de-ideas` (ID: `prj_nSLBUjl6RLxljIYtqRpY
 
 | Rama | Propósito | URL | Base de datos MongoDB |
 |---|---|---|---|
-| `develop` | Desarrollo activo | preview URL aleatoria (ver Vercel) | `banco-ideas-pruebas` |
-| `staging` | Pruebas antes de producción | preview estable (ver Active Branches en Vercel) | `banco-ideas-pruebas` |
+| `develop` | Desarrollo activo | preview URL aleatoria (ver Vercel) | ⚠️ **`banco-ideas` (PRODUCCION)** |
+| `staging` | Pruebas antes de producción | preview estable (ver Active Branches en Vercel) | ⚠️ sin verificar; asumir producción |
 | `main` | Producción | `www.unbancodeideas.com` | `banco-ideas` |
+
+> ### 🚨 LOS PREVIEWS ESCRIBEN EN PRODUCCION
+>
+> Verificado el 21 ago 2026: se guardo una idea desde el preview de `develop` y
+> aparecio en `banco-ideas`, la base real. **Esta tabla decia `banco-ideas-pruebas`
+> y era falso.**
+>
+> El motivo esta en el codigo: `lib/mongodb.ts` lee **solo** `MONGODB_URI`. No hay
+> ninguna rama que mire `MONGODB_URI_PRUEBAS` segun el entorno — esa variable la
+> usan unicamente los scripts de `scripts/`. Asi que la base depende por completo
+> de que valor tenga `MONGODB_URI` en cada Environment de Vercel, y en Preview
+> apunta a produccion.
+>
+> **Consecuencia practica: probar el flujo de guardado en un preview ensucia el
+> banco publico.** Para probar de verdad, correr en local con
+> `.env.development.local` apuntando a `banco-ideas-pruebas` (Next lo carga antes
+> que `.env.local` y gana).
+>
+> Se arregla poniendo `MONGODB_URI` = la URI de pruebas en el Environment
+> **Preview** del proyecto en Vercel. **Pendiente de decision del owner.**
 
 Team ID Vercel: `team_ABSUeFTZC1zeHHswIAVbNDJ0`
 
