@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import { logger } from "@/lib/logger";
-import { playLightbulbOn } from "@/lib/sounds/lightbulb";
+import { playSaved, unlockAudio } from "@/lib/sounds/lightbulb";
 
 type Message = {
   id: string | number;
@@ -383,7 +383,10 @@ export default function ChatEngine({
 
     // Dentro del gesto: el sonido del guardado llega ~300 ms después, con la
     // respuesta del servidor, y para entonces ya sería tarde para abrirlo.
+    // unlockAudio() además habilita el audio para el hover de la lamparita: pasar
+    // el mouse no cuenta como gesto de usuario para el navegador.
     asegurarContextoAudio();
+    unlockAudio();
     setErrorGuardado(false);
 
     if (!hasInteracted) setHasInteracted(true);
@@ -578,8 +581,8 @@ export default function ChatEngine({
       }).then(res => {
         if (res.ok) {
           logger.info("Idea guardada exitosamente en MongoDB");
-          // La idea está en la base: recién ahora se enciende la lamparita.
-          playLightbulbOn(audioContextRef.current);
+          // La idea está en la base: recién ahora se celebra.
+          playSaved();
           onIdeaSaved?.();
         } else {
           logger.warn("No se pudo guardar en MongoDB.");

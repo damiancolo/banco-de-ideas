@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { playSwitch } from "@/lib/sounds/lightbulb";
 
 /** Cuánto dura el destello del guardado, en ms. */
 const DURACION_DESTELLO = 600;
@@ -63,12 +64,27 @@ interface LightbulbProps {
 }
 
 /**
- * La lamparita de arriba. Es el enlace a /about, y también el único indicador
- * de que una idea entró: se enciende al pasar el mouse, y da un destello más
- * fuerte —a la par del sonido del interruptor— cuando se guarda algo.
+ * La lamparita de arriba. Es el enlace a /about, y también el indicador de que
+ * una idea entró.
+ *
+ * Al pasar el mouse se enciende y suena el clac de un interruptor. Al guardar una
+ * idea da un destello más fuerte, a la par del arpegio de recompensa que dispara
+ * el ChatEngine.
+ *
+ * El sonido del hover queda mudo hasta que el usuario haga el primer clic o pulse
+ * una tecla en la página: los navegadores no habilitan el audio antes, y pasar el
+ * mouse no cuenta como gesto. Es una limitación del navegador, no un fallo.
  */
 export default function Lightbulb({ pulse = 0 }: LightbulbProps) {
     const [destello, setDestello] = useState(false);
+
+    // El clac sólo en dispositivos con puntero de verdad. En una pantalla táctil
+    // mouseenter se dispara con el toque, y sonaría al ir a /about.
+    const sonarInterruptor = () => {
+        if (typeof window === "undefined") return;
+        if (!window.matchMedia?.("(hover: hover)").matches) return;
+        playSwitch();
+    };
 
     useEffect(() => {
         if (!pulse) return;
@@ -85,6 +101,7 @@ export default function Lightbulb({ pulse = 0 }: LightbulbProps) {
                 aria-label="Sobre el proyecto"
                 className={`lampara${destello ? " encendida" : ""} fixed top-10 left-1/2 -translate-x-1/2 z-[99999] p-4 bg-white/20 hover:bg-white/40 backdrop-blur-sm rounded-full cursor-pointer shadow-sm transition-all duration-300`}
                 style={{ WebkitTapHighlightColor: "transparent" }}
+                onMouseEnter={sonarInterruptor}
             >
                 <svg
                     className="lampara-svg"

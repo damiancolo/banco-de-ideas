@@ -1,138 +1,201 @@
 /**
- * El sonido de una lamparita antigua encendiéndose.
+ * Los dos sonidos del banco.
  *
- * Sintetizado en el momento con Web Audio API: sin archivos, sin peso, y se
- * afina cambiando los números de acá abajo. Son tres capas que juntas duran
- * poco menos de medio segundo:
+ *   playSwitch()  el clac de un interruptor de lamparita antigua. Suena al pasar
+ *                 el mouse por la bombilla de arriba, que es literalmente
+ *                 encenderla. Corto y bajo: se dispara muy seguido.
  *
- *   1. El clac del interruptor — un ruido cortísimo y agudo, más el rebote
- *      mecánico 25 ms después. Es el 80 % del carácter "antiguo".
- *   2. El filamento — una onda triangular grave que sube un poco de tono
- *      mientras se calienta. Es la sensación de que algo se encendió.
- *   3. El zumbido de red — 100 Hz muy por debajo, el armónico del
- *      transformador, que entra después del clac y se apaga solo.
+ *   playSaved()   la recompensa de guardar una idea. Un arpegio de Mi mayor
+ *                 ascendente con timbre de campana, en la familia del sonido de
+ *                 juntar una moneda pero más cálido, para no desentonar con el
+ *                 beige del sitio.
  *
- * IMPORTANTE (iOS): el AudioContext se recibe por parámetro a propósito. Tiene
- * que haberse creado o reanudado dentro de un gesto del usuario, y el sonido
- * suena después, cuando el servidor confirma el guardado. Quien llama es
- * responsable de eso; acá solo se toca. ChatEngine ya mantiene ese contexto
- * vivo para el TTS y es el que hay que reutilizar.
+ * Los dos se sintetizan en el momento con Web Audio API: sin archivos, sin peso,
+ * y se afinan cambiando los números de acá abajo.
+ *
+ * SOBRE EL AudioContext: los navegadores no dejan sonar nada hasta que el usuario
+ * interactúa, y pasar el mouse NO cuenta como interacción. Por eso unlockAudio()
+ * se engancha al primer clic o tecla de la página. Antes de ese primer gesto el
+ * hover es mudo, y no hay forma de evitarlo.
  */
 
-/** Volumen general. Bajo a propósito: es una confirmación, no un aviso. */
-const VOLUMEN = 0.25;
+let contexto: AudioContext | null = null;
+let enganchado = false;
 
-/** El buffer de ruido del clac se genera una vez por contexto y se reutiliza. */
-const bufferDeRuido = new WeakMap<BaseAudioContext, AudioBuffer>();
-
-function ruido(ctx: BaseAudioContext): AudioBuffer {
-    const cacheado = bufferDeRuido.get(ctx);
-    if (cacheado) return cacheado;
-
-    // 100 ms alcanzan de sobra: los clacs duran 12 ms y 8 ms.
-    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.1), ctx.sampleRate);
-    const datos = buffer.getChannelData(0);
-    for (let i = 0; i < datos.length; i++) {
-        datos[i] = Math.random() * 2 - 1;
+/** Crea o reanuda el contexto compartido. Devuelve null si el audio no está disponible. */
+function obtenerContexto(): AudioContext | null {
+    if (typeof window === "undefined") return null;
+    try {
+        if (!contexto) {
+            const Ctor = window.AudioContext
+                || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+            if (!Ctor) return null;
+            contexto = new Ctor();
+        }
+        if (contexto.state === "suspended") void contexto.resume();
+        return contexto.state === "closed" ? null : contexto;
+    } catch {
+        return null;
     }
-    bufferDeRuido.set(ctx, buffer);
+}
+
+/**
+ * Habilita el audio. Llamar DENTRO de un gesto del usuario (un clic, una tecla),
+ * aunque el sonido suene después. Además deja enganchado un oyente global para
+ * que el primer clic en cualquier parte de la página desbloquee el hover.
+ */
+export function unlockAudio(): void {
+    obtenerContexto();
+
+    if (enganchado || typeof window === "undefined") return;
+    enganchado = true;
+    const abrir = () => { obtenerContexto(); };
+    window.addEventListener("pointerdown", abrir, { once: true, passive: true });
+    window.addEventListener("keydown", abrir, { once: true });
+}
+
+/** El buffer de ruido del clac se genera una vez y se reutiliza. */
+let ruidoCache: AudioBuffer | null = null;
+function ruido(ctx: AudioContext): AudioBuffer {
+    if (ruidoCache && ruidoCache.sampleRate === ctx.sampleRate) return ruidoCache;
+    const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * 0.05), ctx.sampleRate);
+    const datos = buffer.getChannelData(0);
+    for (let i = 0; i < datos.length; i++) datos[i] = Math.random() * 2 - 1;
+    ruidoCache = buffer;
     return buffer;
 }
 
-/**
- * Un golpe seco de ruido filtrado: el contacto del interruptor.
- *
- * @param inicio  cuándo suena, en tiempo del contexto
- * @param dur     cuánto dura el decaimiento, en segundos
- * @param nivel   pico de volumen, relativo al máster
- * @param corte   frecuencia central del filtro; más alto = más "seco"
- */
-function clac(
-    ctx: AudioContext,
-    destino: AudioNode,
-    inicio: number,
-    dur: number,
-    nivel: number,
-    corte: number,
-): void {
-    const fuente = ctx.createBufferSource();
-    fuente.buffer = ruido(ctx);
+// ──────────────────────────────────────────────────────────────────────
+// El interruptor
+// ──────────────────────────────────────────────────────────────────────
 
-    const filtro = ctx.createBiquadFilter();
-    filtro.type = 'bandpass';
-    filtro.frequency.value = corte;
-    filtro.Q.value = 1.2;
+/** No se repite más rápido que esto: pasar el mouse por encima es muy fácil. */
+const ESPERA_SWITCH_MS = 350;
+let ultimoSwitch = 0;
 
-    const ganancia = ctx.createGain();
-    // Ataque instantáneo y caída exponencial: así suena un golpe, no un fundido.
-    ganancia.gain.setValueAtTime(nivel, inicio);
-    ganancia.gain.exponentialRampToValueAtTime(0.0001, inicio + dur);
+export function playSwitch(): void {
+    const ahora = typeof performance !== "undefined" ? performance.now() : 0;
+    if (ahora - ultimoSwitch < ESPERA_SWITCH_MS) return;
+    ultimoSwitch = ahora;
 
-    fuente.connect(filtro).connect(ganancia).connect(destino);
-    fuente.start(inicio);
-    fuente.stop(inicio + dur + 0.01);
-}
-
-/**
- * Toca el encendido. Silencioso y seguro si el navegador no coopera: si el
- * contexto está cerrado o el audio no está disponible, no hace nada y no
- * rompe el guardado, que es lo que de verdad importaba.
- */
-export function playLightbulbOn(ctx: AudioContext | null | undefined): void {
-    if (!ctx || ctx.state === 'closed') return;
+    const ctx = obtenerContexto();
+    if (!ctx) return;
 
     try {
-        // Si quedó suspendido, se intenta reanudar sin esperar: puede que
-        // llegue tarde para este toque, pero deja el contexto listo.
-        if (ctx.state === 'suspended') void ctx.resume();
-
         const t = ctx.currentTime;
-
         const master = ctx.createGain();
-        master.gain.value = VOLUMEN;
+        master.gain.value = 0.16;
         master.connect(ctx.destination);
 
-        // ── 1. El interruptor ──────────────────────────────────────────
-        clac(ctx, master, t, 0.012, 0.9, 2500);         // el contacto
-        clac(ctx, master, t + 0.025, 0.008, 0.35, 1800); // el rebote del resorte
+        // El contacto: ruido muy corto por un pasabanda agudo. Ataque instantáneo
+        // y caída exponencial, que es como suena un golpe y no un fundido.
+        const fuente = ctx.createBufferSource();
+        fuente.buffer = ruido(ctx);
+        const filtro = ctx.createBiquadFilter();
+        filtro.type = "bandpass";
+        filtro.frequency.value = 2600;
+        filtro.Q.value = 1.4;
+        const gClac = ctx.createGain();
+        gClac.gain.setValueAtTime(0.9, t);
+        gClac.gain.exponentialRampToValueAtTime(0.0001, t + 0.011);
+        fuente.connect(filtro).connect(gClac).connect(master);
+        fuente.start(t);
+        fuente.stop(t + 0.03);
 
-        // ── 2. El filamento calentándose ───────────────────────────────
+        // El filamento que salta: un pulso grave que sube apenas de tono.
         const filamento = ctx.createOscillator();
-        filamento.type = 'triangle';
-        filamento.frequency.setValueAtTime(90, t);
-        filamento.frequency.linearRampToValueAtTime(130, t + 0.12);
-
-        // Un pasabajos suave le saca el borde metálico a la triangular.
+        filamento.type = "triangle";
+        filamento.frequency.setValueAtTime(95, t);
+        filamento.frequency.linearRampToValueAtTime(128, t + 0.07);
         const calidez = ctx.createBiquadFilter();
-        calidez.type = 'lowpass';
-        calidez.frequency.value = 900;
-
-        const gFilamento = ctx.createGain();
-        gFilamento.gain.setValueAtTime(0.0001, t + 0.01);
-        gFilamento.gain.exponentialRampToValueAtTime(0.18, t + 0.03);
-        gFilamento.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
-
-        filamento.connect(calidez).connect(gFilamento).connect(master);
-        filamento.start(t + 0.01);
-        filamento.stop(t + 0.24);
-
-        // ── 3. El zumbido de red ───────────────────────────────────────
-        const zumbido = ctx.createOscillator();
-        zumbido.type = 'sine';
-        zumbido.frequency.value = 100;
-
-        const gZumbido = ctx.createGain();
-        gZumbido.gain.setValueAtTime(0.0001, t + 0.03);
-        gZumbido.gain.exponentialRampToValueAtTime(0.06, t + 0.09);
-        gZumbido.gain.exponentialRampToValueAtTime(0.0001, t + 0.42);
-
-        zumbido.connect(gZumbido).connect(master);
-        zumbido.start(t + 0.03);
-        zumbido.stop(t + 0.44);
+        calidez.type = "lowpass";
+        calidez.frequency.value = 850;
+        const gFil = ctx.createGain();
+        gFil.gain.setValueAtTime(0.0001, t + 0.006);
+        gFil.gain.exponentialRampToValueAtTime(0.14, t + 0.022);
+        gFil.gain.exponentialRampToValueAtTime(0.0001, t + 0.13);
+        filamento.connect(calidez).connect(gFil).connect(master);
+        filamento.start(t + 0.006);
+        filamento.stop(t + 0.15);
     } catch {
-        // Un sonido que falla no puede tumbar el guardado de una idea.
+        // Un sonido que falla no puede romper nada de lo que hay alrededor.
     }
 }
 
-/** Cuánto dura el sonido completo, en ms. La lamparita lo usa para sincronizar. */
-export const DURACION_ENCENDIDO_MS = 450;
+// ──────────────────────────────────────────────────────────────────────
+// La recompensa
+// ──────────────────────────────────────────────────────────────────────
+
+/** Mi mayor ascendente: E5, G#5, B5, E6. Cierra una octava arriba de donde abre. */
+const ARPEGIO = [659.25, 830.61, 987.77, 1318.51];
+const PASO = 0.052;
+
+/** Una campana: fundamental en triangular más el armónico de octava en seno. */
+function campana(
+    ctx: AudioContext,
+    destino: AudioNode,
+    frecuencia: number,
+    inicio: number,
+    dur: number,
+    nivel: number,
+): void {
+    const g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, inicio);
+    g.gain.exponentialRampToValueAtTime(nivel, inicio + 0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001, inicio + dur);
+    g.connect(destino);
+
+    const fundamental = ctx.createOscillator();
+    fundamental.type = "triangle";
+    fundamental.frequency.value = frecuencia;
+    fundamental.connect(g);
+    fundamental.start(inicio);
+    fundamental.stop(inicio + dur + 0.02);
+
+    // La octava por encima, floja, es lo que le da el brillo de campana.
+    const brillo = ctx.createOscillator();
+    brillo.type = "sine";
+    brillo.frequency.value = frecuencia * 2;
+    const gBrillo = ctx.createGain();
+    gBrillo.gain.value = 0.32;
+    brillo.connect(gBrillo).connect(g);
+    brillo.start(inicio);
+    brillo.stop(inicio + dur + 0.02);
+}
+
+export function playSaved(): void {
+    const ctx = obtenerContexto();
+    if (!ctx) return;
+
+    try {
+        const t = ctx.currentTime;
+        const master = ctx.createGain();
+        master.gain.value = 0.26;
+        master.connect(ctx.destination);
+
+        ARPEGIO.forEach((f, i) => {
+            const ultima = i === ARPEGIO.length - 1;
+            // La última nota se queda sonando: es la cola que da la sensación de
+            // que algo se completó, en vez de cortarse en seco.
+            campana(ctx, master, f, t + i * PASO, ultima ? 0.95 : 0.34, ultima ? 0.34 : 0.26);
+        });
+
+        // Un destello agudo sobre la última nota, muy por debajo del resto.
+        const cierre = t + (ARPEGIO.length - 1) * PASO;
+        const chispa = ctx.createOscillator();
+        chispa.type = "sine";
+        chispa.frequency.value = ARPEGIO[ARPEGIO.length - 1] * 3;
+        const gChispa = ctx.createGain();
+        gChispa.gain.setValueAtTime(0.0001, cierre);
+        gChispa.gain.exponentialRampToValueAtTime(0.05, cierre + 0.01);
+        gChispa.gain.exponentialRampToValueAtTime(0.0001, cierre + 0.5);
+        chispa.connect(gChispa).connect(master);
+        chispa.start(cierre);
+        chispa.stop(cierre + 0.52);
+    } catch {
+        // Idem: el guardado ya ocurrió, el sonido es sólo la confirmación.
+    }
+}
+
+/** Cuánto dura el arpegio completo, en ms. La lamparita lo usa para sincronizar. */
+export const DURACION_GUARDADO_MS = 600;
