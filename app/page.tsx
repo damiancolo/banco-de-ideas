@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import ChatEngine from "@/components/ChatEngine";
 import Lightbulb from "@/components/Lightbulb";
@@ -31,18 +31,27 @@ export default function Home() {
 
   const [tooltipState, setTooltipState] = useState<"hidden" | "visible" | "fading">("hidden");
   const [tooltipLeft, setTooltipLeft] = useState<number | null>(null);
+  const [tooltipBottom, setTooltipBottom] = useState<number | null>(null);
+  /** Cuánto hubo que correr el cartel para que no se saliera de la pantalla. */
+  const [tooltipDesvio, setTooltipDesvio] = useState(0);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [message, setMessage] = useState("");
   const bancoRef = useRef<HTMLAnchorElement>(null);
   // Se incrementa cuando una idea entra de verdad en la base: enciende la lamparita.
   const [ideasGuardadas, setIdeasGuardadas] = useState(0);
 
   useEffect(() => {
-    if (bancoRef.current) {
-      const rect = bancoRef.current.getBoundingClientRect();
-      setTooltipLeft(rect.left + rect.width / 2);
-    }
-
     const show = () => {
+      // Se mide en cada aparición y no una sola vez al montar: así el cartel
+      // queda bien puesto aunque la ventana haya cambiado de tamaño.
+      const rect = bancoRef.current?.getBoundingClientRect();
+      if (!rect) return;
+      setTooltipLeft(rect.left + rect.width / 2);
+      // Anclado al borde superior del icono, con 10 px de aire para la flecha.
+      // Antes era un `bottom-20` fijo y el cartel se apoyaba encima de los iconos.
+      setTooltipBottom(window.innerHeight - rect.top + 10);
+
+      setTooltipDesvio(0);
       setMessage(MESSAGES[Math.floor(Math.random() * MESSAGES.length)]);
       setTooltipState("visible");
       setTimeout(() => setTooltipState("fading"), 5000);
@@ -54,6 +63,23 @@ export default function Home() {
     const t3 = setTimeout(show, 30000);
     return () => { clearTimeout(t1); clearTimeout(t2); clearTimeout(t3); };
   }, []);
+
+  // El cartel se centra en el icono del banco, pero el más largo ("Ideas que no
+  // caben en la cabeza de uno solo") se salía 11 px por la izquierda en un móvil
+  // de 375 px. Se mide ya renderizado y se corre lo justo para que entre; la
+  // flecha se compensa en sentido contrario para seguir apuntando al icono.
+  useLayoutEffect(() => {
+    const el = tooltipRef.current;
+    if (!el || tooltipLeft === null) return;
+
+    const MARGEN = 8;
+    const mitad = el.offsetWidth / 2;
+    const centroPermitido = Math.min(
+      Math.max(tooltipLeft, MARGEN + mitad),
+      window.innerWidth - MARGEN - mitad,
+    );
+    setTooltipDesvio(centroPermitido - tooltipLeft);
+  }, [message, tooltipLeft]);
 
   return (
     <main className="min-h-dvh flex flex-col items-center justify-between p-4 md:p-6 relative overflow-hidden transition-all duration-700 bg-background">
@@ -69,15 +95,19 @@ export default function Home() {
       <Lightbulb pulse={ideasGuardadas} />
 
       {/* Onboarding Tooltip */}
-      {tooltipState !== "hidden" && tooltipLeft !== null && (
+      {tooltipState !== "hidden" && tooltipLeft !== null && tooltipBottom !== null && (
         <div
-          className={`fixed bottom-20 z-[9999] pointer-events-none transition-opacity duration-700 -translate-x-1/2 ${tooltipState === "visible" ? "opacity-100" : "opacity-0"}`}
-          style={{ left: tooltipLeft }}
+          ref={tooltipRef}
+          className={`fixed z-[9999] pointer-events-none transition-opacity duration-700 -translate-x-1/2 ${tooltipState === "visible" ? "opacity-100" : "opacity-0"}`}
+          style={{ left: tooltipLeft + tooltipDesvio, bottom: tooltipBottom }}
         >
           <div className="bg-gray-900 text-white text-xs px-3 py-2 rounded-lg whitespace-nowrap shadow-lg">
             {message}
           </div>
-          <div className="absolute top-full left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900" />
+          <div
+            className="absolute top-full -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-gray-900"
+            style={{ left: `calc(50% - ${tooltipDesvio}px)` }}
+          />
         </div>
       )}
 
