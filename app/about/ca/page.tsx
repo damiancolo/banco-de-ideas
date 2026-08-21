@@ -71,7 +71,7 @@ export default function AboutPageCA() {
                         <div className="border-l-4 border-[#C5A47E] pl-6">
                             <h3 className="text-xl font-bold text-gray-800 mb-3">Guardar Idees</h3>
                             <p className="text-gray-700 leading-relaxed">
-                                El sistema implementa un flux d&apos;entrada optimitzat per reduir la càrrega cognitiva. Permet el registre de conceptes de forma àgil mitjançant interfícies de text o comandes de veu processades per models de transcripció neuronal (OpenAI Whisper), garantint una captura immediata de dades.
+                                El sistema implementa un flux d&apos;entrada optimitzat per reduir la càrrega cognitiva. Permet el registre àgil de conceptes per text —i si prefereixes parlar, amb el dictat del mateix teclat del telèfon—, garantint una captura immediata de dades.
                             </p>
                         </div>
 
@@ -163,10 +163,9 @@ export default function AboutPageCA() {
                                 <p><span className="text-white font-medium">Espai públic:</span> Motor DeepSeek (deepseek-chat) per a la inferència, anàlisi i generació de bisociacions col·lectives.</p>
                                 <p><span className="text-white font-medium">Espai privat:</span> Claude Opus 4.6 (Anthropic) com a gestor personal d&apos;idees — el model més avançat disponible per a l&apos;anàlisi profunda i la generació creativa.</p>
                                 <div className="pl-4 border-l border-gray-700">
-                                    <p className="font-medium text-white mb-1">Interacció per Veu (STT/TTS):</p>
+                                    <p className="font-medium text-white mb-1">Lectura en veu alta (TTS):</p>
                                     <ul className="space-y-2">
-                                        <li>• <span className="text-white">Speech-to-Text (STT):</span> Integració de l&apos;API OpenAI Whisper per a la transcripció precisa d&apos;idees mitjançant entrada d&apos;àudio.</li>
-                                        <li>• <span className="text-white">Text-to-Speech (TTS):</span> Ús de models de síntesi de veu (OpenAI TTS-1) per a la lectura de respostes.</li>
+                                        <li>• <span className="text-white">Text-to-Speech (TTS):</span> Ús de models de síntesi de veu (OpenAI gpt-4o-mini-tts) per a la lectura de respostes.</li>
                                     </ul>
                                 </div>
                                 <p><span className="text-white font-medium">API d&apos;Embeddings:</span> Implementació de models de vectorització per transformar cada idea en un vector numèric, permetent el càlcul de la similitud segons l&apos;essència estructural.</p>

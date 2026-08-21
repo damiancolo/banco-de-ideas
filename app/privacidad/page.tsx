@@ -65,8 +65,8 @@ export default function PrivacidadPage() {
 
                 <h3 className="font-semibold text-gray-900 mt-4 mb-1">Herramientas de IA</h3>
                 <p>
-                    El chat, el análisis y la voz envían el texto o el audio que generás a proveedores de IA
-                    para producir la respuesta. <strong>Te pedimos que no introduzcas datos personales
+                    El chat, el análisis y la lectura en voz alta envían el texto que escribís a proveedores
+                    de IA para producir la respuesta. La app no graba audio ni accede a tu micrófono. <strong>Te pedimos que no introduzcas datos personales
                     sensibles</strong> en el chat.
                 </p>
 
@@ -80,10 +80,11 @@ export default function PrivacidadPage() {
                 <h2 className="text-xl font-bold text-gray-900 mt-8 mb-2">4. Proveedores y transferencias internacionales</h2>
                 <p>
                     Trabajamos con encargados del tratamiento: alojamiento (Vercel), base de datos (MongoDB
-                    Atlas), proveedores de IA (DeepSeek para el chat/análisis; OpenAI para la voz) e inicio de
+                    Atlas), proveedores de IA (DeepSeek para el chat/análisis; OpenAI para la lectura en voz
+                    alta y las búsquedas por esencia) e inicio de
                     sesión (Google). Algunos están ubicados fuera del Espacio Económico Europeo y aplicamos las
-                    garantías que exige la normativa. A los proveedores de IA solo les enviamos el texto o el
-                    audio necesarios para generar la respuesta, no tu identidad; los datos de tu cuenta (nombre
+                    garantías que exige la normativa. A los proveedores de IA solo les enviamos el texto
+                    necesario para generar la respuesta, no tu identidad; los datos de tu cuenta (nombre
                     y email de Google) se tratan únicamente para el inicio de sesión y se conservan en nuestra
                     base de datos.
                 </p>

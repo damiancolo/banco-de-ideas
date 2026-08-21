@@ -71,7 +71,7 @@ export default function AboutPageEN() {
                         <div className="border-l-4 border-[#C5A47E] pl-6">
                             <h3 className="text-xl font-bold text-gray-800 mb-3">Save Ideas</h3>
                             <p className="text-gray-700 leading-relaxed">
-                                The system implements an optimized input flow to reduce cognitive load. It allows for agile registration of concepts through text interfaces or voice commands processed by neural transcription models (OpenAI Whisper), ensuring immediate data capture.
+                                The system implements an optimized input flow to reduce cognitive load. It allows for agile registration of concepts through text — and if you'd rather speak, through your phone keyboard's own dictation — ensuring immediate data capture.
                             </p>
                         </div>
 
@@ -123,7 +123,7 @@ export default function AboutPageEN() {
                         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                             <div className="text-2xl mb-2">✨</div>
                             <h3 className="font-bold text-gray-800 mb-1">Full capabilities</h3>
-                            <p className="text-sm text-gray-600">Chat, voice, bisociations and semantic search — all available in your private space.</p>
+                            <p className="text-sm text-gray-600">Chat, bisociations and semantic search — all available in your private space.</p>
                         </div>
                         <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
                             <div className="text-2xl mb-2">📱</div>
@@ -163,10 +163,9 @@ export default function AboutPageEN() {
                                 <p><span className="text-white font-medium">Public space:</span> DeepSeek engine (deepseek-chat) for inference, analysis, and generation of collective bisociations.</p>
                                 <p><span className="text-white font-medium">Private space:</span> Claude Opus 4.6 (Anthropic) as a personal ideas manager — the most advanced model available for deep analysis and creative generation.</p>
                                 <div className="pl-4 border-l border-gray-700">
-                                    <p className="font-medium text-white mb-1">Voice Interaction (STT/TTS):</p>
+                                    <p className="font-medium text-white mb-1">Read aloud (TTS):</p>
                                     <ul className="space-y-2">
-                                        <li>• <span className="text-white">Speech-to-Text (STT):</span> Integration of OpenAI Whisper API for precise idea transcription via audio input.</li>
-                                        <li>• <span className="text-white">Text-to-Speech (TTS):</span> Use of voice synthesis models (OpenAI TTS-1) for reading responses.</li>
+                                        <li>• <span className="text-white">Text-to-Speech (TTS):</span> Use of voice synthesis models (OpenAI gpt-4o-mini-tts) for reading responses.</li>
                                     </ul>
                                 </div>
                                 <p><span className="text-white font-medium">Embeddings API:</span> Implementation of vectorization models to transform each idea into a numerical vector, allowing the calculation of similarity based on structural essence.</p>

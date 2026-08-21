@@ -4,7 +4,6 @@ import { useState, useRef, useEffect, useMemo } from "react";
 import ChatMessage from "@/components/ChatMessage";
 import { logger } from "@/lib/logger";
 import { playLightbulbOn } from "@/lib/sounds/lightbulb";
-import { useVoiceRecording } from "@/hooks/useVoiceRecording";
 
 type Message = {
   id: string | number;
@@ -72,10 +71,10 @@ export default function ChatEngine({
   const [inputValue, setInputValue] = useState("");
   const [loading, setLoading] = useState(false);
   const [currentIdea, setCurrentIdea] = useState<string | null>(null);
-  const [awaitingDecision, setAwaitingDecision] = useState(false);
+  // Los tres botones que reemplazan a la vieja pregunta "¿similares o profundizar?"
+  const [mostrarAcciones, setMostrarAcciones] = useState(false);
   const [hasInteracted, setHasInteracted] = useState(false);
 
-  const [voiceEnabled, setVoiceEnabled] = useState(true);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   const [errorGuardado, setErrorGuardado] = useState(false);
@@ -84,35 +83,29 @@ export default function ChatEngine({
   const [showModeMenu, setShowModeMenu] = useState(false);
   const [thinkingIndex, setThinkingIndex] = useState(0);
 
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const messagesRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const menuEnterTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const menuLeaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const {
-    isRecording,
-    isTranscribing,
-    startRecording,
-    stopRecording,
-    handlePointerUp
-  } = useVoiceRecording({
-    onTranscription: (text) => handleSendMessage(undefined, text, true),
-    onTranscriptionError: (err) => {
-      logger.error("Voice Error:", err);
-      alert("Error con el audio o la transcripción.");
-    }
-  });
-
+  // Se scrollea el contenedor directamente y no con scrollIntoView sobre un
+  // centinela: el <main> de la home es overflow-hidden, así que scrollIntoView
+  // se confundía de ancestro y dejaba la conversación a medio bajar. Cuando
+  // debajo hay botones, eso los deja fuera de la vista y sin forma de llegar.
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    const el = messagesRef.current;
+    if (!el) return;
+    // Tras el paint: si no, scrollHeight todavía no incluye lo recién agregado.
+    requestAnimationFrame(() => {
+      el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+    });
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages, loading, isTranscribing]);
+  }, [messages, loading]);
 
   // Cleanup timeouts on unmount
   useEffect(() => {
@@ -138,15 +131,6 @@ export default function ChatEngine({
     }, 2500);
     return () => clearInterval(interval);
   }, [loading]);
-
-  const resetConversation = () => {
-    stopSpeaking();
-    setCurrentIdea(null);
-    setAwaitingDecision(false);
-    setVoiceEnabled(true);
-    setInputValue("");
-    setHasInteracted(false);
-  };
 
   /**
    * Crea o reanuda el AudioContext. Hay que llamarlo DENTRO del gesto del
@@ -270,7 +254,122 @@ export default function ChatEngine({
     }
   };
 
-  const handleSendMessage = async (e?: React.FormEvent, forcedText?: string, viaVoice = false) => {
+  /**
+   * Llama a la IA con una de las tres acciones y agrega la respuesta.
+   *
+   * Antes esto vivía dentro de handleSendMessage y la acción se adivinaba
+   * buscando palabras sueltas en lo que el usuario escribía ('criti', 'dame',
+   * 'dale'...). Con los botones la intención llega explícita, así que la
+   * adivinanza desapareció: escribir libre siempre es conversación.
+   */
+  const ejecutarAccion = async (
+    action: 'similar' | 'analysis' | 'chat',
+    textoUsuario?: string,
+  ) => {
+    setMostrarAcciones(false);
+    setLoading(true);
+
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60000);
+
+      const response = await fetch(`${apiPrefix}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action,
+          idea: action === 'chat'
+            ? (textoUsuario ?? '')
+            : (currentIdea || messages.findLast(m => m.role === 'user')?.plainText || textoUsuario || ''),
+          history: messages,
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeoutId);
+
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error("Error al procesar la respuesta del servidor");
+      }
+
+      if (!response.ok) {
+        throw new Error(data?.error || `Error del servidor: ${response.status}`);
+      }
+
+      const result = data?.result;
+
+      let content: React.ReactNode;
+      let plainTextForContext = "";
+
+      if (action === "similar" && Array.isArray(result)) {
+        content = (
+          <div className="flex flex-col gap-4 mt-2">
+            <p className="font-medium text-gray-800">Aquí tienes 3 ideas similares:</p>
+            {result.map((idea: Idea) => (
+              <div key={idea.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                <div className="font-bold text-gray-800 mb-1">{idea.title}</div>
+                <div className="text-gray-600 text-sm leading-relaxed">{idea.summary}</div>
+              </div>
+            ))}
+          </div>
+        );
+
+        plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
+          result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
+
+      } else if (typeof result === 'string' && (result.includes("\u26A0\uFE0F") || result.includes("Error"))) {
+        logger.error("Backend Error:", result);
+        content = (
+          <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700 mt-2">
+            <p><strong>Error del Sistema:</strong></p>
+            <div className="whitespace-pre-wrap">{result.replace(/\*\*/g, '')}</div>
+          </div>
+        );
+        plainTextForContext = result;
+
+      } else {
+        plainTextForContext = typeof result === 'string' ? result : "Respuesta completada.";
+        content = plainTextForContext;
+      }
+
+      setMessages(prev => [...prev, {
+        id: generateMessageId(),
+        role: 'assistant',
+        content,
+        plainText: plainTextForContext,
+        colectivizable: action !== 'similar',
+      }]);
+
+      // Los botones vuelven: siempre se puede pedir lo otro, o seguir escribiendo.
+      setMostrarAcciones(true);
+
+    } catch (error) {
+      logger.error(`Error en la acción ${action}:`, error);
+      const errorMessage = error instanceof Error
+        ? (error.name === 'AbortError'
+            ? "La solicitud tardó demasiado. Por favor, intenta de nuevo."
+            : error.message)
+        : "Error desconocido";
+
+      setMessages(prev => [...prev, {
+        id: generateMessageId(),
+        role: 'assistant',
+        content: (
+          <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700">
+            <p><strong>Error:</strong> {errorMessage}</p>
+          </div>
+        ),
+        plainText: `Error: ${errorMessage}`,
+      }]);
+      setMostrarAcciones(true);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e?: React.FormEvent, forcedText?: string) => {
     e?.preventDefault();
     const textToProcess = forcedText || inputValue.trim();
     if (!textToProcess) return;
@@ -280,7 +379,7 @@ export default function ChatEngine({
       return;
     }
 
-    if (loading || isTranscribing) return;
+    if (loading) return;
 
     // Dentro del gesto: el sonido del guardado llega ~300 ms después, con la
     // respuesta del servidor, y para entonces ya sería tarde para abrirlo.
@@ -440,9 +539,6 @@ export default function ChatEngine({
           };
           setMessages(prev => [...prev, reply]);
 
-          if (viaVoice && plainTextForContext) {
-            handleTTS(plainTextForContext);
-          }
         }
 
         setSearchMode(null);
@@ -469,218 +565,47 @@ export default function ChatEngine({
       }
     }
 
-    // Process Logic (DEFAULT FLOW)
+    // Flujo por defecto: la primera idea se guarda; lo que se escriba después
+    // es conversación. Las acciones concretas (ideas similares, crítica) ya no
+    // se adivinan del texto: son los botones de abajo.
+    if (!currentIdea) {
+      setCurrentIdea(userText);
 
-    try {
-      if (!currentIdea) {
-        setCurrentIdea(userText);
-        setVoiceEnabled(true);
-
-        fetch(`${apiPrefix}/analyze`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ action: "save", idea: userText }),
-        }).then(res => {
-          if (res.ok) {
-            logger.info("Idea guardada exitosamente en MongoDB");
-            // La idea está en la base: recién ahora se enciende la lamparita.
-            playLightbulbOn(audioContextRef.current);
-            onIdeaSaved?.();
-          } else {
-            logger.warn("No se pudo guardar en MongoDB.");
-            setErrorGuardado(true);
-          }
-        }).catch(err => {
-          logger.error("Error de red al guardar:", err);
-          setErrorGuardado(true);
-        });
-
-        const replyText = `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`;
-        const reply: Message = {
-          id: generateMessageId(),
-          role: 'assistant',
-          content: replyText,
-          plainText: replyText,
-          colectivizable: true,
-          colectivizableText: userText,
-        };
-        setMessages(prev => [...prev, reply]);
-        setLoading(false);
-        setAwaitingDecision(true);
-
-        if (viaVoice) {
-          handleTTS(replyText);
-        }
-      } else if (awaitingDecision) {
-        const lowerText = userText.toLowerCase().trim();
-        let action = "";
-
-        const analysisKeywords = ['profundiz', 'analizar', 'analíz', 'criti', 'críti', 'detalle', 'profundo'];
-        const similarKeywords = ['similar', 'ideas', 'conectar', 'dame', 'generar', 'otra', 'más', 'mas'];
-        const yesKeywords = ['si', 'sí', 'claro', 'dale', 'ok', 'va', 'venga'];
-
-        if (analysisKeywords.some(k => lowerText.includes(k))) {
-          action = "analysis";
-        } else if (similarKeywords.some(k => lowerText.includes(k))) {
-          action = "similar";
-        } else if (yesKeywords.some(k => lowerText === k || lowerText.startsWith(k + " ") || lowerText.endsWith(" " + k) || lowerText.includes(" " + k + " "))) {
-          action = "similar";
+      fetch(`${apiPrefix}/analyze`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "save", idea: userText }),
+      }).then(res => {
+        if (res.ok) {
+          logger.info("Idea guardada exitosamente en MongoDB");
+          // La idea está en la base: recién ahora se enciende la lamparita.
+          playLightbulbOn(audioContextRef.current);
+          onIdeaSaved?.();
         } else {
-          action = "chat";
+          logger.warn("No se pudo guardar en MongoDB.");
+          setErrorGuardado(true);
         }
+      }).catch(err => {
+        logger.error("Error de red al guardar:", err);
+        setErrorGuardado(true);
+      });
 
-        if (action) {
-          const controller = new AbortController();
-          const timeoutId = setTimeout(() => controller.abort(), 60000);
-
-          const response = await fetch(`${apiPrefix}/analyze`, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              action,
-              idea: action === 'chat' ? userText : (currentIdea || messages.findLast(m => m.role === 'user')?.plainText || messages.findLast(m => m.role === 'user')?.content || userText),
-              history: messages
-            }),
-            signal: controller.signal,
-          });
-          clearTimeout(timeoutId);
-
-          let data;
-          try {
-            data = await response.json();
-          } catch {
-            throw new Error("Error al procesar la respuesta del servidor");
-          }
-
-          if (!response.ok) {
-            throw new Error(data?.error || `Error del servidor: ${response.status}`);
-          }
-
-          const result = data?.result;
-
-          let content: React.ReactNode;
-          let plainTextForContext = "";
-
-          if (action === "similar" && Array.isArray(result)) {
-            setVoiceEnabled(false);
-
-            content = (
-              <div className="flex flex-col gap-4 mt-2">
-                <p className="font-medium text-gray-800">Aquí tienes 3 ideas similares:</p>
-                {result.map((idea: Idea) => (
-                  <div key={idea.id} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
-                    <div className="font-bold text-gray-800 mb-1">{idea.title}</div>
-                    <div className="text-gray-600 text-sm leading-relaxed">{idea.summary}</div>
-                  </div>
-                ))}
-              </div>
-            );
-
-            plainTextForContext = "Aquí tienes 3 ideas similares:\n" +
-              result.map((idea: Idea, i: number) => `${i + 1}. ${idea.title}: ${idea.summary}`).join("\n");
-
-          } else if (typeof result === 'string' && (result.includes("\u26A0\uFE0F") || result.includes("Error"))) {
-            logger.error("Backend Error:", result);
-            content = (
-              <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700 mt-2">
-                <p><strong>Error del Sistema:</strong></p>
-                <div className="whitespace-pre-wrap">{result.replace(/\*\*/g, '')}</div>
-              </div>
-            );
-            plainTextForContext = result;
-
-          } else {
-            plainTextForContext = typeof result === 'string' ? result : "Respuesta completada.";
-            content = plainTextForContext;
-          }
-
-          const reply: Message = {
-            id: generateMessageId(),
-            role: 'assistant',
-            content: content,
-            plainText: plainTextForContext,
-            colectivizable: action !== 'similar',
-          };
-
-          setMessages(prev => [...prev, reply]);
-
-          if (viaVoice && plainTextForContext) {
-            handleTTS(plainTextForContext);
-          }
-
-          if (action === "similar") {
-            const followUpText = "¿Qué opinas? ¿Cuál te parece más interesante? ¿O prefieres profundizar en tu idea original?";
-            setTimeout(() => {
-              setMessages(prev => [...prev, {
-                id: generateMessageId(),
-                role: 'assistant',
-                content: followUpText,
-                plainText: followUpText
-              }]);
-              setAwaitingDecision(true);
-            }, 1500);
-          } else {
-            setAwaitingDecision(true);
-          }
-
-        }
-        setLoading(false);
-      } else {
-        setCurrentIdea(userText);
-        setVoiceEnabled(true);
-        const replyText = `¿Quieres escuchar 3 ideas similares o profundizar en esta idea?`;
-        setTimeout(() => {
-          const reply: Message = {
-            id: generateMessageId(),
-            role: 'assistant',
-            content: replyText,
-            plainText: replyText,
-            colectivizable: true,
-            colectivizableText: userText,
-          };
-          setMessages(prev => [...prev, reply]);
-          setLoading(false);
-          setAwaitingDecision(true);
-
-          if (viaVoice) {
-            handleTTS(replyText);
-          }
-        }, 800);
-      }
-
-    } catch (error) {
-      logger.error("Error in handleSendMessage:", error);
-      let errorMessage = "Error desconocido";
-      if (error instanceof Error) {
-        errorMessage = error.name === 'AbortError'
-          ? "La solicitud tardó demasiado. Por favor, intenta de nuevo."
-          : error.message;
-      }
-      const errorReply: Message = {
+      // Un bubble mínimo, no una pregunta: las opciones ahora son botones. Se
+      // mantiene porque de él cuelgan Colectivizar y Calendizar.
+      setMessages(prev => [...prev, {
         id: generateMessageId(),
         role: 'assistant',
-        content: (
-          <div className="bg-red-50 p-4 rounded-xl border border-red-200 text-red-700">
-            <p><strong>Error:</strong> {errorMessage}</p>
-          </div>
-        ),
-        plainText: `Error: ${errorMessage}`
-      };
-      setMessages(prev => [...prev, errorReply]);
-    } finally {
+        content: "Guardada.",
+        plainText: "Guardada.",
+        colectivizable: true,
+        colectivizableText: userText,
+      }]);
       setLoading(false);
+      setMostrarAcciones(true);
+      return;
     }
-  };
 
-  const handlePointerUpProxy = (e: React.PointerEvent) => {
-    handlePointerUp(e, buttonRef);
-  };
-
-  const handleTouchEndProxy = (e: React.TouchEvent) => {
-    // Fallback for iOS Safari where pointerup is unreliable on long press
-    if (!isRecording) return;
-    e.preventDefault();
-    stopRecording();
+    await ejecutarAccion("chat", userText);
   };
 
   const handleColectivizar = async (text: string, mode: 'anon' | 'user') => {
@@ -707,7 +632,7 @@ export default function ChatEngine({
 
         {/* Message History */}
         {hasInteracted && (
-          <div className="w-full flex-1 overflow-y-auto max-h-[40vh] space-y-4 px-2 scroll-smooth mask-fade-top mb-4">
+          <div ref={messagesRef} className="w-full flex-1 overflow-y-auto max-h-[40vh] space-y-4 px-2 scroll-smooth mask-fade-top mb-4">
             {messages.map((msg) => (
               <ChatMessage
                 key={msg.id}
@@ -723,11 +648,9 @@ export default function ChatEngine({
                   : undefined}
               />
             ))}
-            {(loading || isTranscribing || isSpeaking) && (
+            {(loading || isSpeaking) && (
               <div className="pl-2 flex items-center gap-3">
-                {isTranscribing ? (
-                  <span className="text-sm text-gray-400 animate-pulse">Transcribiendo audio...</span>
-                ) : isSpeaking ? (
+                {isSpeaking ? (
                   <div className="flex items-center gap-2 text-[#C5A47E] font-medium text-sm">
                     <span className="flex gap-1 items-end h-3">
                       <span className="w-1 bg-current animate-[sound_0.5s_ease-in-out_infinite]"></span>
@@ -748,7 +671,42 @@ export default function ChatEngine({
                 )}
               </div>
             )}
-            <div ref={messagesEndRef} />
+
+          </div>
+        )}
+
+        {/* Los tres caminos, fuera del contenedor que scrollea: una respuesta
+            larga los empujaba a 5000 px de altura y quedaban inalcanzables,
+            porque el <main> de la home no scrollea. Acá están siempre a la
+            vista, justo encima de la tarjeta, que es donde antes aparecía la
+            pregunta. */}
+        {mostrarAcciones && !loading && (
+          <div className="w-full flex items-center justify-center gap-2 flex-wrap -mt-4">
+            <button
+              type="button"
+              onClick={() => ejecutarAccion('similar')}
+              className="p-2 px-3 text-gray-500 hover:text-[#C5A47E] hover:bg-white rounded-lg transition-all flex items-center gap-2 text-xs font-medium border border-gray-200 hover:border-[#C5A47E] bg-white/50 hover:shadow-sm"
+            >
+              <span className="text-sm">✨</span>
+              Escuchar tres ideas similares
+            </button>
+            <button
+              type="button"
+              onClick={() => ejecutarAccion('analysis')}
+              className="p-2 px-3 text-gray-500 hover:text-[#C5A47E] hover:bg-white rounded-lg transition-all flex items-center gap-2 text-xs font-medium border border-gray-200 hover:border-[#C5A47E] bg-white/50 hover:shadow-sm"
+            >
+              <span className="text-sm">🧠</span>
+              Critícame la idea
+            </button>
+            <button
+              type="button"
+              /* No llama a ninguna IA: sólo devuelve el foco al campo de texto. */
+              onClick={() => { setMostrarAcciones(false); textareaRef.current?.focus(); }}
+              className="p-2 px-3 text-gray-500 hover:text-[#C5A47E] hover:bg-white rounded-lg transition-all flex items-center gap-2 text-xs font-medium border border-gray-200 hover:border-[#C5A47E] bg-white/50 hover:shadow-sm"
+            >
+              <span className="text-sm">✍️</span>
+              Continuar desarrollando
+            </button>
           </div>
         )}
 
@@ -757,7 +715,6 @@ export default function ChatEngine({
           onSubmit={handleSendMessage}
           className={`bg-white w-full rounded-3xl shadow-sm border border-black/5 p-4 md:p-8 flex flex-col justify-end transition-all duration-500 relative
               ${hasInteracted ? 'min-h-[160px]' : 'min-h-[320px] shadow-xl'}
-              ${isRecording ? 'ring-2 ring-red-400 translate-y-[-4px]' : ''}
             `}
         >
           <div className="flex items-end gap-2 md:gap-4 w-full">
@@ -868,54 +825,33 @@ export default function ChatEngine({
                   handleSendMessage();
                 }
               }}
-              placeholder={isRecording ? "Grabando..." : (inputValue.trim() || !voiceEnabled) ? "Escribe aquí..." : "Guarda aquí tu idea..."}
-              className={`flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium min-w-0 resize-none overflow-hidden leading-tight py-1 ${isRecording ? 'text-red-500 animate-pulse' : ''}`}
-              disabled={loading || isTranscribing}
+              placeholder={hasInteracted ? "Escribe aquí..." : "Guarda aquí tu idea..."}
+              className="flex-1 text-2xl bg-transparent border-none outline-none text-foreground placeholder:text-gray-300 font-medium min-w-0 resize-none overflow-hidden leading-tight py-1"
+              disabled={loading}
               autoFocus={!hasInteracted}
             />
 
-            {/* Send / Mic Button */}
+            {/* Enviar (o detener la voz de la IA, si está hablando) */}
             <button
-              ref={buttonRef}
-              type={(inputValue.trim() || !voiceEnabled) ? "submit" : "button"}
-              onPointerDown={(e) => {
-                if (voiceEnabled && !inputValue.trim() && !loading && !isTranscribing) {
-                  e.preventDefault();
-                  startRecording();
-                }
-              }}
-              onPointerUp={handlePointerUpProxy}
-              onTouchEnd={handleTouchEndProxy}
-              disabled={loading || isTranscribing}
-              style={{ touchAction: 'none', userSelect: 'none' }}
-              className={`w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 ${(inputValue.trim() || !voiceEnabled)
-                ? "bg-[#C5A47E] text-white hover:bg-[#b08e68]"
-                : isRecording
-                  ? "bg-red-500 text-white scale-110 shadow-lg"
-                  : "bg-gray-100 text-gray-300"
-                }`}
-              title={(inputValue.trim() || !voiceEnabled) ? "Enviar" : "Mantener para grabar"}
+              type="submit"
+              disabled={loading || !inputValue.trim()}
+              className="w-14 h-10 md:w-16 md:h-11 flex-none flex items-center justify-center rounded-xl transition-all duration-200 bg-[#C5A47E] text-white hover:bg-[#b08e68] disabled:bg-gray-100 disabled:text-gray-300"
+              title="Enviar"
             >
-              {(loading || isTranscribing) ? (
+              {loading ? (
                 <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin" />
               ) : isSpeaking ? (
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); stopSpeaking(); }}
-                  className="w-full h-full flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors"
+                <span
+                  role="button"
+                  tabIndex={0}
+                  onClick={(e) => { e.stopPropagation(); e.preventDefault(); stopSpeaking(); }}
+                  className="w-full h-full flex items-center justify-center bg-red-50 text-red-500 rounded-xl hover:bg-red-100 transition-colors cursor-pointer"
                   title="Detener audio"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="2"></rect></svg>
-                </button>
-              ) : isRecording ? (
-                <div className="relative">
-                  <div className="absolute inset-0 bg-white rounded-full animate-ping opacity-75" />
-                  <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
-                </div>
-              ) : (inputValue.trim() || !voiceEnabled) ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
+                </span>
               ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" y1="19" x2="12" y2="22" /></svg>
+                <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"></path></svg>
               )}
             </button>
           </div>
@@ -926,11 +862,6 @@ export default function ChatEngine({
           {errorGuardado && (
             <div className="text-[11px] text-red-500 mt-1 font-medium" role="status">
               No se pudo guardar la idea. Probá de nuevo.
-            </div>
-          )}
-          {isRecording && (
-            <div className="text-[10px] text-red-500 absolute bottom-2 left-8 animate-pulse font-bold tracking-wider">
-              SOLTAR PARA ENVIAR • MOVER FUERA PARA CANCELAR
             </div>
           )}
         </form>

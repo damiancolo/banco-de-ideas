@@ -1,13 +1,14 @@
 # AGENTS.md — Banco de Ideas
 
 ## Resumen
-Aplicacion web de gestion creativa con IA multimodal (voz + texto). Captura, analiza y expande ideas usando "bisociacion" (conectar ideas no relacionadas). Creada por Damian Lafferranderie.
+Aplicacion web de gestion creativa con IA. La entrada es texto (para dictar se usa el teclado del propio telefono); la IA puede leer sus respuestas en voz alta. Captura, analiza y expande ideas usando "bisociacion" (conectar ideas no relacionadas). Creada por Damian Lafferranderie.
 
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Base de datos**: MongoDB Atlas (Mongoose 9)
 - **IA chat/análisis**: DeepSeek `deepseek-v4-pro` vía SDK OpenAI-compatible
-- **IA voz**: OpenAI Whisper-1 (STT), gpt-4o-mini-tts Shimmer (TTS), text-embedding-3-small (embeddings)
+- **IA voz**: gpt-4o-mini-tts Shimmer (TTS, solo salida), text-embedding-3-small (embeddings)
+- **Sin STT**: la grabacion por microfono se quito en ago 2026 — el dictado del teclado de iOS/Android lo hace mejor
 - **Auth**: NextAuth v5 beta (next-auth@5.0.0-beta) + @auth/mongodb-adapter + Google OAuth
 - **Estilos**: TailwindCSS 4
 - **Deploy**: Vercel (auto-deploy desde GitHub)
@@ -44,7 +45,7 @@ Team ID Vercel: `team_ABSUeFTZC1zeHHswIAVbNDJ0`
 ```
 # IA - DeepSeek (chat/análisis)
 DEEPSEEK_API_KEY=sk-...
-# IA - OpenAI (voz: Whisper STT, TTS, embeddings)
+# IA - OpenAI (TTS de salida y embeddings)
 OPENAI_API_KEY=sk-proj-...
 # MongoDB Atlas
 MONGODB_URI=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
@@ -72,7 +73,6 @@ app/
     banco/page.tsx              # Dashboard de ideas privadas del usuario
   api/
     analyze/route.ts            # Chat/bisociaciones/analisis (OpenAI) [rate limit: 15/min]
-    transcribe/route.ts         # Speech-to-text (Whisper) [rate limit: 10/min]
     speak/route.ts              # Text-to-speech (TTS) [rate limit: 10/min]
     ideas/route.ts              # CRUD de ideas publicas [rate limit: 5/min POST, 10/min DELETE]
     ideas/comments/route.ts     # Comentarios en ideas [rate limit: 10/min]
@@ -101,7 +101,6 @@ components/
   PrivateHeader.tsx             # Header del area privada con foto de usuario y sign out
   IdeaModal.tsx                 # Modal de detalle de idea (botones: calendario, colectivizar, copiar)
 hooks/
-  useVoiceRecording.ts          # Hook push-to-talk (Web Media API)
 lib/
   db.ts                         # Capa de datos (saveIdea, getIdeas, getUserIdeas, etc.)
   mongodb.ts                    # Conexion singleton a MongoDB (Mongoose)
@@ -197,7 +196,7 @@ Usuario visita /privado
 
 ### Caracteristicas
 - **Aislamiento total**: las ideas privadas tienen `userId` y solo son accesibles por ese usuario
-- **Mismas capacidades**: chat, voz, bisociaciones, busqueda semantica — todo igual que el espacio publico
+- **Mismas capacidades**: chat, bisociaciones, busqueda semantica — todo igual que el espacio publico
 - **API privada**: `/api/privado/*` replica los endpoints publicos pero filtra por `session.user.id`
 - **No indexable**: `robots: { index: false }` en el layout privado
 - **Sin rate limit por IP en privado**: las rutas privadas confian en la sesion JWT
@@ -208,7 +207,7 @@ Usuario visita /privado
 - **Botón Colectivizar** (en IdeaModal del banco privado): mismo comportamiento, icono compartir junto al calendario. Solo visible cuando `apiPrefix === '/api/privado'`.
 - **Botón Google Calendar** (en IdeaModal): abre `calendar.google.com/render` con la idea pre-cargada. Solo en area privada.
 - **Atribución de autor**: el prefijo `[Nombre]: ` en ideas colectivizadas se parsea en BancoView e IdeaModal para mostrar el nombre como badge en lugar de "Inteligencia Artesanal", y el texto limpio en el contenido.
-- **iOS fix voz**: `onTouchEnd` como fallback de `onPointerUp` en el botón de micrófono, con `touch-action: none`. Evita que el micrófono quede activo al soltar en Safari iOS.
+- **iOS y audio**: el `AudioContext` debe crearse o reanudarse DENTRO del gesto del usuario aunque el sonido suene despues. Lo hace `asegurarContextoAudio()` en ChatEngine, y lo comparten el TTS y el sonido de guardado.
 
 ### Configuracion NextAuth (`auth.ts`)
 - Provider: Google con `client_secret_post`
@@ -302,10 +301,9 @@ El plugin en `estudioprompt.com/wp-content/plugins/ai-bot-tracker/ai-bot-tracker
 ## Flujo principal
 ```
 Usuario habla/escribe
-  -> Si voz: /api/transcribe (Whisper) -> texto
   -> Deteccion de intencion en cliente (keywords)
   -> /api/analyze?action=similar|analysis|chat (DeepSeek deepseek-v4-pro)
-  -> Si via voz: /api/speak (TTS) -> audio MP3
+  -> Boton "Escuchar": /api/speak (TTS) -> audio MP3
   -> Bisociaciones se guardan automaticamente en MongoDB
 ```
 

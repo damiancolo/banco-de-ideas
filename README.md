@@ -6,22 +6,23 @@ Plataforma web para capturar, analizar y expandir ideas usando Inteligencia Arti
 
 ## Características
 
-- **Voz push-to-talk**: Mantenés el botón → Whisper transcribe → IA responde → TTS lee la respuesta
+- **Tres caminos tras guardar**: botones para pedir ideas similares, una crítica, o seguir escribiendo
+- **Lectura en voz alta**: botón "Escuchar" en las respuestas de la IA (TTS)
 - **Bisociaciones**: Genera 3 ideas relacionadas conectando conceptos no relacionados
 - **Análisis crítico**: Evaluación de viabilidad y negocio de tus ideas
 - **Chat inteligente**: Conversación contextual para madurar ideas
 - **Búsqueda semántica**: Encuentra ideas por significado, no solo por palabras clave
 - **Espacio privado**: Banco personal por usuario, autenticado con Google, invisible para el resto
 - **PWA instalable**: Funciona como app nativa en iPhone (Safari) y Android (Chrome) — icono en pantalla de inicio, sin browser
-- **IA personalizable**: El espacio privado usa Claude Opus 4.6. Si querés otro modelo, escribinos
+- **IA personalizable**: El espacio privado usa Claude Opus 5. Si querés otro modelo, escribinos
 
 ## Stack
 
 - Next.js 16 (App Router) + React 19 + TypeScript
 - MongoDB Atlas + Mongoose 9
 - **Espacio público:** DeepSeek `deepseek-chat` (chat/análisis)
-- **Espacio privado:** Claude Opus 4.6 (Anthropic) — análisis profundo y generación creativa
-- OpenAI Whisper-1 / TTS-1 (voz)
+- **Espacio privado:** Claude Opus 5 (Anthropic) — análisis profundo y generación creativa
+- OpenAI gpt-4o-mini-tts (lectura en voz alta)
 - Auth.js v5 (NextAuth) + Google OAuth
 - TailwindCSS 4
 - Vercel
@@ -55,7 +56,7 @@ El área `/privado` es un banco de ideas personal por usuario:
 
 - Login con Google (un click, sin formularios)
 - Ideas aisladas por `userId` — invisibles para el resto y para agentes de IA
-- Gestor IA: Claude Opus 4.6 (Anthropic)
+- Gestor IA: Claude Opus 5 (Anthropic)
 - Instalable como app: iPhone → Safari → Compartir → Agregar a pantalla de inicio / Android → Chrome → Instalar app
 - ¿Querés otra IA como gestor? → [damian@estudioprompt.com](mailto:damian@estudioprompt.com)
 
@@ -89,8 +90,7 @@ app/
     PrivadoChat.tsx         # Chat privado con banner PWA
   api/
     analyze/                # IA pública (DeepSeek)
-    privado/analyze/        # IA privada (Claude Opus 4.6)
-    transcribe/             # Speech-to-text (Whisper)
+    privado/analyze/        # IA privada (Claude Opus 5)
     speak/                  # Text-to-speech (TTS)
     ideas/                  # CRUD ideas públicas
     privado/ideas/          # CRUD ideas privadas
