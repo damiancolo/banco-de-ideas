@@ -117,7 +117,13 @@ export async function POST(
                     }))
                 });
             }
-            return NextResponse.json({ result: [] });
+            // Antes esto era 200 con lista vacía y el chat pintaba el encabezado
+            // "Aquí tienes 3 ideas similares:" seguido de nada. Un fallo tiene que
+            // llegar como fallo.
+            return NextResponse.json(
+                { error: 'No se pudieron generar las ideas similares' },
+                { status: 500 }
+            );
         }
 
         if (action === 'analysis') {

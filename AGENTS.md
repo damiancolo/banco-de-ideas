@@ -102,7 +102,6 @@ app/
     track/route.ts              # POST interno para guardar visitas (protegido con TRACK_SECRET)
     tracker/route.ts            # GET con agregaciones MongoDB para dashboard analytics [rate limit: 30/min]
     auth/[...nextauth]/route.ts # Handler NextAuth (GET/POST)
-    auth-debug/route.ts         # Diagnostico de variables de auth (no exponer en produccion)
     privado/
       analyze/route.ts          # Chat/bisociaciones privado (requiere sesion)
       ideas/route.ts            # CRUD de ideas privadas (filtradas por userId)
@@ -312,7 +311,10 @@ El plugin en `estudioprompt.com/wp-content/plugins/ai-bot-tracker/ai-bot-tracker
 - Estetica gold/beige (#C5A47E, #F8F5F0)
 
 ## Seguridad implementada
-- Rate limiting en TODOS los endpoints API (fail-closed: si la BD falla, rechaza)
+- Rate limiting en los endpoints API (fail-closed: si la BD falla, rechaza).
+  ⚠️ En ago 2026 se encontró que `/api/lacuna-propuesta` y `/api/extract-text` no
+  lo tenían pese a que aquí ponía «TODOS». El primero ya está cubierto; el segundo
+  sigue sin él, aunque tiene tope de 500 KB por archivo.
 - Extraccion de IP con validacion anti-spoofing (lib/request-utils.ts)
 - Headers de seguridad en next.config.mjs (nosniff, DENY frame, XSS protection, referrer policy, permissions policy)
 - Errores 500 sanitizados: no exponen detalles internos, solo mensajes genericos
@@ -335,8 +337,8 @@ npm run map-project  # Genera esquema visual del proyecto
 ```
 
 ## Flujo de trabajo Git
-1. Trabajar en `develop` -> push -> preview en Vercel (BD: `banco-ideas-pruebas`)
-2. Merge `develop` → `staging` -> preview estable para QA (BD: `banco-ideas-pruebas`)
+1. Trabajar en `develop` -> push -> preview en Vercel (BD: ⚠️ **produccion**, ver el aviso de arriba)
+2. Merge `develop` → `staging` -> preview estable para QA (BD: ⚠️ **produccion**)
 3. Merge `staging` → `main` -> auto-deploy a produccion (BD: `banco-ideas`)
 
 **IMPORTANTE**: Nunca pushear directo a `main`. Nunca a `staging` sin pasar por `develop`.

@@ -43,12 +43,20 @@ export class ClaudeProvider implements AIProvider {
 
         const response = await this.client.messages.create({
             model: this.model,
+            // Era 2000. Los modelos actuales razonan por defecto y ese razonamiento
+            // sale del mismo presupuesto, así que un tope bajo corta la respuesta a
+            // media frase. Es un techo, no un consumo: se paga lo que se genera.
+            max_tokens: 16000,
             system: systemMessage,
-            max_tokens: 2000,
             messages: anthropicMessages,
         });
 
-        // @ts-ignore - content[0] is usually text
+        // Un corte por tope devuelve texto — incompleto, pero texto — así que sin
+        // esta comprobación pasa como si fuera la respuesta buena.
+        if (response.stop_reason === 'max_tokens') {
+            throw new Error(`${this.model} cortó la respuesta al llegar al tope de tokens`);
+        }
+
         const textBlock = response.content.find(block => block.type === 'text');
         const texto = textBlock && 'text' in textBlock ? textBlock.text : '';
         // Una respuesta vacía no es una respuesta: si se devuelve '' el chat se

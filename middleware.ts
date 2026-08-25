@@ -33,6 +33,10 @@ const AI_BOTS: Record<string, string> = {
     'YouBot': 'You.com AI',
     'DeepSeekBot': 'DeepSeek AI',
     'Applebot-Extended': 'Apple (Siri)',
+    // Invitados en robots.txt pero sin detectar hasta ago 2026: sus visitas se
+    // contaban como humanas y ensuciaban las cifras del tracker.
+    'Claude-SearchBot': 'Anthropic (Claude Search)',
+    'CCBot': 'Common Crawl',
 };
 
 function detectAiBot(ua: string): { pattern: string; name: string } | null {

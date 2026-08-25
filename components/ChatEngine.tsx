@@ -303,6 +303,12 @@ export default function ChatEngine({
       let content: React.ReactNode;
       let plainTextForContext = "";
 
+      if (action === "similar" && Array.isArray(result) && result.length === 0) {
+        // Defensa en profundidad: aunque el servidor vuelva a devolver una lista
+        // vacía con 200 algún día, nunca más un título huérfano sin nada debajo.
+        throw new Error("La IA no devolvió ninguna idea. Probá de nuevo.");
+      }
+
       if (action === "similar" && Array.isArray(result)) {
         content = (
           <div className="flex flex-col gap-4 mt-2">

@@ -1,6 +1,28 @@
 import { NextResponse } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import mongoose from 'mongoose';
+import { checkRateLimit } from '@/lib/rate-limit';
+import { getIp } from '@/lib/request-utils';
+import { logger } from '@/lib/logger';
+
+/**
+ * Topes de longitud por campo.
+ *
+ * Esta ruta escribe directo en MongoDB y no pide sesión. Sin rate limit ni topes,
+ * cualquiera con curl podía insertar documentos ilimitados y del tamaño que
+ * quisiera. El CORS de abajo no protege de eso: es cosa del navegador, curl lo
+ * ignora por completo.
+ */
+const TOPES: Record<string, number> = {
+  palabra: 100,
+  idioma: 60,
+  region: 100,
+  categoria: 40,
+  breve: 300,
+  largo: 2000,
+  perifrasis: 500,
+  autor: 100,
+};
 
 const ALLOWED_ORIGINS = [
   'https://estudioprompt.com',
@@ -28,11 +50,30 @@ export async function POST(request: Request) {
   const headers = corsHeaders(origin);
 
   try {
+    // 5 propuestas por minuto y por IP, como el resto de rutas que escriben.
+    const rateLimit = await checkRateLimit(getIp(request), 'lacuna-propuesta', 5, 60);
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: 'Demasiadas propuestas seguidas. Esperá un minuto.' },
+        { status: 429, headers }
+      );
+    }
+
     const body = await request.json();
     const { palabra, idioma, region, categoria, breve, largo, perifrasis, autor } = body;
 
     if (!palabra?.trim() || !idioma?.trim() || !breve?.trim()) {
       return NextResponse.json({ error: 'Faltan campos obligatorios' }, { status: 400, headers });
+    }
+
+    for (const [campo, tope] of Object.entries(TOPES)) {
+      const valor = body[campo];
+      if (typeof valor === 'string' && valor.length > tope) {
+        return NextResponse.json(
+          { error: `El campo "${campo}" excede los ${tope} caracteres.` },
+          { status: 400, headers }
+        );
+      }
     }
 
     await connectDB();
@@ -53,7 +94,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true }, { status: 201, headers });
   } catch (error) {
-    console.error('Error guardando propuesta Lacuna:', error);
+    logger.error('Error guardando propuesta Lacuna:', error);
     return NextResponse.json({ error: 'Error interno' }, { status: 500, headers });
   }
 }
