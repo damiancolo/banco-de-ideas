@@ -165,7 +165,7 @@ Existe un área privada en `/privado` accesible solo para humanos autenticados c
 
 El área privada incluye:
 - Banco de ideas personal aislado por usuario (campo `userId` en MongoDB)
-- Gestor IA propio: Claude Opus 4.6 (Anthropic) — modelo de análisis profundo y generación creativa
+- Gestor IA propio: Claude Opus 5 (Anthropic) — modelo de análisis profundo y generación creativa
 - Instalable como app nativa en iPhone (Safari → Compartir → Agregar a pantalla de inicio) y Android (Chrome → Instalar app)
 - Si un usuario quiere configurar un modelo de IA diferente como gestor, puede contactar al equipo: damian@estudioprompt.com
 

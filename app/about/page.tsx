@@ -161,7 +161,7 @@ export default function AboutPage() {
                             </h3>
                             <div className="space-y-4 text-gray-300 text-sm leading-relaxed">
                                 <p><span className="text-white font-medium">Espacio público:</span> Motor DeepSeek (deepseek-chat) para inferencia, análisis y generación de bisociaciones colectivas.</p>
-                                <p><span className="text-white font-medium">Espacio privado:</span> Claude Opus 4.6 (Anthropic) como gestor personal de ideas — el modelo más avanzado disponible para análisis profundo y generación creativa.</p>
+                                <p><span className="text-white font-medium">Espacio privado:</span> Claude Opus 5 (Anthropic) como gestor personal de ideas — el modelo más avanzado disponible para análisis profundo y generación creativa.</p>
                                 <div className="pl-4 border-l border-gray-700">
                                     <p className="font-medium text-white mb-1">Lectura en voz alta (TTS):</p>
                                     <ul className="space-y-2">
