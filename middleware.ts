@@ -116,7 +116,9 @@ export function middleware(request: NextRequest) {
     response.headers.set('X-AI-Agent-API', '/api/agent');
     response.headers.set('X-AI-Capabilities', 'read,write,search');
     response.headers.set('X-AI-Docs', '/llms.txt');
-    response.headers.set('X-AI-MCP', '/mcp');
+    // El servidor MCP habla por stdio (npm: banco-de-ideas-mcp), no por HTTP.
+    // Apuntamos al manifiesto, que es lo unico que existe de verdad.
+    response.headers.set('X-AI-MCP', '/.well-known/mcp.json');
     response.headers.set('X-AI-Plugin', '/.well-known/ai-plugin.json');
 
     // ─── Content Negotiation ───

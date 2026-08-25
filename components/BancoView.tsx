@@ -19,29 +19,87 @@ function parseAuthor(text: string): { author: string | null; displayText: string
     return { author: null, displayText: text };
 }
 
+/** Ordena de más a menos resaltada, sin mutar el array de entrada. */
+function porResaltadas(lista: SavedIdea[]): SavedIdea[] {
+    return [...lista].sort((a, b) => (b.highlightCount || 0) - (a.highlightCount || 0));
+}
+
 export default function BancoView({
     initialIdeas,
     isConnected,
     apiPrefix = '/api',
     userName,
     allowDelete = false,
+    totals,
+    highlighted,
+    pageSize = 60,
 }: {
     initialIdeas: SavedIdea[];
     isConnected: boolean;
     apiPrefix?: string;
     userName?: string;
     allowDelete?: boolean;
+    /**
+     * Cuántas ideas hay en total por pestaña. Presente solo en el banco público,
+     * que es el único que pagina: los bancos privado y de organización siguen
+     * recibiendo su lista entera, que es chica.
+     */
+    totals?: { user: number; bisociation: number };
+    /** Ideas resaltadas resueltas en el servidor (hacen falta si se pagina). */
+    highlighted?: SavedIdea[];
+    /** Tamaño de página al pedir más. */
+    pageSize?: number;
 }) {
+    const pagina = !!totals;
+
     const [view, setView] = useState<'user' | 'bisociation'>('user');
     const [ideas, setIdeas] = useState<SavedIdea[]>(initialIdeas);
     const [deletingId, setDeletingId] = useState<string | null>(null);
     const [selectedIdea, setSelectedIdea] = useState<SavedIdea | null>(null);
+    const [cargandoMas, setCargandoMas] = useState(false);
+    const [errorCarga, setErrorCarga] = useState<string | null>(null);
+
+    /**
+     * Las resaltadas van aparte. Cuando se pagina ya no se pueden sacar
+     * filtrando la lista visible, porque la lista visible no está entera.
+     */
+    const [destacadas, setDestacadas] = useState<SavedIdea[]>(() =>
+        porResaltadas(highlighted ?? initialIdeas.filter(idea => (idea.highlightCount || 0) > 0))
+    );
 
     // Filtrar ideas según la vista
     const visibleIdeas = ideas.filter(idea => {
         const category = idea.category || 'user';
         return category === view;
     });
+
+    const totalDeLaVista = totals ? totals[view] : visibleIdeas.length;
+    const quedanMas = pagina && visibleIdeas.length < totalDeLaVista;
+
+    const cargarMas = async () => {
+        setCargandoMas(true);
+        setErrorCarga(null);
+        try {
+            const response = await fetch(
+                `${apiPrefix}/ideas?category=${view}&limit=${pageSize}&skip=${visibleIdeas.length}`
+            );
+            if (!response.ok) throw new Error('respuesta no OK');
+
+            const data = await response.json();
+            const nuevas: SavedIdea[] = data.ideas ?? [];
+
+            // Si alguien publicó mientras leíamos, el skip puede repetir ideas.
+            setIdeas(prev => {
+                const yaEstan = new Set(prev.map(idea => idea.id));
+                return [...prev, ...nuevas.filter(idea => !yaEstan.has(idea.id))];
+            });
+        } catch (error) {
+            logger.error('Error loading more ideas:', error);
+            setErrorCarga('No se pudieron cargar más ideas.');
+        } finally {
+            setCargandoMas(false);
+        }
+    };
 
     const handleHighlight = async (id: string) => {
         setDeletingId(id);
@@ -56,6 +114,21 @@ export default function BancoView({
                         ? { ...idea, highlightCount: (idea.highlightCount || 0) + 1 }
                         : idea
                 ));
+                setDestacadas(prev => {
+                    const yaEsta = prev.some(idea => idea.id === id);
+                    if (yaEsta) {
+                        return porResaltadas(prev.map(idea =>
+                            idea.id === id
+                                ? { ...idea, highlightCount: (idea.highlightCount || 0) + 1 }
+                                : idea
+                        ));
+                    }
+                    // Primera vez que la resaltan: entra a la tarjeta sepia.
+                    const recien = ideas.find(idea => idea.id === id);
+                    return recien
+                        ? porResaltadas([...prev, { ...recien, highlightCount: (recien.highlightCount || 0) + 1 }])
+                        : prev;
+                });
                 if (selectedIdea && selectedIdea.id === id) {
                     setSelectedIdea(prev => prev ? { ...prev, highlightCount: (prev.highlightCount || 0) + 1 } : null);
                 }
@@ -80,6 +153,7 @@ export default function BancoView({
             });
             if (response.ok) {
                 setIdeas(prev => prev.filter(idea => idea.id !== id));
+                setDestacadas(prev => prev.filter(idea => idea.id !== id));
                 if (selectedIdea?.id === id) setSelectedIdea(null);
             } else {
                 const data = await response.json();
@@ -142,7 +216,7 @@ export default function BancoView({
             </div>
 
             {/* Tarjeta Sepia: Ideas Resaltadas - MOVED TO TOP */}
-            {ideas.some(idea => (idea.highlightCount || 0) > 0) && (
+            {destacadas.length > 0 && (
                 <div className="mb-8 animate-in fade-in slide-in-from-bottom-8 duration-1000">
                     <div className="bg-[#EBE0D0] p-8 rounded-[2.5rem] shadow-lg border border-[#D9C4A9] flex flex-col md:flex-row gap-8 items-center relative overflow-hidden">
                         <div className="flex-1 relative z-10">
@@ -153,9 +227,7 @@ export default function BancoView({
                         </div>
 
                         <div className="w-full md:w-80 space-y-2 overflow-y-auto max-h-[300px] pr-4 custom-scrollbar relative z-10">
-                            {ideas
-                                .filter(idea => (idea.highlightCount || 0) > 0)
-                                .sort((a, b) => b.highlightCount - a.highlightCount)
+                            {destacadas
                                 .map(idea => (
                                     <div
                                         key={idea.id}
@@ -218,6 +290,29 @@ export default function BancoView({
                     })
                 )}
             </div>
+
+            {/* Cargar más — solo en el banco público, que es el que pagina */}
+            {pagina && (
+                <div className="mt-10 flex flex-col items-center gap-3">
+                    {errorCarga && (
+                        <p className="text-sm text-red-500">{errorCarga}</p>
+                    )}
+                    {quedanMas ? (
+                        <button
+                            onClick={cargarMas}
+                            disabled={cargandoMas}
+                            className="px-8 py-3 rounded-2xl bg-white border border-gray-200 text-sm font-bold text-gray-600 hover:text-[#C5A47E] hover:border-[#C5A47E] transition-all disabled:opacity-50 disabled:cursor-wait"
+                        >
+                            {cargandoMas ? 'Cargando…' : 'Cargar más ideas'}
+                        </button>
+                    ) : null}
+                    {totalDeLaVista > 0 && (
+                        <p className="text-xs text-gray-400 font-mono">
+                            {Math.min(visibleIdeas.length, totalDeLaVista)} de {totalDeLaVista}
+                        </p>
+                    )}
+                </div>
+            )}
 
             {/* Modal de Detalles */}
             {selectedIdea && (

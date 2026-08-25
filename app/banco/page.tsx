@@ -1,4 +1,9 @@
-import { getIdeas } from '@/lib/db';
+import {
+    getIdeas,
+    getHighlightedIdeas,
+    countPublicIdeas,
+    IDEAS_POR_PAGINA,
+} from '@/lib/db';
 import { isDBConnected } from '@/lib/mongodb';
 import { auth } from '@/auth';
 import Link from 'next/link';
@@ -9,7 +14,20 @@ export const dynamic = 'force-dynamic';
 const ADMIN_EMAIL = 'damianlafferranderie@gmail.com';
 
 export default async function BancoPage() {
-    const [ideas, session] = await Promise.all([getIdeas(), auth()]);
+    // Una página por pestaña, no la colección entera. Las dos categorías se
+    // piden juntas porque el conmutador de arriba filtra en el cliente: si solo
+    // trajéramos la mezcla más reciente, una de las dos pestañas podía salir
+    // vacía teniendo ideas de sobra más atrás.
+    const [userIdeas, aiIdeas, highlighted, totalUser, totalAi, session] = await Promise.all([
+        getIdeas({ category: 'user', limit: IDEAS_POR_PAGINA }),
+        getIdeas({ category: 'bisociation', limit: IDEAS_POR_PAGINA }),
+        getHighlightedIdeas(20),
+        countPublicIdeas('user'),
+        countPublicIdeas('bisociation'),
+        auth(),
+    ]);
+
+    const ideas = [...userIdeas, ...aiIdeas];
     const connected = isDBConnected();
     const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
@@ -37,7 +55,14 @@ export default async function BancoPage() {
                 </div>
             </div>
 
-            <BancoView initialIdeas={ideas} isConnected={connected} allowDelete={isAdmin} />
+            <BancoView
+                initialIdeas={ideas}
+                isConnected={connected}
+                allowDelete={isAdmin}
+                totals={{ user: totalUser, bisociation: totalAi }}
+                highlighted={highlighted}
+                pageSize={IDEAS_POR_PAGINA}
+            />
         </main>
     );
 }

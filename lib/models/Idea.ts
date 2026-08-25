@@ -134,7 +134,7 @@ const IdeaSchema = new Schema<IIdea>(
 );
 
 // Índices compuestos para optimizar queries comunes
-// Índice para filtrar por categoría y ordenar por fecha (usado en getIdeasByCategory)
+// Índice para filtrar por categoría y ordenar por fecha (usado por getIdeas con category)
 IdeaSchema.index({ category: 1, createdAt: -1 });
 
 // Índice para ordenar todas las ideas por fecha (usado en getIdeas)

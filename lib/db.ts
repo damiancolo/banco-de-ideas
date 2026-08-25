@@ -1,3 +1,4 @@
+import type { QueryFilter } from 'mongoose';
 import { connectDB } from './mongodb';
 import Idea, { IIdea } from './models/Idea';
 
@@ -115,25 +116,61 @@ export async function savePrivateIdeaFromTask(params: {
 }
 
 /**
- * Obtiene todas las ideas ordenadas por fecha descendente (más recientes primero)
- * 
- * @returns Promise con array de ideas o array vacío en caso de error
- * 
+ * Filtro canónico de «idea pública»: sin dueño, y fuera de los espacios privado
+ * y de organización.
+ *
+ * Vive en una sola constante a propósito. Había dos copias sueltas a las que les
+ * faltaba la parte del `scope`, así que una idea de organización guardada sin
+ * `userId` (lo que hace `saveOrganizationIdea` cuando no recibe uno) se colaba
+ * al banco público: una al filtrar por categoría y otra al buscar por texto.
+ */
+const SOLO_PUBLICAS: QueryFilter<IIdea> = {
+    $or: [{ userId: null }, { userId: { $exists: false } }],
+    $nor: [{ 'scope.type': 'organization' }, { 'scope.type': 'private' }],
+};
+
+/** Cuántas ideas trae una página del banco. */
+export const IDEAS_POR_PAGINA = 60;
+
+/** Techo duro por consulta: ningún llamador puede pedir la colección entera. */
+const MAX_POR_CONSULTA = 200;
+
+export type OpcionesDePagina = {
+    /** Cuántas traer (por defecto IDEAS_POR_PAGINA, tope MAX_POR_CONSULTA) */
+    limit?: number;
+    /** Cuántas saltar desde la más reciente */
+    skip?: number;
+    /** Filtrar por categoría; sin esto vienen las dos mezcladas */
+    category?: 'user' | 'bisociation';
+};
+
+/**
+ * Obtiene una página de ideas públicas, de la más reciente a la más vieja.
+ *
+ * Antes devolvía la colección entera en cada carga de /banco (1501 documentos en
+ * agosto de 2026, y creciendo sin techo). Ahora siempre hay límite: para contar
+ * está `countPublicIdeas`, y para las agregadas `getPublicIdeaStats`.
+ *
  * @example
  * ```typescript
- * const ideas = await getIdeas();
- * console.log(ideas.length); // Número total de ideas
+ * const primeraPagina = await getIdeas({ category: 'user' });
+ * const segunda = await getIdeas({ category: 'user', skip: IDEAS_POR_PAGINA });
  * ```
  */
-export async function getIdeas(): Promise<SavedIdea[]> {
+export async function getIdeas(options: OpcionesDePagina = {}): Promise<SavedIdea[]> {
+    const limit = Math.min(Math.max(options.limit ?? IDEAS_POR_PAGINA, 1), MAX_POR_CONSULTA);
+    const skip = Math.max(options.skip ?? 0, 0);
+
     try {
         await connectDB();
 
         const ideas = await Idea.find({
-            $or: [{ userId: null }, { userId: { $exists: false } }],
-            $nor: [{ 'scope.type': 'organization' }, { 'scope.type': 'private' }]
+            ...SOLO_PUBLICAS,
+            ...(options.category ? { category: options.category } : {}),
         })
             .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
             .lean()
             .exec();
 
@@ -146,32 +183,103 @@ export async function getIdeas(): Promise<SavedIdea[]> {
 }
 
 /**
- * Obtiene ideas filtradas por categoría, ordenadas por fecha descendente
- * 
- * @param category - Categoría a filtrar: 'user' o 'bisociation'
- * @returns Promise con array de ideas filtradas
- * 
- * @example
- * ```typescript
- * const userIdeas = await getIdeasByCategory('user');
- * const aiIdeas = await getIdeasByCategory('bisociation');
- * ```
+ * Cuenta ideas públicas sin traerlas. Es lo que necesita el «cargar más» para
+ * saber si quedan.
  */
-export async function getIdeasByCategory(
-    category: 'user' | 'bisociation'
-): Promise<SavedIdea[]> {
+export async function countPublicIdeas(category?: 'user' | 'bisociation'): Promise<number> {
+    try {
+        await connectDB();
+        return await Idea.countDocuments({
+            ...SOLO_PUBLICAS,
+            ...(category ? { category } : {}),
+        });
+    } catch (error) {
+        console.error('Error counting ideas:', error);
+        return 0;
+    }
+}
+
+/**
+ * Las ideas resaltadas (deletionAttempts > 0), de más a menos.
+ *
+ * La tarjeta sepia del banco las sacaba filtrando la lista completa en el
+ * cliente; con paginación esa lista ya no está entera, así que la consulta la
+ * hace la base.
+ */
+export async function getHighlightedIdeas(limit = 20): Promise<SavedIdea[]> {
     try {
         await connectDB();
 
-        const ideas = await Idea.find({ category, $or: [{ userId: null }, { userId: { $exists: false } }] })
-            .sort({ createdAt: -1 })
+        const ideas = await Idea.find({ ...SOLO_PUBLICAS, deletionAttempts: { $gt: 0 } })
+            .sort({ deletionAttempts: -1, createdAt: -1 })
+            .limit(Math.min(Math.max(limit, 1), MAX_POR_CONSULTA))
             .lean()
             .exec();
 
         return ideas.map(idea => toSavedIdea(idea));
     } catch (error) {
-        console.error(`Error fetching ${category} ideas:`, error);
+        console.error('Error fetching highlighted ideas:', error);
         return [];
+    }
+}
+
+/**
+ * Busca una idea pública por su id. Reemplaza al `getIdeas().find(...)` de
+ * /api/agent, que traía la colección entera para quedarse con un documento.
+ */
+export async function getPublicIdeaById(id: string): Promise<SavedIdea | null> {
+    // Un id con forma inválida haría tirar a Mongoose un CastError. Eso no es un
+    // fallo del servidor —es que no existe—, así que se descarta antes de
+    // consultar y no ensucia los logs.
+    if (!/^[a-f\d]{24}$/i.test(id)) return null;
+
+    try {
+        await connectDB();
+
+        const idea = await Idea.findOne({ _id: id, ...SOLO_PUBLICAS }).lean().exec();
+        return idea ? toSavedIdea(idea) : null;
+    } catch (error) {
+        console.error('Error fetching idea by id:', error);
+        return null;
+    }
+}
+
+/**
+ * Totales del banco público, resueltos con contadores y dos documentos, no
+ * trayendo las 1500 ideas para contarlas en memoria.
+ */
+export async function getPublicIdeaStats(): Promise<{
+    total: number;
+    user: number;
+    bisociation: number;
+    newest: string | null;
+    oldest: string | null;
+}> {
+    try {
+        await connectDB();
+
+        const [user, bisociation, newestDoc, oldestDoc] = await Promise.all([
+            Idea.countDocuments({ ...SOLO_PUBLICAS, category: 'user' }),
+            Idea.countDocuments({ ...SOLO_PUBLICAS, category: 'bisociation' }),
+            Idea.findOne(SOLO_PUBLICAS).sort({ createdAt: -1 }).select('createdAt').lean().exec(),
+            Idea.findOne(SOLO_PUBLICAS).sort({ createdAt: 1 }).select('createdAt').lean().exec(),
+        ]);
+
+        const fecha = (doc: unknown): string | null => {
+            const value = (doc as { createdAt?: Date } | null)?.createdAt;
+            return value instanceof Date ? value.toISOString() : null;
+        };
+
+        return {
+            total: user + bisociation,
+            user,
+            bisociation,
+            newest: fecha(newestDoc),
+            oldest: fecha(oldestDoc),
+        };
+    } catch (error) {
+        console.error('Error fetching idea stats:', error);
+        return { total: 0, user: 0, bisociation: 0, newest: null, oldest: null };
     }
 }
 
@@ -413,8 +521,8 @@ export async function searchIdeasByKeywords(query: string): Promise<SavedIdea[]>
 
         // Búsqueda case-insensitive con regex (OR logic) - solo ideas públicas
         const ideas = await Idea.find({
+            ...SOLO_PUBLICAS,
             text: { $regex: regexPattern, $options: 'i' },
-            $or: [{ userId: null }, { userId: { $exists: false } }]
         })
             .sort({ createdAt: -1 })
             .limit(10) // Limitar a 10 resultados

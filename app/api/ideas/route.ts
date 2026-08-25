@@ -1,5 +1,12 @@
 import { NextResponse } from 'next/server';
-import { getIdeas, getIdeasByCategory, highlightIdea, deletePublicIdea, saveIdea } from '@/lib/db';
+import {
+    getIdeas,
+    countPublicIdeas,
+    IDEAS_POR_PAGINA,
+    highlightIdea,
+    deletePublicIdea,
+    saveIdea,
+} from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
@@ -8,16 +15,19 @@ import { auth } from '@/auth';
 const ADMIN_EMAIL = 'damianlafferranderie@gmail.com';
 
 /**
- * GET /api/ideas?category=user|bisociation
- * Obtiene todas las ideas o filtradas por categoría
- * 
+ * GET /api/ideas?category=user|bisociation&limit=60&skip=0
+ * Obtiene una página de ideas públicas, de la más reciente a la más vieja.
+ *
+ * Devuelve `total` y `hasMore` para que el banco sepa si le queda algo por pedir.
+ * Ya no existe la variante «todas»: la colección pasó las 1500 ideas y crece.
+ *
  * @param request - Request object de Next.js
- * @returns JSON con array de ideas
- * 
+ * @returns JSON con array de ideas, total y si hay más
+ *
  * @example
- * GET /api/ideas -> Todas las ideas
- * GET /api/ideas?category=user -> Solo ideas del usuario
- * GET /api/ideas?category=bisociation -> Solo bisociaciones
+ * GET /api/ideas -> Primera página, ambas categorías
+ * GET /api/ideas?category=user -> Primera página de ideas del usuario
+ * GET /api/ideas?category=bisociation&skip=60 -> Segunda página de bisociaciones
  */
 export async function GET(request: Request) {
     try {
@@ -32,13 +42,24 @@ export async function GET(request: Request) {
             );
         }
 
-        const ideas = category
-            ? await getIdeasByCategory(category as 'user' | 'bisociation')
-            : await getIdeas();
+        const limitRaw = parseInt(searchParams.get('limit') || String(IDEAS_POR_PAGINA), 10);
+        const skipRaw = parseInt(searchParams.get('skip') || '0', 10);
+        const limit = Number.isNaN(limitRaw) ? IDEAS_POR_PAGINA : limitRaw;
+        const skip = Math.max(Number.isNaN(skipRaw) ? 0 : skipRaw, 0);
+
+        const filtro = (category as 'user' | 'bisociation' | null) ?? undefined;
+
+        const [ideas, total] = await Promise.all([
+            getIdeas({ limit, skip, category: filtro }),
+            countPublicIdeas(filtro),
+        ]);
 
         return NextResponse.json({
             ideas,
             count: ideas.length,
+            total,
+            skip,
+            hasMore: skip + ideas.length < total,
             category: category || 'all'
         });
     } catch (error) {

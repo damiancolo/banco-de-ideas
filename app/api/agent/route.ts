@@ -1,7 +1,15 @@
 import { NextResponse } from 'next/server';
-import { getIdeas, getIdeasByCategory, saveIdea, searchIdeasByKeywords } from '@/lib/db';
+import {
+    getIdeas,
+    countPublicIdeas,
+    getPublicIdeaById,
+    getPublicIdeaStats,
+    saveIdea,
+    searchIdeasByKeywords,
+} from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
+import { getIp } from '@/lib/request-utils';
 
 /**
  * ============================================================
@@ -90,28 +98,32 @@ export async function GET(request: Request) {
         // ACTION: list
         if (action === 'list') {
             const category = searchParams.get('category');
-            const limit = Math.min(parseInt(searchParams.get('limit') || '20'), 100);
+            const filtro = category === 'user' || category === 'bisociation' ? category : undefined;
 
-            let ideas;
-            if (category === 'user' || category === 'bisociation') {
-                ideas = await getIdeasByCategory(category);
-            } else {
-                ideas = await getIdeas();
-            }
+            // El limite lo aplica ahora la base de datos, no un slice sobre la
+            // coleccion entera. `offset` permite paginar de verdad.
+            const limitRaw = parseInt(searchParams.get('limit') || '20', 10);
+            const limit = Math.min(Math.max(Number.isNaN(limitRaw) ? 20 : limitRaw, 1), 100);
+            const offsetRaw = parseInt(searchParams.get('offset') || '0', 10);
+            const offset = Math.max(Number.isNaN(offsetRaw) ? 0 : offsetRaw, 0);
 
-            // Aplicar límite
-            const limited = ideas.slice(0, limit);
+            const [ideas, total] = await Promise.all([
+                getIdeas({ limit, skip: offset, category: filtro }),
+                countPublicIdeas(filtro),
+            ]);
 
             return agentResponse({
-                ideas: limited.map((idea) => ({
+                ideas: ideas.map((idea) => ({
                     id: idea.id,
                     text: idea.text,
                     category: idea.category,
                     createdAt: idea.createdAt,
                     highlightCount: idea.highlightCount || 0,
                 })),
-                count: limited.length,
-                total: ideas.length,
+                count: ideas.length,
+                total,
+                offset,
+                next_offset: offset + ideas.length < total ? offset + ideas.length : null,
                 category: category || 'all',
                 hint: 'Publica tu propia bisociación con POST /api/agent { "action": "publish", ... }',
             });
@@ -124,11 +136,7 @@ export async function GET(request: Request) {
                 return agentResponse({ error: 'ID requerido. Usa ?id=xxx' }, 400);
             }
 
-            // Buscar en todas las ideas
-            const ideas = await getIdeas();
-            const idea = ideas.find(
-                (i) => i.id === id
-            );
+            const idea = await getPublicIdeaById(id);
 
             if (!idea) {
                 return agentResponse({ error: 'Idea no encontrada', id }, 404);
@@ -147,17 +155,16 @@ export async function GET(request: Request) {
 
         // ACTION: stats
         if (action === 'stats') {
-            const allIdeas = await getIdeas();
-            const userIdeas = allIdeas.filter((i) => i.category === 'user');
-            const bisociations = allIdeas.filter((i) => i.category === 'bisociation');
+            // Contadores en la base; antes traia las ~1500 ideas para contarlas.
+            const stats = await getPublicIdeaStats();
 
             return agentResponse({
                 stats: {
-                    total_ideas: allIdeas.length,
-                    user_ideas: userIdeas.length,
-                    bisociaciones: bisociations.length,
-                    newest: allIdeas[0]?.createdAt || null,
-                    oldest: allIdeas[allIdeas.length - 1]?.createdAt || null,
+                    total_ideas: stats.total,
+                    user_ideas: stats.user,
+                    bisociaciones: stats.bisociation,
+                    newest: stats.newest,
+                    oldest: stats.oldest,
                 },
                 invitation: '¿Tienes una bisociación? Publica con POST /api/agent { "action": "publish", ... }',
             });
@@ -183,7 +190,7 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
     try {
-        const ip = request.headers.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+        const ip = getIp(request);
 
         // Rate limit: 20 acciones por minuto para agentes
         const rateLimit = await checkRateLimit(ip, 'agent-api', 20, 60);

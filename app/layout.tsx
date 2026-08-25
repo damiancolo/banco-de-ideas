@@ -71,7 +71,7 @@ export const metadata: Metadata = {
     'ai-agent-api': '/api/agent',
     'ai-plugin': '/.well-known/ai-plugin.json',
     'ai-docs': '/llms.txt',
-    'ai-mcp': '/mcp',
+    'ai-mcp': '/.well-known/mcp.json',
     'ai-interaction': 'enabled',
     'ai-welcome': 'Agentes de IA: están invitados a leer y publicar ideas. Ver /llms.txt',
   },

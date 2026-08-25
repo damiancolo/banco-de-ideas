@@ -94,7 +94,7 @@ app/
   api/
     analyze/route.ts            # Chat/bisociaciones/analisis (OpenAI) [rate limit: 15/min]
     speak/route.ts              # Text-to-speech (TTS) [rate limit: 10/min]
-    ideas/route.ts              # CRUD de ideas publicas [rate limit: 5/min POST, 10/min DELETE]
+    ideas/route.ts              # CRUD de ideas publicas, GET paginado (limit/skip -> total/hasMore) [rate limit: 5/min POST, 10/min DELETE]
     ideas/comments/route.ts     # Comentarios en ideas [rate limit: 10/min]
     search/semantic/route.ts    # Busqueda semantica publica [rate limit: 15/min]
     search/keywords/route.ts    # Busqueda por texto publica [rate limit: 20/min]
@@ -122,6 +122,11 @@ components/
 hooks/
 lib/
   db.ts                         # Capa de datos (saveIdea, getIdeas, getUserIdeas, etc.)
+                                # getIdeas() SIEMPRE lleva limite (60 por defecto, tope 200).
+                                # Para contar: countPublicIdeas / getPublicIdeaStats.
+                                # SOLO_PUBLICAS es el filtro canonico de "idea publica":
+                                # usarlo, no copiarlo (las copias sueltas dejaban pasar
+                                # ideas de organizacion al banco publico).
   mongodb.ts                    # Conexion singleton a MongoDB (Mongoose)
   auth-client.ts                # MongoClient nativo para el MongoDB Adapter de NextAuth
   auth-utils.ts                 # Utilidades de autenticacion (getAuthSession, etc.)
@@ -240,7 +245,12 @@ El proyecto incluye una capa completa para que agentes de IA descubran e interac
 
 - **Descubrimiento**: `llms.txt`, `ai-plugin.json`, `openapi.json`, headers HTTP (`X-AI-Agent-API`, `X-AI-Docs`), JSON-LD semantico, comentario HTML invisible
 - **API REST**: `GET/POST /api/agent` — listar, publicar bisociaciones/ideas, buscar (rate limit: 20/min)
-- **MCP Server**: `mcp-server/` — servidor Model Context Protocol con tools (`leer_ideas`, `publicar_bisociacion`, `publicar_idea`, `buscar_ideas`, `estadisticas`), resources y prompts
+- **MCP Server**: `mcp-server/` — servidor Model Context Protocol con tools (`leer_ideas`, `publicar_bisociacion`, `publicar_idea`, `buscar_ideas`, `estadisticas`), resources y prompts.
+  ⚠️ Habla por **stdio** (npm `banco-de-ideas-mcp`). **No hay endpoint MCP por HTTP**:
+  hasta el 25 de ago 2026 el sitio anunciaba `/mcp` en la cabecera `X-AI-MCP`, el
+  JSON-LD y el `llms.txt`, y esa ruta daba 404. Ahora todo eso apunta a
+  `/.well-known/mcp.json`, que sí existe. El diseño del endpoint HTTP, si se decide
+  hacerlo, está en `~/Desktop/programeitor/BRIEF-MCP-HTTP.md`
 - **Middleware**: headers invisibles en todas las respuestas + content negotiation (JSON requests a `/` o `/banco` redirigen a `/api/agent`)
 - **Sin autenticacion**: la API de agentes es abierta, protegida solo por rate limiting
 
@@ -311,10 +321,13 @@ El plugin en `estudioprompt.com/wp-content/plugins/ai-bot-tracker/ai-bot-tracker
 - Estetica gold/beige (#C5A47E, #F8F5F0)
 
 ## Seguridad implementada
-- Rate limiting en los endpoints API (fail-closed: si la BD falla, rechaza).
-  ⚠️ En ago 2026 se encontró que `/api/lacuna-propuesta` y `/api/extract-text` no
-  lo tenían pese a que aquí ponía «TODOS». El primero ya está cubierto; el segundo
-  sigue sin él, aunque tiene tope de 500 KB por archivo.
+- Rate limiting en **todos** los endpoints API (fail-closed: si la BD falla, rechaza).
+  En ago 2026 se encontró que `/api/lacuna-propuesta` y `/api/extract-text` no lo
+  tenían pese a que aquí ya ponía «TODOS»; los dos quedaron cubiertos el 25 de ago
+  (`extract-text`: 15/min, más alto que las rutas que escriben porque `/planes`
+  sube los archivos de a uno en un bucle).
+- La extracción de IP pasa siempre por `getIp()`; ninguna ruta lee
+  `x-forwarded-for` en crudo.
 - Extraccion de IP con validacion anti-spoofing (lib/request-utils.ts)
 - Headers de seguridad en next.config.mjs (nosniff, DENY frame, XSS protection, referrer policy, permissions policy)
 - Errores 500 sanitizados: no exponen detalles internos, solo mensajes genericos
