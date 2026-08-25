@@ -147,9 +147,10 @@ export type OpcionesDePagina = {
 /**
  * Obtiene una página de ideas públicas, de la más reciente a la más vieja.
  *
- * Antes devolvía la colección entera en cada carga de /banco (1501 documentos en
- * agosto de 2026, y creciendo sin techo). Ahora siempre hay límite: para contar
- * está `countPublicIdeas`, y para las agregadas `getPublicIdeaStats`.
+ * Antes devolvía la colección entera en cada carga de /banco: 897 ideas públicas
+ * en agosto de 2026 (de 1509 documentos en la colección), y creciendo sin techo.
+ * Ahora siempre hay límite: para contar está `countPublicIdeas`, y para las
+ * agregadas `getPublicIdeaStats`.
  *
  * @example
  * ```typescript
@@ -245,8 +246,8 @@ export async function getPublicIdeaById(id: string): Promise<SavedIdea | null> {
 }
 
 /**
- * Totales del banco público, resueltos con contadores y dos documentos, no
- * trayendo las 1500 ideas para contarlas en memoria.
+ * Totales del banco público, resueltos con contadores y dos documentos, en vez de
+ * traerse las ideas enteras para contarlas en memoria.
  */
 export async function getPublicIdeaStats(): Promise<{
     total: number;
