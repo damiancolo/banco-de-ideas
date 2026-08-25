@@ -22,44 +22,106 @@ Aplicacion web de gestion creativa con IA. La entrada es texto (para dictar se u
 
 Todo en un solo proyecto Vercel: `banco-de-ideas` (ID: `prj_nSLBUjl6RLxljIYtqRpYsRCZn09j`)
 
-| Rama | Propósito | URL | Base de datos MongoDB |
-|---|---|---|---|
-| `develop` | Desarrollo activo | preview URL aleatoria (ver Vercel) | ⚠️ **`banco-ideas` (PRODUCCION)** |
-| `staging` | Pruebas antes de producción | preview estable (ver Active Branches en Vercel) | ⚠️ sin verificar; asumir producción |
-| `main` | Producción | `www.unbancodeideas.com` | `banco-ideas` |
+### Hay dos espacios, y sólo uno toca el banco público
 
-> ### 🚨 LOS PREVIEWS ESCRIBEN EN PRODUCCION
+| Rama | Dónde corre | Base de datos | Qué es |
+|---|---|---|---|
+| `develop` | preview con URL aleatoria (ver Vercel) | `banco-ideas-pruebas` | espacio de pruebas |
+| `staging` | preview estable (ver Active Branches) | `banco-ideas-pruebas` | espacio de pruebas |
+| `main` | `www.unbancodeideas.com` | **`banco-ideas`** | el banco real |
+| local `npm run dev` | `localhost:3000` | `banco-ideas-pruebas` | espacio de pruebas |
+
+**En los previews podés guardar, borrar y romper lo que quieras.** No tocan el
+banco público. Sólo `main` escribe en `banco-ideas`.
+
+> #### Cómo llegó a ser así (25 ago 2026)
 >
-> Verificado el 21 ago 2026: se guardo una idea desde el preview de `develop` y
-> aparecio en `banco-ideas`, la base real. **Esta tabla decia `banco-ideas-pruebas`
-> y era falso.**
+> Hasta ese día **los previews escribían en la base de producción**. No era una
+> teoría: el 21 de ago se guardó una idea desde el preview de `develop` y apareció
+> en `banco-ideas`. Peor todavía, esta misma tabla afirmaba que usaban
+> `banco-ideas-pruebas`, así que quien probaba ahí lo hacía convencido de estar
+> haciendo lo correcto.
 >
-> El motivo esta en el codigo: `lib/mongodb.ts` lee **solo** `MONGODB_URI`. No hay
-> ninguna rama que mire `MONGODB_URI_PRUEBAS` segun el entorno — esa variable la
-> usan unicamente los scripts de `scripts/`. Asi que la base depende por completo
-> de que valor tenga `MONGODB_URI` en cada Environment de Vercel, y en Preview
-> apunta a produccion.
+> El motivo está en el código: `lib/mongodb.ts` lee **sólo** `MONGODB_URI`. No hay
+> ninguna rama que mire `MONGODB_URI_PRUEBAS` según el entorno — esa variable la
+> usan únicamente los scripts de `scripts/`. Así que la base depende por completo
+> de qué valor tenga `MONGODB_URI` en cada Environment de Vercel.
 >
-> **Consecuencia practica: probar el flujo de guardado en un preview ensucia el
-> banco publico.** Para probar de verdad, correr en local con
-> `.env.development.local` apuntando a `banco-ideas-pruebas` (Next lo carga antes
-> que `.env.local` y gana).
+> **Lo que se hizo**: en Vercel, `MONGODB_URI` del Environment **Preview** pasó a
+> apuntar a `banco-ideas-pruebas`. La de **Production** no se tocó. Verificado
+> publicando una idea desde staging: subió las pruebas de 399 a 400 y producción
+> se quedó en 897.
 >
-> Se arregla poniendo `MONGODB_URI` = la URI de pruebas en el Environment
-> **Preview** del proyecto en Vercel. **Pendiente de decision del owner.**
+> Antes se hizo copia de seguridad completa de producción (ver «Respaldos»).
+
+> #### ⚠️ Dos trampas que siguen vivas
+>
+> **1. Las variables de entorno sólo entran en despliegues nuevos.** Si cambiás
+> una en Vercel, los despliegues que ya existen siguen con la vieja. Hay que
+> redesplegar (`vercel redeploy <url>`) o hacer un push.
+>
+> **2. En local, `.env.development.local` sólo vale para `next dev`.** Si corrés
+> `npm run build && npm start` en tu máquina, ese archivo NO se carga: manda
+> `.env.local`, cuya `MONGODB_URI` apunta a **producción**. Compilar no escribe
+> nada, así que `npm run build` a secas es inofensivo; arrancar el servidor de
+> producción en local y guardar una idea, no.
+
+### Qué comprueba cada paso (y qué no)
+
+`staging` y los previews de `develop` usan **la misma base**, así que pasar por
+staging comprueba que el código compila, que las páginas se sirven y que el
+guardado funciona — pero **no** comprueba nada contra los datos reales. Si un
+fallo depende de una idea concreta que sólo existe en producción, en el preview
+no se reproduce: hay que mirar producción, que es leer y no tiene riesgo.
+
+Ese es el precio del cambio, y se aceptó a sabiendas: es mejor que la alternativa
+de no tener dónde probar el guardado.
 
 Team ID Vercel: `team_ABSUeFTZC1zeHHswIAVbNDJ0`
 
 **Flujo de trabajo**:
-1. Trabajar en `develop` → push → preview en Vercel
-2. Merge `develop` → `staging` → preview estable para probar
-3. Merge `staging` → `main` → auto-deploy a producción
+1. Trabajar en `develop` → push → preview en Vercel · base de **pruebas**, probá lo que quieras
+2. Merge `develop` → `staging` → preview estable para QA · base de **pruebas**
+3. Merge `staging` → `main` → auto-deploy a producción · base **real**, aquí sí importa
 
-> El proyecto `banco-de-ideas-pruebas` ya no se usa.
+> Ojo con los nombres parecidos: el que ya no se usa es el *proyecto* de Vercel
+> llamado `banco-de-ideas-pruebas`. La *base de datos* `banco-ideas-pruebas` sí se
+> usa, y desde el 25 ago 2026 es la que ven los previews.
 
 **IMPORTANTE**: Las bases de datos se llaman `banco-ideas` y `banco-ideas-pruebas` (SIN "de"). No usar `banco-de-ideas` ni `banco-de-ideas-pruebas`.
 
 **Credenciales**: ver `credentials.md` (gitignoreado).
+
+## Respaldos
+
+**Dónde**: `~/Desktop/programeitor/respaldo-banco-ideas/<AAAA-MM-DD>/`
+(fuera del repo a propósito — contiene ideas privadas de usuarios reales y datos
+de cuentas OAuth; **nunca commitear**).
+
+Una carpeta por fecha, con un `.json` por colección más un `RESUMEN.json`. Se
+respalda todo menos `visits`, que se auto-borra a los 90 días y se regenera sola.
+
+**Copia del 25 ago 2026** (tomada antes de cambiar el entorno Preview):
+
+| Colección | Documentos |
+|---|---|
+| `ideas` | 1509 (897 públicas · 612 privadas) |
+| `imported_tasks` | 246 |
+| `auth_errors` | 56 |
+| `accounts` · `users` · `memberships` | 5 cada una |
+| `organizations` · `google_tokens` | 1 cada una |
+
+Verificada documento a documento contra la base, y cotejando el texto de una idea
+concreta. 20 MB (los `embedding` ocupan casi todo).
+
+**Para volver a respaldar**: no hay script en el repo; es un volcado directo con
+`find({}).toArray()` por colección usando la `MONGODB_URI` de producción. Lo
+importante es que sea **antes** de cualquier cambio de entorno o migración, y que
+después se cuente lo volcado contra la base en vez de dar por bueno que no hubo
+error.
+
+MongoDB Atlas tiene además sus propias copias, pero esto es un artefacto local que
+se puede leer y verificar sin depender del panel.
 
 ## Variables de entorno
 ```
@@ -350,15 +412,18 @@ npm run map-project  # Genera esquema visual del proyecto
 ```
 
 ## Flujo de trabajo Git
-1. Trabajar en `develop` -> push -> preview en Vercel (BD: ⚠️ **produccion**, ver el aviso de arriba)
-2. Merge `develop` → `staging` -> preview estable para QA (BD: ⚠️ **produccion**)
-3. Merge `staging` → `main` -> auto-deploy a produccion (BD: `banco-ideas`)
+1. Trabajar en `develop` -> push -> preview en Vercel (BD: `banco-ideas-pruebas`)
+2. Merge `develop` → `staging` -> preview estable para QA (BD: `banco-ideas-pruebas`)
+3. Merge `staging` → `main` -> auto-deploy a produccion (BD: **`banco-ideas`**, la real)
 
 **IMPORTANTE**: Nunca pushear directo a `main`. Nunca a `staging` sin pasar por `develop`.
 
 ## Notas para agentes
 - El archivo `env.example` tiene el formato correcto de las variables
-- Para probar cambios localmente: usar `MONGODB_URI` apuntando a `banco-ideas-pruebas` en `.env.local`
+- Para probar en local no hay que tocar nada: `.env.development.local` ya apunta a
+  `banco-ideas-pruebas` y Next lo carga antes que `.env.local` en `next dev`.
+  Cuidado: eso NO aplica a `npm start`, que usaría la `MONGODB_URI` de `.env.local`
+  (producción)
 - Para el area privada: `AUTH_SECRET`, `AUTH_GOOGLE_ID`, `AUTH_GOOGLE_SECRET` deben estar en Vercel
 - El OAuth client de Google esta en GCP `perfect-period-473623-p8` (project number 700254029805)
 - Redirect URIs autorizados en Google: `localhost:3000`, `banco-de-ideas.vercel.app`, `www.unbancodeideas.com`
