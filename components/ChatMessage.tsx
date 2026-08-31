@@ -6,6 +6,8 @@ interface ChatMessageProps {
     plainText?: string;
     onSpeak?: (text: string) => void;
     onColectivizar?: (mode: 'anon' | 'user') => Promise<void>;
+    /** Qué se va a publicar exactamente. Se enseña antes de confirmar. */
+    colectivizarPreview?: string;
     onCalendizar?: () => void;
 }
 
@@ -94,7 +96,7 @@ function MarkdownContent({ content }: { content: string }) {
     return <div className="space-y-0.5">{elements}</div>;
 }
 
-export default function ChatMessage({ role, content, plainText, onSpeak, onColectivizar, onCalendizar }: ChatMessageProps) {
+export default function ChatMessage({ role, content, plainText, onSpeak, onColectivizar, colectivizarPreview, onCalendizar }: ChatMessageProps) {
     const isUser = role === 'user';
     const [showDropdown, setShowDropdown] = useState(false);
     const [done, setDone] = useState(false);
@@ -147,13 +149,24 @@ export default function ChatMessage({ role, content, plainText, onSpeak, onColec
                                     <button
                                         onClick={() => setShowDropdown(v => !v)}
                                         className="p-2 text-gray-400 hover:text-[#C5A47E] hover:bg-white rounded-lg transition-all flex items-center gap-2 text-xs font-medium border border-gray-200 hover:border-[#C5A47E] bg-white/50 hover:shadow-sm"
+                                        title="Publicar tu idea en el banco público"
                                     >
                                         <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
                                         Colectivizar
                                     </button>
                                 )}
                                 {showDropdown && !done && (
-                                    <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-10 min-w-[140px]">
+                                    <div className="absolute bottom-full left-0 mb-1 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden z-10 min-w-[140px] max-w-[280px]">
+                                        {colectivizarPreview && (
+                                            <div className="px-4 py-2.5 border-b border-gray-100 bg-gray-50/60">
+                                                <p className="text-[10px] uppercase tracking-wide text-gray-400 font-medium mb-1">
+                                                    Se publicará
+                                                </p>
+                                                <p className="text-xs text-gray-600 leading-snug line-clamp-3">
+                                                    {colectivizarPreview}
+                                                </p>
+                                            </div>
+                                        )}
                                         <button
                                             className="w-full text-left px-4 py-2.5 text-xs text-gray-600 hover:bg-gray-50 hover:text-[#C5A47E] transition-colors"
                                             onClick={async () => {

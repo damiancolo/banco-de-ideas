@@ -289,7 +289,14 @@ Usuario visita /privado
 
 ### Features exclusivas del area privada
 - **Botón Escuchar**: TTS en mensajes del asistente (ChatMessage)
-- **Botón Colectivizar** (en mensajes del chat): aparece junto a "Escuchar" en respuestas del asistente. Opciones: "Anónimo" (publica texto tal cual) o "Con usuario" (publica con prefijo `[Nombre]: texto`). POST a `/api/ideas` (publico).
+- **Botón Colectivizar** (en mensajes del chat): aparece junto a "Escuchar" en respuestas del asistente. **Publica SIEMPRE la idea del usuario, nunca el texto de la IA.**
+  Opciones: "Anónimo" (publica la idea tal cual) o "Con usuario" (con prefijo `[Nombre]: texto`). POST a `/api/ideas` (publico).
+  El desplegable enseña el texto exacto antes de confirmar.
+  ⚠️ Hasta el 31 ago 2026 esto estaba mal: los mensajes del asistente no llevaban
+  `colectivizableText`, así que el botón caía en el `plainText` del propio mensaje y
+  colectivizar publicaba **la prosa de la IA** en el banco público en lugar de la idea.
+  Pasó de verdad. Ahora, si un mensaje no sabe qué idea le corresponde, el botón
+  directamente no se muestra: es imposible publicar la respuesta por accidente.
 - **Botón Colectivizar** (en IdeaModal del banco privado): mismo comportamiento, icono compartir junto al calendario. Solo visible cuando `apiPrefix === '/api/privado'`.
 - **Botón Google Calendar** (en IdeaModal): abre `calendar.google.com/render` con la idea pre-cargada. Solo en area privada.
 - **Atribución de autor**: el prefijo `[Nombre]: ` en ideas colectivizadas se parsea en BancoView e IdeaModal para mostrar el nombre como badge en lugar de "Inteligencia Artesanal", y el texto limpio en el contenido.

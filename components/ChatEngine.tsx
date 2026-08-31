@@ -11,7 +11,16 @@ type Message = {
   content: React.ReactNode | string;
   plainText?: string;
   colectivizable?: boolean;
-  colectivizableText?: string; // texto a colectivizar (puede diferir del plainText del mensaje)
+  /**
+   * La idea DEL USUARIO que este mensaje publica al pulsar «Colectivizar».
+   *
+   * Nunca es el texto de la IA. Si falta, el botón no se muestra: antes caía por
+   * defecto en el `plainText` del mensaje, así que colectivizar una respuesta del
+   * asistente publicaba la prosa de la IA en el banco público en vez de la idea.
+   */
+  colectivizableText?: string;
+  /** Lo que se manda a Google Calendar; si falta, el texto del propio mensaje. */
+  calendarText?: string;
 };
 
 type Idea = {
@@ -273,14 +282,17 @@ export default function ChatEngine({
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 60000);
 
+      // La idea sobre la que va todo esto. Se calcula una vez: se manda a la API y
+      // se guarda en el mensaje, para que «Colectivizar» sepa qué publicar.
+      const ideaDelUsuario =
+        currentIdea || messages.findLast(m => m.role === 'user')?.plainText || textoUsuario || '';
+
       const response = await fetch(`${apiPrefix}/analyze`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           action,
-          idea: action === 'chat'
-            ? (textoUsuario ?? '')
-            : (currentIdea || messages.findLast(m => m.role === 'user')?.plainText || textoUsuario || ''),
+          idea: action === 'chat' ? (textoUsuario ?? '') : ideaDelUsuario,
           history: messages,
         }),
         signal: controller.signal,
@@ -346,6 +358,8 @@ export default function ChatEngine({
         content,
         plainText: plainTextForContext,
         colectivizable: action !== 'similar',
+        // Colectivizar publica la idea, no la respuesta.
+        colectivizableText: ideaDelUsuario,
       }]);
 
       // Los botones vuelven: siempre se puede pedir lo otro, o seguir escribiendo.
@@ -545,6 +559,8 @@ export default function ChatEngine({
             content: content,
             plainText: plainTextForContext,
             colectivizable: action !== 'similar',
+            // `currentIdea` puede no haberse propagado aún en este mismo manejador.
+            colectivizableText: currentIdea || userText,
           };
           setMessages(prev => [...prev, reply]);
 
@@ -608,6 +624,7 @@ export default function ChatEngine({
         plainText: "Guardada.",
         colectivizable: true,
         colectivizableText: userText,
+        calendarText: userText,
       }]);
       setLoading(false);
       setMostrarAcciones(true);
@@ -649,11 +666,12 @@ export default function ChatEngine({
                 content={msg.content}
                 plainText={msg.plainText}
                 onSpeak={msg.role === 'assistant' ? handleTTS : undefined}
-                onColectivizar={msg.role === 'assistant' && msg.colectivizable && apiPrefix === '/api/privado'
-                  ? (mode) => handleColectivizar(msg.colectivizableText ?? msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''), mode)
+                colectivizarPreview={msg.colectivizableText}
+                onColectivizar={msg.role === 'assistant' && msg.colectivizable && msg.colectivizableText && apiPrefix === '/api/privado'
+                  ? (mode) => handleColectivizar(msg.colectivizableText!, mode)
                   : undefined}
                 onCalendizar={msg.role === 'assistant' && msg.colectivizable
-                  ? () => handleCalendizar(msg.colectivizableText ?? msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''))
+                  ? () => handleCalendizar(msg.calendarText ?? msg.plainText ?? (typeof msg.content === 'string' ? msg.content : ''))
                   : undefined}
               />
             ))}
