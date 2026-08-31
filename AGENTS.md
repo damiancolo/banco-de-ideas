@@ -287,6 +287,19 @@ Usuario visita /privado
 - **No indexable**: `robots: { index: false }` en el layout privado
 - **Sin rate limit por IP en privado**: las rutas privadas confian en la sesion JWT
 
+### Qué del área privada sale al público (decisión del owner, 31 ago 2026)
+
+| Qué | Dónde acaba |
+|---|---|
+| Tu idea | **privada**, sólo en tu espacio (`savePrivateIdea` con `userId`) |
+| Las 3 ideas similares que genera la IA | **banco público**, pestaña «Bisociaciones Artificiales» (`saveIdeas`, sin `userId`, `category: 'bisociation'`) |
+| Lo que colectivizás a mano | banco público, y publica **tu idea**, nunca el texto de la IA |
+
+Las 3 derivadas se publican **solas**, sin pulsar nada. Está decidido así a
+propósito: es lo que alimenta las Bisociaciones Artificiales del banco público.
+Parece un descuido —la idea se guarda privada y sus derivadas no— y encima el
+log decía «bisociaciones privadas», que era falso. Antes de cambiarlo, preguntar.
+
 ### Features exclusivas del area privada
 - **Botón Escuchar**: TTS en mensajes del asistente (ChatMessage)
 - **Botón Colectivizar** (en mensajes del chat): aparece junto a "Escuchar" en respuestas del asistente. **Publica SIEMPRE la idea del usuario, nunca el texto de la IA.**

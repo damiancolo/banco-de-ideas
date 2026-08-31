@@ -210,6 +210,21 @@ export async function POST(request: Request) {
                     );
                 }
 
+                /**
+                 * DECISIÓN DEL OWNER (31 ago 2026): las 3 ideas que genera la IA a
+                 * partir de una idea privada van al banco PÚBLICO, a la pestaña
+                 * «Bisociaciones Artificiales». Por eso se usa `saveIdeas` —que no
+                 * lleva userId, o sea públicas— y no `savePrivateIdea`.
+                 *
+                 * NO es un descuido: parece uno, porque justo arriba la idea del
+                 * usuario sí se guarda con `savePrivateIdea(..., userId)`, y porque
+                 * este bloque llevaba un log que decía «bisociaciones privadas» y
+                 * hacía pensar que la asimetría era un error. Lo era el log, no el
+                 * comportamiento. Antes de «arreglar» esto, preguntar al owner.
+                 *
+                 * Lo que SÍ es privado es la idea del usuario: sólo salen al público
+                 * las 3 derivadas que produce la IA.
+                 */
                 const ideasToSave = result.map((item: SuggestedIdea) => ({
                     text: item.summary || item.title || item.text || JSON.stringify(item),
                     category: 'bisociation' as const
@@ -217,7 +232,7 @@ export async function POST(request: Request) {
                 try {
                     await saveIdeas(ideasToSave);
                 } catch (err: unknown) {
-                    logger.error('Error guardando bisociaciones privadas:', err);
+                    logger.error('Error publicando las bisociaciones de la IA en el banco público:', err);
                 }
 
                 return NextResponse.json({
