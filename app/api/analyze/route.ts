@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import OpenAI from 'openai';
 import { saveIdea, saveIdeas } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { PROMPTS, API } from '@/lib/constants';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { getAuthUserId } from '@/lib/auth-utils';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 /**
  * Tipo para los mensajes sugeridos por la IA
@@ -113,7 +115,9 @@ export async function POST(request: Request) {
         if (action === "save") {
             if (idea) {
                 try {
-                    await saveIdea(idea, 'user');
+                    const saved = await saveIdea(idea, 'user');
+                    const authorUserId = await getAuthUserId().catch(() => null);
+                    after(() => notifyAdminNewIdea({ ...saved, scope: 'public' }, authorUserId));
                     return NextResponse.json({ result: "Idea guardada exitosamente" });
                 } catch (err: unknown) {
                     const errorMessage = err instanceof Error ? err.message : "Error desconocido";

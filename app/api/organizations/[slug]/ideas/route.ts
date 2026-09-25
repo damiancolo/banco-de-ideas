@@ -1,10 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { auth } from '@/auth';
 import { requireMembership } from '@/lib/enterprise/auth';
 import { getOrganizationIdeas, saveOrganizationIdea } from '@/lib/db';
 import { getIp } from '@/lib/request-utils';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { logger } from '@/lib/logger';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 export async function GET(
     request: Request,
@@ -78,6 +79,8 @@ export async function POST(
             membership.organization._id, 
             session?.user?.id
         );
+
+        after(() => notifyAdminNewIdea({ ...idea, scope: 'organization' }, session?.user?.id));
 
         return NextResponse.json({
             success: true,

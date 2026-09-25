@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import {
     getIdeas,
     countPublicIdeas,
@@ -10,6 +10,8 @@ import {
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { getAuthUserId } from '@/lib/auth-utils';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 /**
  * ============================================================
@@ -246,6 +248,8 @@ export async function POST(request: Request) {
             }
 
             const idea = await saveIdea(bisociationText, 'bisociation');
+            const authorUserId = await getAuthUserId().catch(() => null);
+            after(() => notifyAdminNewIdea({ ...idea, scope: 'public' }, authorUserId));
 
             return agentResponse({
                 success: true,
@@ -281,6 +285,8 @@ export async function POST(request: Request) {
             }
 
             const idea = await saveIdea(ideaText, 'bisociation');
+            const authorUserId = await getAuthUserId().catch(() => null);
+            after(() => notifyAdminNewIdea({ ...idea, scope: 'public' }, authorUserId));
 
             return agentResponse({
                 success: true,

@@ -1,10 +1,12 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { connectDB } from '@/lib/mongodb';
 import Idea from '@/lib/models/Idea';
 import { generateEmbedding, cosineSimilarity } from '@/lib/utils/embeddings';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { getAuthUserId } from '@/lib/auth-utils';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 interface IdeaWithEmbedding {
     _id: string;
@@ -58,6 +60,9 @@ export async function POST(req: Request) {
                 embedding: queryEmbedding,
             });
             savedIdeaId = savedIdea._id.toString();
+            const authorUserId = await getAuthUserId().catch(() => null);
+            const notifiable = { id: savedIdeaId, text: savedIdea.text, createdAt: savedIdea.createdAt, scope: 'public' as const };
+            after(() => notifyAdminNewIdea(notifiable, authorUserId));
             logger.info(`Auto-saved search query as new idea with ID: ${savedIdeaId}`);
         } catch (saveError) {
             // Don't fail the search if save fails, just log it

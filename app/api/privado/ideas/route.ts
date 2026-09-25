@@ -1,8 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { requireAuth } from '@/lib/auth-utils';
 import { getUserIdeas, savePrivateIdea, highlightPrivateIdea, deletePrivateIdea } from '@/lib/db';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 export async function GET(request: Request) {
     let userId: string;
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
         }
 
         const idea = await savePrivateIdea(text, category, userId);
+        after(() => notifyAdminNewIdea({ ...idea, scope: 'private' }, userId));
         return NextResponse.json({ idea });
     } catch (error) {
         return NextResponse.json({ error: 'Error al guardar idea' }, { status: 500 });

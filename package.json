@@ -27,7 +27,8 @@
     "react-dom": "19.2.1",
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.0",
-    "remark-gfm": "^4.0.1"
+    "remark-gfm": "^4.0.1",
+    "resend": "^6.29.0"
   },
   "devDependencies": {
     "@anthropic-ai/claude-code": "^2.1.3",

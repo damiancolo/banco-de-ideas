@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { auth } from '@/auth';
 import { requireMembership } from '@/lib/enterprise/auth';
 import { getAIProvider } from '@/lib/ai/providers';
@@ -7,6 +7,7 @@ import Organization from '@/lib/models/Organization';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 import { logger } from '@/lib/logger';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 export async function POST(
     request: Request,
@@ -45,7 +46,8 @@ export async function POST(
         // save action: just persist the idea
         if (action === 'save') {
             if (idea) {
-                await saveOrganizationIdea(idea, 'user', orgId, userId);
+                const saved = await saveOrganizationIdea(idea, 'user', orgId, userId);
+                after(() => notifyAdminNewIdea({ ...saved, scope: 'organization' }, userId));
             }
             return NextResponse.json({ result: 'Idea guardada' });
         }

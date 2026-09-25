@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import {
     getIdeas,
     countPublicIdeas,
@@ -11,6 +11,8 @@ import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 import { auth } from '@/auth';
+import { getAuthUserId } from '@/lib/auth-utils';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 const ADMIN_EMAIL = 'damianlafferranderie@gmail.com';
 
@@ -188,6 +190,9 @@ export async function POST(request: Request) {
         }
 
         const idea = await saveIdea(text, category || 'user');
+
+        const authorUserId = await getAuthUserId().catch(() => null);
+        after(() => notifyAdminNewIdea({ ...idea, scope: 'public' }, authorUserId));
 
         return NextResponse.json({
             success: true,
