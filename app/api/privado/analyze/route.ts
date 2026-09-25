@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 import { requireAuth } from '@/lib/auth-utils';
 import { savePrivateIdea, saveIdeas } from '@/lib/db';
@@ -6,6 +6,7 @@ import { logger } from '@/lib/logger';
 import { PROMPTS, API } from '@/lib/constants';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 type SuggestedIdea = {
     id?: string;
@@ -136,7 +137,8 @@ export async function POST(request: Request) {
         if (action === 'save') {
             if (idea) {
                 try {
-                    await savePrivateIdea(idea, 'user', userId);
+                    const saved = await savePrivateIdea(idea, 'user', userId);
+                    after(() => notifyAdminNewIdea({ ...saved, scope: 'private' }, userId));
                     return NextResponse.json({ result: 'Idea guardada exitosamente' });
                 } catch (err: unknown) {
                     const errorMessage = err instanceof Error ? err.message : 'Error desconocido';

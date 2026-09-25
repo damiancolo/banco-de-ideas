@@ -1,4 +1,4 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, after } from 'next/server';
 import { requireAuth } from '@/lib/auth-utils';
 import { connectDB } from '@/lib/mongodb';
 import Idea from '@/lib/models/Idea';
@@ -6,6 +6,7 @@ import { generateEmbedding, cosineSimilarity } from '@/lib/utils/embeddings';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
 
 interface IdeaWithEmbedding {
     _id: string;
@@ -53,6 +54,8 @@ export async function POST(req: Request) {
                 userId,
             });
             savedIdeaId = savedIdea._id.toString();
+            const notifiable = { id: savedIdeaId, text: savedIdea.text, createdAt: savedIdea.createdAt, scope: 'private' as const };
+            after(() => notifyAdminNewIdea(notifiable, userId));
         } catch (saveError) {
             logger.warn('Failed to auto-save private search query:', saveError);
         }
