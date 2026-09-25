@@ -1,6 +1,7 @@
 import { ObjectId } from 'mongodb';
 import { Resend } from 'resend';
 import { getMongoClient } from '@/lib/auth-client';
+import { OWNER_EMAIL } from '@/lib/owner';
 
 /**
  * Aviso por mail al administrador cada vez que OTRA persona publica una idea.
@@ -26,6 +27,29 @@ const TIMEZONE = 'Europe/Madrid';
 const TITLE_MAX = 60;
 const COLOR_BG = '#faf8f3';
 const COLOR_ACCENT = '#7a1a2e';
+
+/**
+ * Remitente de pruebas de Resend: funciona sin verificar dominio, pero sólo
+ * entrega al email dueño de la cuenta de Resend. Para producción, definir
+ * NOTIFY_EMAIL_FROM con un dominio verificado.
+ */
+const DEFAULT_FROM = 'Banco de Ideas <onboarding@resend.dev>';
+
+/**
+ * Configuración con respaldo: la API key también se acepta como `RESEND` (así
+ * quedó guardada en Vercel), y destinatario/admin caen en el owner del proyecto.
+ */
+function config() {
+    const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
+    return {
+        apiKey: process.env.RESEND_API_KEY || process.env.RESEND,
+        to: process.env.NOTIFY_EMAIL_TO || OWNER_EMAIL,
+        from: process.env.NOTIFY_EMAIL_FROM || DEFAULT_FROM,
+        adminUserId: process.env.ADMIN_USER_ID?.trim(),
+        adminEmail: (process.env.ADMIN_EMAIL || OWNER_EMAIL).trim().toLowerCase(),
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL || vercelUrl,
+    };
+}
 
 function escapeHtml(value: string): string {
     return value
@@ -59,7 +83,7 @@ function titleOf(text: string): string {
  * una idea concreta es la lectura por id de la API de agentes.
  */
 function publicIdeaUrl(ideaId: string): string | null {
-    const base = process.env.NEXT_PUBLIC_SITE_URL?.trim().replace(/\/+$/, '');
+    const base = config().siteUrl?.trim().replace(/\/+$/, '');
     if (!base) return null;
     return `${base}/api/agent?action=get&id=${encodeURIComponent(ideaId)}`;
 }
@@ -77,10 +101,9 @@ async function emailOfUser(userId: string): Promise<string | null> {
 async function isAdmin(authorUserId: string | null | undefined): Promise<boolean> {
     if (!authorUserId) return false;
 
-    const adminUserId = process.env.ADMIN_USER_ID?.trim();
+    const { adminUserId, adminEmail } = config();
     if (adminUserId && authorUserId === adminUserId) return true;
 
-    const adminEmail = process.env.ADMIN_EMAIL?.trim().toLowerCase();
     if (adminEmail) {
         const email = await emailOfUser(authorUserId);
         if (email && email.trim().toLowerCase() === adminEmail) return true;
@@ -155,17 +178,9 @@ export async function notifyAdminNewIdea(
     authorUserId?: string | null
 ): Promise<void> {
     try {
-        const apiKey = process.env.RESEND_API_KEY;
-        const to = process.env.NOTIFY_EMAIL_TO;
-        const from = process.env.NOTIFY_EMAIL_FROM;
-        if (!apiKey || !to || !from) {
-            console.warn('[notifyAdminNewIdea] Falta RESEND_API_KEY, NOTIFY_EMAIL_TO o NOTIFY_EMAIL_FROM; no se envía aviso.');
-            return;
-        }
-
-        // Sin saber quién es el admin, sus propias ideas también dispararían mails.
-        if (!process.env.ADMIN_USER_ID && !process.env.ADMIN_EMAIL) {
-            console.warn('[notifyAdminNewIdea] Falta ADMIN_USER_ID y ADMIN_EMAIL; no se envía aviso.');
+        const { apiKey, to, from } = config();
+        if (!apiKey) {
+            console.warn('[notifyAdminNewIdea] Falta RESEND_API_KEY (o RESEND); no se envía aviso.');
             return;
         }
 
