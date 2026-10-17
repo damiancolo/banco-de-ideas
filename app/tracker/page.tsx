@@ -205,7 +205,7 @@ function TrackerContent() {
                         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
                             {[
                                 { label: "Personas únicas", value: data.uniquePeople, hint: "por día, sin cookies" },
-                                { label: "Páginas vistas por personas", value: data.humanCount, hint: "incluye datos viejos inflados" },
+                                { label: "Páginas vistas por personas", value: data.humanCount, hint: "sin bots ni agentes" },
                                 { label: "Rastreadores de IA", value: data.crawlerCount, hint: "GPTBot, ClaudeBot…" },
                                 { label: "Otros bots", value: data.otherBotCount, hint: "buscadores, curl, previews" },
                                 { label: "Llamadas de agentes (API/MCP)", value: data.agentCount, hint: "acciones en /api/agent" },
@@ -220,10 +220,7 @@ function TrackerContent() {
                             ))}
                         </div>
                         <p className="text-xs text-[#333]/50 mb-6">
-                            {data.v2Since
-                                ? `Datos anteriores al ${new Date(data.v2Since).toLocaleDateString("es", { timeZone: "Europe/Madrid", day: "numeric", month: "long", year: "numeric" })} usan la clasificación vieja y están inflados.`
-                                : "Los datos anteriores al nuevo contador usan la clasificación vieja y están inflados."}
-                            {" "}Personas únicas: con rangos largos es la suma de personas distintas de cada día.
+                            Personas únicas: con rangos largos es la suma de personas distintas de cada día.
                             {excluido && <span className="ml-2" style={{ color: GOLD }}>· Tus visitas no se cuentan en este navegador (<code>?no-contarme=0</code> para volver a contarlas).</span>}
                         </p>
 
