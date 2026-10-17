@@ -40,7 +40,11 @@ export async function POST(req: Request) {
     const existingOrg = await Organization.findOne({ slug });
     const finalSlug = existingOrg ? `${slug}-${Math.floor(Math.random() * 1000)}` : slug;
 
-    const joinToken = `${Math.random().toString(36).slice(2, 6)}-${Math.random().toString(36).slice(2, 6)}`.toUpperCase();
+    // Aleatoriedad criptográfica: el token es lo único que protege el ingreso.
+    // Mismo formato de siempre (XXXX-XXXX, base 36) para no romper enlaces.
+    const ALFABETO = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    const letras = Array.from(crypto.getRandomValues(new Uint32Array(8)), (n) => ALFABETO[n % 36]).join('');
+    const joinToken = `${letras.slice(0, 4)}-${letras.slice(4)}`;
 
     // Prizes: filter empty strings
     const validPrizes = (prizes as string[] ?? []).map((p: string) => p.trim()).filter(Boolean);

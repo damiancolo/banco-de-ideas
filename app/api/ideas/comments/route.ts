@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { addComment } from '@/lib/db';
+import { addComment, getPublicIdeaById } from '@/lib/db';
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
@@ -28,14 +28,17 @@ export async function POST(request: Request) {
             );
         }
 
-        if (!id || !text) {
+        if (typeof id !== 'string' || typeof text !== 'string' || !id || !text.trim()) {
             return NextResponse.json(
                 { error: 'ID de idea y texto del comentario son requeridos' },
                 { status: 400 }
             );
         }
 
-        const success = await addComment(id, text);
+        // addComment no mira el scope: sin este control se podrían comentar
+        // ideas privadas o de Enterprise conociendo (o adivinando) el id.
+        const idea = await getPublicIdeaById(id);
+        const success = idea ? await addComment(id, text) : false;
 
         if (success) {
             return NextResponse.json({

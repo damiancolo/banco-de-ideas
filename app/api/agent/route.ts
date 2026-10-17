@@ -62,6 +62,18 @@ function agentResponse(data: Record<string, unknown>, status = 200) {
     );
 }
 
+const esTexto = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
+
+/** Tags: lista de textos, o nada. Cualquier otra cosa se ignora. */
+function limpiarTags(tags: unknown): string[] {
+    return Array.isArray(tags) ? tags.filter(esTexto).map((t) => t.trim()) : [];
+}
+
+/** agent_name: texto corto, o el valor por defecto. */
+function firmaAgente(agentName: unknown, porDefecto = 'agente-ia'): string {
+    return esTexto(agentName) ? agentName.trim().slice(0, 100) : porDefecto;
+}
+
 /**
  * Registra una llamada de agente en `visits`, directo a la base (sin fetch al propio
  * sitio). botName = agent_name del body si existe; si no, el user-agent
@@ -205,7 +217,7 @@ export async function GET(request: Request) {
     } catch (error) {
         logger.error('Agent API GET error:', error);
         return agentResponse(
-            { error: 'Error interno', message: error instanceof Error ? error.message : 'Unknown' },
+            { error: 'Error interno' },
             500
         );
     }
@@ -253,9 +265,11 @@ export async function POST(request: Request) {
 
         // ACTION: publish (bisociación)
         if (action === 'publish') {
-            const { conceptA, conceptB, insight, tags, agent_name } = body;
+            const { conceptA, conceptB, insight } = body;
+            const tags = limpiarTags(body.tags);
+            const agent_name = firmaAgente(body.agent_name);
 
-            if (!conceptA || !conceptB || !insight) {
+            if (!esTexto(conceptA) || !esTexto(conceptB) || !esTexto(insight)) {
                 return agentResponse(
                     {
                         error: 'Se requieren: conceptA, conceptB, insight',
@@ -274,8 +288,8 @@ export async function POST(request: Request) {
 
             // Construir el texto de la bisociación
             const bisociationText = `[Bisociación: ${conceptA} × ${conceptB}] ${insight}${
-                tags?.length ? ` | Tags: ${tags.join(', ')}` : ''
-            }${agent_name ? ` | Publicado por: ${agent_name}` : ' | Publicado por: agente-ia'}`;
+                tags.length ? ` | Tags: ${tags.join(', ')}` : ''
+            } | Publicado por: ${agent_name}`;
 
             if (bisociationText.length > 1500) {
                 return agentResponse({ error: 'El texto total excede 1500 caracteres. Sé más conciso.' }, 400);
@@ -304,15 +318,15 @@ export async function POST(request: Request) {
 
         // ACTION: publish_idea
         if (action === 'publish_idea') {
-            const { text, tags, agent_name } = body;
+            const { text } = body;
+            const tags = limpiarTags(body.tags);
+            const agent_name = firmaAgente(body.agent_name);
 
-            if (!text) {
+            if (!esTexto(text)) {
                 return agentResponse({ error: 'Se requiere: text' }, 400);
             }
 
-            const ideaText = `${text}${tags?.length ? ` | Tags: ${tags.join(', ')}` : ''}${
-                agent_name ? ` | Por: ${agent_name}` : ' | Por: agente-ia'
-            }`;
+            const ideaText = `${text}${tags.length ? ` | Tags: ${tags.join(', ')}` : ''} | Por: ${agent_name}`;
 
             if (ideaText.length > 1500) {
                 return agentResponse({ error: 'El texto excede 1500 caracteres.' }, 400);
@@ -354,7 +368,7 @@ export async function POST(request: Request) {
                 return agentResponse({ error: 'Idea no encontrada', id }, 404);
             }
 
-            const signedText = `${commentText} | Por: ${agent_name || 'agente-ia'}`;
+            const signedText = `${commentText} | Por: ${firmaAgente(agent_name)}`;
             const saved = await addComment(id, signedText);
             if (!saved) {
                 return agentResponse({ error: 'No se pudo guardar el comentario' }, 500);
@@ -374,7 +388,7 @@ export async function POST(request: Request) {
         if (action === 'search') {
             const { query } = body;
 
-            if (!query) {
+            if (!esTexto(query)) {
                 return agentResponse({ error: 'Se requiere: query' }, 400);
             }
 
@@ -399,7 +413,7 @@ export async function POST(request: Request) {
     } catch (error) {
         logger.error('Agent API POST error:', error);
         return agentResponse(
-            { error: 'Error interno', message: error instanceof Error ? error.message : 'Unknown' },
+            { error: 'Error interno' },
             500
         );
     }

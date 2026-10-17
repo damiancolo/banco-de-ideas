@@ -5,6 +5,7 @@ import {
     IDEAS_POR_PAGINA,
     highlightIdea,
     deletePublicIdea,
+    getPublicIdeaById,
     saveIdea,
 } from '@/lib/db';
 import { logger } from '@/lib/logger';
@@ -130,7 +131,8 @@ export async function DELETE(request: Request) {
             );
         }
 
-        const highlighted = await highlightIdea(id);
+        // highlightIdea no mira el scope: se comprueba antes que la idea sea pública.
+        const highlighted = (await getPublicIdeaById(id)) ? await highlightIdea(id) : false;
 
         if (highlighted) {
             return NextResponse.json({
@@ -173,6 +175,10 @@ export async function POST(request: Request) {
                 { error: 'Estás creando ideas muy rápido. Tómate un respiro de un minuto.' },
                 { status: 429 }
             );
+        }
+
+        if (typeof text !== 'string' || (category != null && category !== 'user' && category !== 'bisociation')) {
+            return NextResponse.json({ error: 'Datos inválidos' }, { status: 400 });
         }
 
         if (text && text.length > 1500) {

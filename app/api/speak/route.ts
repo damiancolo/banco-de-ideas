@@ -25,8 +25,13 @@ export async function POST(req: Request) {
 
         const { text } = await req.json();
 
-        if (!text) {
+        if (!text || typeof text !== "string") {
             return NextResponse.json({ error: "No se proporcionó texto" }, { status: 400 });
+        }
+
+        // 4096 es el máximo que acepta el TTS de OpenAI.
+        if (text.length > 4096) {
+            return NextResponse.json({ error: "El texto es demasiado largo para leerlo en voz alta." }, { status: 400 });
         }
 
         logger.info(`Generating speech for text: ${text.substring(0, 50)}...`);

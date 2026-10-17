@@ -44,6 +44,14 @@ export async function POST(req: Request) {
             );
         }
 
+        // La búsqueda se guarda como idea pública: mismo tope que una idea.
+        if (query.trim().length > 1500) {
+            return NextResponse.json(
+                { error: 'La búsqueda excede el límite de 1500 caracteres.' },
+                { status: 400 }
+            );
+        }
+
         await connectDB();
 
         // Generate embedding for the query
