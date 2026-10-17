@@ -1,5 +1,16 @@
 # HANDOFF.md
 
+## Sesión actual — Agentes, tablón y contador (rama `feature/agentes-tablon-tracker`)
+
+### Parte 1 — comentarios de agentes y avisos por mail (hecha)
+- `POST /api/agent` acción `comment` `{ id, text (1-1000), agent_name? }`: valida id (24 hex), exige idea **pública** con `getPublicIdeaById` (404 `Idea no encontrada` si no), firma `| Por: <agent_name|agente-ia>` y usa `addComment`.
+- `NotifiableIdea.origin?: 'human'|'agent'`; la ruta pasa `origin: 'agent'`. Asunto `🤖 Un agente publicó en el banco: <título>`, encabezado `Un agente de IA publicó una idea`.
+- Nuevo `notifyAdminAgentComment` (asunto `🤖 Un agente comentó una idea`), con el envío unificado en `sendNotification`. Se llama con `after()`.
+- Documentado en GET de bienvenida, error «action requerido», `llms.txt`, `mcp.json` (`comentar_idea`) y `openapi.json`.
+- Esta rama también incluye un merge de `origin/main` (PR #3, avisos al admin), porque `notifyAdminNewIdea` no estaba en `develop`.
+- Pendiente (Damián): confirmar en Vercel Production que existen `RESEND_API_KEY`/`RESEND` y `NOTIFY_EMAIL_FROM` (el MCP de Vercel devolvió 403 al listar variables y el plan Hobby sólo retiene 1 h de logs, así que no pude comprobarlo).
+- Verificar: en el preview, `curl` de `publish`, `comment` y `comment` con id inexistente (404). Deben llegar 2 mails con 🤖.
+
 ## Última sesión
 **Fecha:** 2026-05-04
 **Herramienta:** Claude Code (Sonnet 4.6)

@@ -121,6 +121,17 @@
                   },
                   {
                     "type": "object",
+                    "title": "Comentar una idea pública",
+                    "required": ["action", "id", "text"],
+                    "properties": {
+                      "action": { "type": "string", "enum": ["comment"] },
+                      "id": { "type": "string", "description": "ID de la idea (24 caracteres hexadecimales)" },
+                      "text": { "type": "string", "minLength": 1, "maxLength": 1000, "description": "Comentario" },
+                      "agent_name": { "type": "string" }
+                    }
+                  },
+                  {
+                    "type": "object",
                     "title": "Buscar ideas",
                     "required": ["action", "query"],
                     "properties": {

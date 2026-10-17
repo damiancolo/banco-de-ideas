@@ -4,6 +4,7 @@ import {
     countPublicIdeas,
     getPublicIdeaById,
     getPublicIdeaStats,
+    addComment,
     saveIdea,
     searchIdeasByKeywords,
 } from '@/lib/db';
@@ -11,7 +12,7 @@ import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 import { getAuthUserId } from '@/lib/auth-utils';
-import { notifyAdminNewIdea } from '@/lib/notifications/notifyAdminNewIdea';
+import { notifyAdminNewIdea, notifyAdminAgentComment } from '@/lib/notifications/notifyAdminNewIdea';
 
 /**
  * ============================================================
@@ -88,6 +89,7 @@ export async function GET(request: Request) {
                         'publish': 'Publicar bisociación. Body: { conceptA, conceptB, insight, tags?, agent_name? }',
                         'publish_idea': 'Publicar idea simple. Body: { text, tags?, agent_name? }',
                         'search': 'Buscar ideas. Body: { query }',
+                        'comment': 'Comentar una idea pública. Body: { id, text (1-1000), agent_name? }',
                     },
                 },
                 examples: {
@@ -189,6 +191,7 @@ export async function GET(request: Request) {
  *   publish       → Publicar bisociación (conceptA + conceptB + insight)
  *   publish_idea  → Publicar idea simple
  *   search        → Buscar ideas por keywords
+ *   comment       → Comentar una idea pública
  */
 export async function POST(request: Request) {
     try {
@@ -210,7 +213,7 @@ export async function POST(request: Request) {
             return agentResponse(
                 {
                     error: 'action requerido en el body',
-                    available_actions: ['publish', 'publish_idea', 'search'],
+                    available_actions: ['publish', 'publish_idea', 'search', 'comment'],
                     docs: '/llms.txt',
                 },
                 400
@@ -249,7 +252,7 @@ export async function POST(request: Request) {
 
             const idea = await saveIdea(bisociationText, 'bisociation');
             const authorUserId = await getAuthUserId().catch(() => null);
-            after(() => notifyAdminNewIdea({ ...idea, scope: 'public' }, authorUserId));
+            after(() => notifyAdminNewIdea({ ...idea, scope: 'public', origin: 'agent' }, authorUserId));
 
             return agentResponse({
                 success: true,
@@ -286,7 +289,7 @@ export async function POST(request: Request) {
 
             const idea = await saveIdea(ideaText, 'bisociation');
             const authorUserId = await getAuthUserId().catch(() => null);
-            after(() => notifyAdminNewIdea({ ...idea, scope: 'public' }, authorUserId));
+            after(() => notifyAdminNewIdea({ ...idea, scope: 'public', origin: 'agent' }, authorUserId));
 
             return agentResponse({
                 success: true,
@@ -297,6 +300,42 @@ export async function POST(request: Request) {
                     category: 'bisociation',
                     createdAt: idea.createdAt,
                 },
+            });
+        }
+
+        // ACTION: comment
+        if (action === 'comment') {
+            const { id, text, agent_name } = body;
+
+            if (typeof id !== 'string' || !/^[0-9a-fA-F]{24}$/.test(id)) {
+                return agentResponse({ error: 'Se requiere un id válido (24 caracteres hexadecimales)' }, 400);
+            }
+
+            const commentText = typeof text === 'string' ? text.trim() : '';
+            if (commentText.length < 1 || commentText.length > 1000) {
+                return agentResponse({ error: 'text es obligatorio y debe tener entre 1 y 1000 caracteres' }, 400);
+            }
+
+            // addComment no mira el scope: sin este control se podrían comentar
+            // ideas privadas o de Enterprise conociendo el id.
+            const idea = await getPublicIdeaById(id);
+            if (!idea) {
+                return agentResponse({ error: 'Idea no encontrada', id }, 404);
+            }
+
+            const signedText = `${commentText} | Por: ${agent_name || 'agente-ia'}`;
+            const saved = await addComment(id, signedText);
+            if (!saved) {
+                return agentResponse({ error: 'No se pudo guardar el comentario' }, 500);
+            }
+
+            after(() => notifyAdminAgentComment({ id: idea.id, text: idea.text }, signedText));
+
+            return agentResponse({
+                success: true,
+                message: 'Comentario publicado.',
+                comment: { text: signedText },
+                idea_id: id,
             });
         }
 

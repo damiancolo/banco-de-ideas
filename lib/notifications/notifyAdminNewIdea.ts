@@ -21,6 +21,8 @@ export type NotifiableIdea = {
     createdAt: string | Date;
     /** Tipo de espacio donde se guardó. `organization` es el entorno Enterprise. */
     scope: 'public' | 'private' | 'organization';
+    /** Quién publicó. Si es `agent`, el aviso lo dice en el asunto y el encabezado. */
+    origin?: 'human' | 'agent';
 };
 
 const TIMEZONE = 'Europe/Madrid';
@@ -149,7 +151,8 @@ function buildMessage(idea: NotifiableIdea): Message {
 
     const title = titleOf(idea.text);
     const url = publicIdeaUrl(idea.id);
-    const heading = 'Se publicó una idea pública';
+    const isAgent = idea.origin === 'agent';
+    const heading = isAgent ? 'Un agente de IA publicó una idea' : 'Se publicó una idea pública';
 
     const text = [
         heading,
@@ -170,23 +173,21 @@ function buildMessage(idea: NotifiableIdea): Message {
     ${url ? `<p style="margin:16px 0 0;"><a href="${escapeHtml(url)}" style="color:${COLOR_ACCENT};">Ver la idea</a></p>` : ''}`
     );
 
-    return { subject: `Nueva idea pública: ${title}`, text, html };
+    const subject = isAgent
+        ? `🤖 Un agente publicó en el banco: ${title}`
+        : `Nueva idea pública: ${title}`;
+    return { subject, text, html };
 }
 
-export async function notifyAdminNewIdea(
-    idea: NotifiableIdea,
-    authorUserId?: string | null
-): Promise<void> {
+/** Envío compartido por todos los avisos. Nunca lanza. */
+async function sendNotification(tag: string, message: Message): Promise<void> {
     try {
         const { apiKey, to, from } = config();
         if (!apiKey) {
-            console.warn('[notifyAdminNewIdea] Falta RESEND_API_KEY (o RESEND); no se envía aviso.');
+            console.warn(`[${tag}] Falta RESEND_API_KEY (o RESEND); no se envía aviso.`);
             return;
         }
 
-        if (await isAdmin(authorUserId)) return;
-
-        const message = buildMessage(idea);
         const resend = new Resend(apiKey);
         const { error } = await resend.emails.send({
             from,
@@ -196,9 +197,68 @@ export async function notifyAdminNewIdea(
             html: message.html,
         });
         if (error) {
-            console.error('[notifyAdminNewIdea] Resend devolvió error:', error);
+            console.error(`[${tag}] Resend devolvió error:`, error);
         }
     } catch (error) {
+        console.error(`[${tag}] Error enviando aviso:`, error);
+    }
+}
+
+export async function notifyAdminNewIdea(
+    idea: NotifiableIdea,
+    authorUserId?: string | null
+): Promise<void> {
+    try {
+        if (await isAdmin(authorUserId)) return;
+        await sendNotification('notifyAdminNewIdea', buildMessage(idea));
+    } catch (error) {
         console.error('[notifyAdminNewIdea] Error enviando aviso:', error);
+    }
+}
+
+/**
+ * Aviso cuando un agente comenta una idea pública. Lleva el comentario, el
+ * texto de la idea comentada y el enlace directo a la idea. Nunca lanza.
+ */
+export async function notifyAdminAgentComment(
+    idea: { id: string; text: string },
+    comment: string
+): Promise<void> {
+    try {
+        const heading = 'Un agente de IA comentó una idea';
+        const when = formatDate(new Date());
+        const url = publicIdeaUrl(idea.id);
+
+        const text = [
+            heading,
+            '',
+            `Fecha: ${when}`,
+            '',
+            'Comentario:',
+            comment,
+            '',
+            'Idea comentada:',
+            idea.text,
+            '',
+            url ? `Ver la idea: ${url}` : '',
+        ].join('\n');
+
+        const html = layout(
+            heading,
+            `<p style="margin:0 0 16px;font-size:13px;color:#666;">${escapeHtml(when)}</p>
+    <p style="margin:0 0 4px;font-weight:bold;">Comentario</p>
+    <div style="padding:16px;background:#fff;border-left:4px solid ${COLOR_ACCENT};white-space:pre-wrap;">${escapeHtml(comment)}</div>
+    <p style="margin:16px 0 4px;font-weight:bold;">Idea comentada</p>
+    <div style="padding:16px;background:#fff;border-left:4px solid #ccc;white-space:pre-wrap;">${escapeHtml(idea.text)}</div>
+    ${url ? `<p style="margin:16px 0 0;"><a href="${escapeHtml(url)}" style="color:${COLOR_ACCENT};">Ver la idea</a></p>` : ''}`
+        );
+
+        await sendNotification('notifyAdminAgentComment', {
+            subject: '🤖 Un agente comentó una idea',
+            text,
+            html,
+        });
+    } catch (error) {
+        console.error('[notifyAdminAgentComment] Error armando aviso:', error);
     }
 }
