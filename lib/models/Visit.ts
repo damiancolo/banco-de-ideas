@@ -3,13 +3,18 @@ import mongoose from 'mongoose';
 export interface IVisit extends mongoose.Document {
     timestamp: Date;
     path: string;
-    visitorType: 'human' | 'bot';
+    /** 'bot' es el valor viejo (antes de separar rastreadores de IA y otros bots): se lee como 'ai_crawler'. */
+    visitorType: 'human' | 'ai_crawler' | 'other_bot' | 'agent' | 'bot';
     botName: string | null;
     browser: string | null;
     deviceType: 'desktop' | 'mobile' | 'tablet';
     country: string | null;
     referrer: string | null;
     site: string | null;
+    /** Hash diario sin cookies (rota cada día, no identifica a nadie). Registros viejos: null. */
+    visitorId: string | null;
+    /** User-agent recortado a 200 caracteres, para diagnosticar. Nunca se guarda la IP. */
+    userAgent: string | null;
 }
 
 const VisitSchema = new mongoose.Schema<IVisit>({
@@ -25,7 +30,7 @@ const VisitSchema = new mongoose.Schema<IVisit>({
     },
     visitorType: {
         type: String,
-        enum: ['human', 'bot'],
+        enum: ['human', 'ai_crawler', 'other_bot', 'agent', 'bot'],
         required: true,
         index: true
     },
@@ -54,6 +59,15 @@ const VisitSchema = new mongoose.Schema<IVisit>({
         type: String,
         default: null,
         index: true
+    },
+    visitorId: {
+        type: String,
+        default: null
+    },
+    userAgent: {
+        type: String,
+        default: null,
+        maxlength: 200
     }
 });
 

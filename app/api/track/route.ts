@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
-import { connectDB } from '@/lib/mongodb';
-import Visit from '@/lib/models/Visit';
+import { recordVisit } from '@/lib/visits';
 import { logger } from '@/lib/logger';
 
 const TRACK_SECRET = process.env.TRACK_SECRET || '';
@@ -13,18 +12,18 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        await connectDB();
-
-        await Visit.create({
+        await recordVisit({
             timestamp: body.timestamp ? new Date(body.timestamp) : new Date(),
-            path: body.path || '/',
-            visitorType: body.visitorType || 'human',
-            botName: body.botName || null,
-            browser: body.browser || null,
-            deviceType: body.deviceType || 'desktop',
-            country: body.country || null,
-            referrer: body.referrer || null,
-            site: body.site || null,
+            path: body.path,
+            visitorType: body.visitorType,
+            botName: body.botName,
+            browser: body.browser,
+            deviceType: body.deviceType,
+            country: body.country,
+            referrer: body.referrer,
+            site: body.site,
+            visitorId: typeof body.visitorId === 'string' ? body.visitorId.slice(0, 16) : null,
+            userAgent: typeof body.userAgent === 'string' ? body.userAgent : null,
         });
 
         return NextResponse.json({ ok: true }, { status: 201 });

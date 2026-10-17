@@ -1,18 +1,21 @@
 import { NextResponse } from 'next/server';
+import type { PipelineStage } from 'mongoose';
 import { connectDB } from '@/lib/mongodb';
 import Visit from '@/lib/models/Visit';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
 import { logger } from '@/lib/logger';
+import { madridStartOfToday } from '@/lib/visits';
+
+const TZ = 'Europe/Madrid';
+// 'bot' es el valor viejo (antes de separar tipos): se lee como ai_crawler.
+const CRAWLER_TYPES = ['ai_crawler', 'bot'];
 
 function getDateFilter(range: string): Date | null {
     const now = new Date();
     switch (range) {
-        case 'today': {
-            const start = new Date(now);
-            start.setHours(0, 0, 0, 0);
-            return start;
-        }
+        case 'today':
+            return madridStartOfToday(now);
         case '7d':
             return new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
         case '30d':
@@ -22,6 +25,8 @@ function getDateFilter(range: string): Date | null {
             return null;
     }
 }
+
+type Counted = { _id: string; count: number };
 
 export async function GET(request: Request) {
     try {
@@ -43,113 +48,101 @@ export async function GET(request: Request) {
             ? { timestamp: { $gte: since }, site }
             : { site };
 
+        const dia = { $dateToString: { format: '%Y-%m-%d', date: '$timestamp', timezone: TZ } };
+        const porTipo = (...tipos: string[]) => ({ ...matchStage, visitorType: { $in: tipos } });
+        const humanos = porTipo('human');
+        const top = (match: object, campo: string, limit?: number): PipelineStage[] => [
+            { $match: match },
+            { $group: { _id: `$${campo}`, count: { $sum: 1 } } },
+            { $sort: { count: -1 as const } },
+            ...(limit ? [{ $limit: limit }] : []),
+        ];
+
         const [
             totalVisits,
-            humanVsBots,
+            byType,
             visitsByDay,
+            personasPorDia,
             topBots,
+            topAgents,
             topPages,
             browsers,
             devices,
             countries,
             recentVisits,
+            v2Since,
         ] = await Promise.all([
-            // 1. Total visits
             Visit.countDocuments(matchStage),
 
-            // 2. Humans vs Bots
             Visit.aggregate([
                 { $match: matchStage },
                 { $group: { _id: '$visitorType', count: { $sum: 1 } } },
             ]),
 
-            // 3. Visits by day
             Visit.aggregate([
                 { $match: matchStage },
-                {
-                    $group: {
-                        _id: {
-                            date: { $dateToString: { format: '%Y-%m-%d', date: '$timestamp' } },
-                            visitorType: '$visitorType',
-                        },
-                        count: { $sum: 1 },
-                    },
-                },
+                { $group: { _id: { date: dia, visitorType: '$visitorType' }, count: { $sum: 1 } } },
                 { $sort: { '_id.date': 1 } },
             ]),
 
-            // 4. Top bots
+            // Personas únicas: el visitorId rota cada día, así que en un rango
+            // largo es la suma de las personas únicas de cada día.
             Visit.aggregate([
-                { $match: { ...matchStage, visitorType: 'bot', botName: { $ne: null } } },
-                { $group: { _id: '$botName', count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-                { $limit: 10 },
+                { $match: { ...humanos, visitorId: { $ne: null } } },
+                { $group: { _id: { date: dia, visitorId: '$visitorId' } } },
+                { $count: 'n' },
             ]),
 
-            // 5. Top pages
-            Visit.aggregate([
-                { $match: matchStage },
-                { $group: { _id: '$path', count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-                { $limit: 10 },
-            ]),
+            Visit.aggregate(top({ ...porTipo(...CRAWLER_TYPES), botName: { $ne: null } }, 'botName', 10)),
+            Visit.aggregate(top({ ...porTipo('agent'), botName: { $ne: null } }, 'botName', 10)),
+            Visit.aggregate(top({ ...matchStage, visitorType: { $ne: 'agent' } }, 'path', 10)),
+            Visit.aggregate(top({ ...humanos, browser: { $ne: null } }, 'browser')),
+            Visit.aggregate(top(humanos, 'deviceType')),
+            Visit.aggregate(top({ ...matchStage, country: { $ne: null } }, 'country', 15)),
 
-            // 6. Browsers
-            Visit.aggregate([
-                { $match: { ...matchStage, visitorType: 'human', browser: { $ne: null } } },
-                { $group: { _id: '$browser', count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-            ]),
-
-            // 7. Devices
-            Visit.aggregate([
-                { $match: { ...matchStage, visitorType: 'human' } },
-                { $group: { _id: '$deviceType', count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-            ]),
-
-            // 8. Countries
-            Visit.aggregate([
-                { $match: { ...matchStage, country: { $ne: null } } },
-                { $group: { _id: '$country', count: { $sum: 1 } } },
-                { $sort: { count: -1 } },
-                { $limit: 15 },
-            ]),
-
-            // 9. Recent 20 visits
             Visit.find(matchStage)
                 .sort({ timestamp: -1 })
                 .limit(20)
                 .select('timestamp path visitorType botName browser deviceType country')
                 .lean(),
+
+            // Desde cuándo rige la clasificación nueva (primer registro con visitorId).
+            Visit.findOne({ site, visitorId: { $ne: null } }).sort({ timestamp: 1 }).select('timestamp').lean(),
         ]);
 
-        // Transform visitsByDay into a more usable format
-        const dayMap: Record<string, { date: string; human: number; bot: number }> = {};
+        const count = (...tipos: string[]) =>
+            (byType as Counted[]).filter((t) => tipos.includes(t._id)).reduce((n, t) => n + t.count, 0);
+
+        type Day = { date: string; human: number; ai_crawler: number; other_bot: number; agent: number };
+        const dayMap: Record<string, Day> = {};
         for (const entry of visitsByDay) {
-            const date = entry._id.date;
-            if (!dayMap[date]) {
-                dayMap[date] = { date, human: 0, bot: 0 };
-            }
-            dayMap[date][entry._id.visitorType as 'human' | 'bot'] = entry.count;
+            const date = entry._id.date as string;
+            dayMap[date] ??= { date, human: 0, ai_crawler: 0, other_bot: 0, agent: 0 };
+            const tipo = entry._id.visitorType === 'bot' ? 'ai_crawler' : (entry._id.visitorType as keyof Omit<Day, 'date'>);
+            if (tipo in dayMap[date]) dayMap[date][tipo] += entry.count;
         }
         const dailyData = Object.values(dayMap).sort((a, b) => a.date.localeCompare(b.date));
 
-        // Transform humanVsBots
-        const humanCount = humanVsBots.find((h: { _id: string }) => h._id === 'human')?.count || 0;
-        const botCount = humanVsBots.find((h: { _id: string }) => h._id === 'bot')?.count || 0;
+        const crawlerCount = count(...CRAWLER_TYPES);
 
         return NextResponse.json({
             totalVisits,
-            humanCount,
-            botCount,
+            uniquePeople: personasPorDia[0]?.n ?? 0,
+            humanCount: count('human'),
+            // `botCount` se mantiene por compatibilidad con el iframe de WordPress.
+            botCount: crawlerCount,
+            crawlerCount,
+            otherBotCount: count('other_bot'),
+            agentCount: count('agent'),
+            v2Since: v2Since ? (v2Since as unknown as { timestamp: Date }).timestamp : null,
             countryCount: countries.length,
             dailyData,
-            topBots: topBots.map((b: { _id: string; count: number }) => ({ name: b._id, count: b.count })),
-            topPages: topPages.map((p: { _id: string; count: number }) => ({ path: p._id, count: p.count })),
-            browsers: browsers.map((b: { _id: string; count: number }) => ({ name: b._id, count: b.count })),
-            devices: devices.map((d: { _id: string; count: number }) => ({ type: d._id, count: d.count })),
-            countries: countries.map((c: { _id: string; count: number }) => ({ code: c._id, count: c.count })),
+            topAgents: (topAgents as Counted[]).map((a) => ({ name: a._id, count: a.count })),
+            topBots: (topBots as Counted[]).map((b) => ({ name: b._id, count: b.count })),
+            topPages: (topPages as Counted[]).map((p) => ({ path: p._id, count: p.count })),
+            browsers: (browsers as Counted[]).map((b) => ({ name: b._id, count: b.count })),
+            devices: (devices as Counted[]).map((d) => ({ type: d._id, count: d.count })),
+            countries: (countries as Counted[]).map((c) => ({ code: c._id, count: c.count })),
             recentVisits,
         });
     } catch (error) {

@@ -11,6 +11,7 @@ import {
 import { logger } from '@/lib/logger';
 import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
+import { recordVisit } from '@/lib/visits';
 import { getAuthUserId } from '@/lib/auth-utils';
 import { notifyAdminNewIdea, notifyAdminAgentComment } from '@/lib/notifications/notifyAdminNewIdea';
 
@@ -62,6 +63,28 @@ function agentResponse(data: Record<string, unknown>, status = 200) {
 }
 
 /**
+ * Registra una llamada de agente en `visits`, directo a la base (sin fetch al propio
+ * sitio). botName = agent_name del body si existe; si no, el user-agent
+ * (banco-de-ideas-mcp/… para el MCP). Nunca lanza.
+ */
+async function recordAgentCall(request: Request, action: string, agentName?: unknown) {
+    try {
+        const userAgent = request.headers.get('user-agent') || '';
+        const name = typeof agentName === 'string' && agentName.trim() ? agentName.trim() : userAgent;
+        await recordVisit({
+            path: `/api/agent:${action}`,
+            visitorType: 'agent',
+            botName: (name || 'desconocido').slice(0, 100),
+            country: request.headers.get('x-vercel-ip-country'),
+            site: 'unbancodeideas',
+            userAgent,
+        });
+    } catch (error) {
+        logger.error('No se pudo registrar la llamada de agente:', error);
+    }
+}
+
+/**
  * GET /api/agent
  * 
  * Acciones:
@@ -97,6 +120,10 @@ export async function GET(request: Request) {
                     publish: 'POST /api/agent { "action": "publish", "conceptA": "Origami", "conceptB": "Arquitectura de software", "insight": "Patrones de plegado como metáfora..." }',
                 },
             });
+        }
+
+        if (action === 'list' || action === 'get' || action === 'stats') {
+            after(() => recordAgentCall(request, action));
         }
 
         // ACTION: list
@@ -218,6 +245,10 @@ export async function POST(request: Request) {
                 },
                 400
             );
+        }
+
+        if (typeof action === 'string') {
+            after(() => recordAgentCall(request, action.slice(0, 40), body.agent_name));
         }
 
         // ACTION: publish (bisociación)

@@ -11,10 +11,15 @@ import {
 // ─── Types ───
 interface TrackerData {
     totalVisits: number;
+    uniquePeople: number;
     humanCount: number;
-    botCount: number;
+    crawlerCount: number;
+    otherBotCount: number;
+    agentCount: number;
+    v2Since: string | null;
     countryCount: number;
-    dailyData: { date: string; human: number; bot: number }[];
+    dailyData: { date: string; human: number; ai_crawler: number; other_bot: number; agent: number }[];
+    topAgents: { name: string; count: number }[];
     topBots: { name: string; count: number }[];
     topPages: { path: string; count: number }[];
     browsers: { name: string; count: number }[];
@@ -33,11 +38,14 @@ interface TrackerData {
 }
 
 // ─── Colors ───
-const GOLD = "#C5A47E";
-const GOLD_LIGHT = "#D4B896";
-const BEIGE = "#F8F5F0";
+const GOLD = "#7a1a2e"; // acento bordó
+const GOLD_LIGHT = "#b0707e";
+const BEIGE = "#faf8f3"; // papel
 const DARK = "#333";
-const PIE_COLORS = ["#C5A47E", "#8B7355", "#D4B896", "#A0522D", "#DEB887", "#CD853F"];
+const PIE_COLORS = ["#7a1a2e", "#a65566", "#c9a0a9", "#555", "#999", "#ccc"];
+const FONT_SERIF = "'Fraunces', serif";
+const FONT_SANS = "'Inter', sans-serif";
+const FONT_MONO = "'JetBrains Mono', monospace";
 
 // ─── Country flags ───
 const countryFlag = (code: string): string => {
@@ -65,8 +73,8 @@ function AnimatedCounter({ value, duration = 1000 }: { value: number; duration?:
 // ─── Chart card wrapper ───
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
     return (
-        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-[#C5A47E]/10">
-            <h3 className="text-sm font-semibold text-[#333] mb-4 tracking-wide uppercase">{title}</h3>
+        <div className="bg-white/80 backdrop-blur-sm rounded-2xl p-5 shadow-sm border border-[#7a1a2e]/10">
+            <h3 className="text-xs font-medium text-[#333] mb-4 tracking-wider uppercase" style={{ fontFamily: FONT_MONO }}>{title}</h3>
             {children}
         </div>
     );
@@ -76,7 +84,7 @@ function ChartCard({ title, children }: { title: string; children: React.ReactNo
 function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: { name: string; value: number; color: string }[]; label?: string }) {
     if (!active || !payload) return null;
     return (
-        <div className="bg-white rounded-lg shadow-lg border border-[#C5A47E]/20 p-3 text-xs">
+        <div className="bg-white rounded-lg shadow-lg border border-[#7a1a2e]/20 p-3 text-xs">
             <p className="font-semibold text-[#333] mb-1">{label}</p>
             {payload.map((entry, i) => (
                 <p key={i} style={{ color: entry.color }}>
@@ -89,7 +97,7 @@ function CustomTooltip({ active, payload, label }: { active?: boolean; payload?:
 
 export default function TrackerPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: "#F8F5F0" }}><div className="w-8 h-8 border-2 border-[#C5A47E] border-t-transparent rounded-full animate-spin" /></div>}>
+        <Suspense fallback={<div className="min-h-screen flex items-center justify-center" style={{ background: "#faf8f3" }}><div className="w-8 h-8 border-2 border-[#7a1a2e] border-t-transparent rounded-full animate-spin" /></div>}>
             <TrackerContent />
         </Suspense>
     );
@@ -102,6 +110,17 @@ function TrackerContent() {
     const [range, setRange] = useState("7d");
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [excluido, setExcluido] = useState(false);
+
+    useEffect(() => {
+        if (!document.getElementById("tracker-fonts")) {
+            const link = document.createElement("link");
+            link.id = "tracker-fonts";
+            link.rel = "stylesheet";
+            link.href = "https://fonts.googleapis.com/css2?family=Fraunces:wght@300;400;500&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400&display=swap";
+            document.head.appendChild(link);
+        }
+    }, []);
 
     const fetchData = useCallback(async () => {
         try {
@@ -110,6 +129,7 @@ function TrackerContent() {
             if (!res.ok) throw new Error("Failed to fetch");
             const json = await res.json();
             setData(json);
+            setExcluido(document.cookie.split("; ").includes("bdi_no_track=1"));
         } catch {
             setError("Error cargando datos");
         } finally {
@@ -131,33 +151,35 @@ function TrackerContent() {
         { key: "all", label: "Todo" },
     ];
 
-    // Donut data for human vs bot
     const donutData = data ? [
-        { name: "Humanos", value: data.humanCount },
-        { name: "Bots", value: data.botCount },
+        { name: "Personas", value: data.humanCount },
+        { name: "Rastreadores de IA", value: data.crawlerCount },
+        { name: "Otros bots", value: data.otherBotCount },
+        { name: "Agentes", value: data.agentCount },
     ] : [];
+    const DONUT_COLORS = [GOLD, DARK, "#999", "#c9a0a9"];
 
     return (
-        <div className="min-h-screen" style={{ background: `linear-gradient(135deg, ${BEIGE} 0%, #EDE8E0 50%, ${BEIGE} 100%)` }}>
+        <div className="min-h-screen" style={{ background: BEIGE, fontFamily: FONT_SANS }}>
             {/* Header */}
             <div className="max-w-6xl mx-auto px-4 pt-8 pb-4">
                 <div className="flex items-center justify-between mb-6">
                     <div className="flex items-center gap-3">
-                        <Link href="/" className="text-[#333]/60 hover:text-[#C5A47E] transition-colors">
+                        <Link href="/" className="text-[#333]/60 hover:text-[#7a1a2e] transition-colors">
                             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
                         </Link>
-                        <h1 className="text-2xl font-bold text-[#333] tracking-tight">Analytics</h1>
+                        <h1 className="text-3xl text-[#181714] tracking-tight" style={{ fontFamily: FONT_SERIF, fontWeight: 300 }}>Analytics</h1>
                         <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" title="Auto-refresh: 60s" />
                     </div>
                     {/* Range selector */}
-                    <div className="flex gap-1 bg-white/60 rounded-xl p-1 shadow-sm border border-[#C5A47E]/10">
+                    <div className="flex gap-1 bg-white/60 rounded-xl p-1 shadow-sm border border-[#7a1a2e]/10">
                         {ranges.map((r) => (
                             <button
                                 key={r.key}
                                 onClick={() => setRange(r.key)}
                                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                                     range === r.key
-                                        ? "bg-[#C5A47E] text-white shadow-sm"
+                                        ? "bg-[#7a1a2e] text-white shadow-sm"
                                         : "text-[#333]/60 hover:text-[#333] hover:bg-white/80"
                                 }`}
                             >
@@ -169,7 +191,7 @@ function TrackerContent() {
 
                 {loading && !data && (
                     <div className="flex justify-center py-20">
-                        <div className="w-8 h-8 border-2 border-[#C5A47E] border-t-transparent rounded-full animate-spin" />
+                        <div className="w-8 h-8 border-2 border-[#7a1a2e] border-t-transparent rounded-full animate-spin" />
                     </div>
                 )}
 
@@ -180,24 +202,30 @@ function TrackerContent() {
                 {data && (
                     <>
                         {/* ─── Stat cards ─── */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-3">
                             {[
-                                { label: "Total Visitas", value: data.totalVisits, icon: "M15 12a3 3 0 11-6 0 3 3 0 016 0z M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" },
-                                { label: "Humanos", value: data.humanCount, icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
-                                { label: "Bots IA", value: data.botCount, icon: "M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
-                                { label: "Paises", value: data.countryCount, icon: "M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
+                                { label: "Personas únicas", value: data.uniquePeople, hint: "por día, sin cookies" },
+                                { label: "Páginas vistas por personas", value: data.humanCount, hint: "incluye datos viejos inflados" },
+                                { label: "Rastreadores de IA", value: data.crawlerCount, hint: "GPTBot, ClaudeBot…" },
+                                { label: "Otros bots", value: data.otherBotCount, hint: "buscadores, curl, previews" },
+                                { label: "Llamadas de agentes (API/MCP)", value: data.agentCount, hint: "acciones en /api/agent" },
                             ].map((stat) => (
-                                <div key={stat.label} className="bg-white/80 backdrop-blur-sm rounded-2xl p-4 shadow-sm border border-[#C5A47E]/10">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={GOLD} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d={stat.icon}/></svg>
-                                        <span className="text-[10px] uppercase tracking-wider text-[#333]/50 font-medium">{stat.label}</span>
-                                    </div>
-                                    <div className="text-2xl font-bold text-[#333]">
+                                <div key={stat.label} className="bg-white/80 rounded-2xl p-4 shadow-sm border border-[#7a1a2e]/10">
+                                    <span className="block text-[10px] uppercase tracking-wider text-[#333]/60 min-h-[28px]" style={{ fontFamily: FONT_MONO }}>{stat.label}</span>
+                                    <div className="text-3xl text-[#181714] mt-1" style={{ fontFamily: FONT_SERIF, fontWeight: 300 }}>
                                         <AnimatedCounter value={stat.value} />
                                     </div>
+                                    <span className="text-[10px] text-[#333]/40">{stat.hint}</span>
                                 </div>
                             ))}
                         </div>
+                        <p className="text-xs text-[#333]/50 mb-6">
+                            {data.v2Since
+                                ? `Datos anteriores al ${new Date(data.v2Since).toLocaleDateString("es", { timeZone: "Europe/Madrid", day: "numeric", month: "long", year: "numeric" })} usan la clasificación vieja y están inflados.`
+                                : "Los datos anteriores al nuevo contador usan la clasificación vieja y están inflados."}
+                            {" "}Personas únicas: con rangos largos es la suma de personas distintas de cada día.
+                            {excluido && <span className="ml-2" style={{ color: GOLD }}>· Tus visitas no se cuentan en este navegador (<code>?no-contarme=0</code> para volver a contarlas).</span>}
+                        </p>
 
                         {/* ─── Area chart: visits over time ─── */}
                         <ChartCard title="Visitas por dia">
@@ -219,8 +247,10 @@ function TrackerContent() {
                                         <YAxis tick={{ fontSize: 10, fill: "#999" }} allowDecimals={false} />
                                         <Tooltip content={<CustomTooltip />} />
                                         <Legend wrapperStyle={{ fontSize: 11 }} />
-                                        <Area type="monotone" dataKey="human" name="Humanos" stroke={GOLD} fill="url(#goldGradient)" strokeWidth={2} />
-                                        <Area type="monotone" dataKey="bot" name="Bots" stroke={DARK} fill="url(#darkGradient)" strokeWidth={2} />
+                                        <Area type="monotone" dataKey="human" name="Personas" stroke={GOLD} fill="url(#goldGradient)" strokeWidth={2} />
+                                        <Area type="monotone" dataKey="ai_crawler" name="Rastreadores de IA" stroke={DARK} fill="url(#darkGradient)" strokeWidth={2} />
+                                        <Area type="monotone" dataKey="other_bot" name="Otros bots" stroke="#999" fill="none" strokeWidth={1.5} />
+                                        <Area type="monotone" dataKey="agent" name="Agentes" stroke="#c9a0a9" fill="none" strokeWidth={1.5} />
                                     </AreaChart>
                                 </ResponsiveContainer>
                             ) : (
@@ -231,7 +261,7 @@ function TrackerContent() {
                         {/* ─── Two-column grid ─── */}
                         <div className="grid md:grid-cols-2 gap-4 mt-4">
                             {/* Donut: humans vs bots */}
-                            <ChartCard title="Humanos vs Bots">
+                            <ChartCard title="Quién visita">
                                 {data.totalVisits > 0 ? (
                                     <ResponsiveContainer width="100%" height={220}>
                                         <PieChart>
@@ -247,8 +277,9 @@ function TrackerContent() {
                                                 labelLine={false}
                                                 style={{ fontSize: 11 }}
                                             >
-                                                <Cell fill={GOLD} />
-                                                <Cell fill={DARK} />
+                                                {donutData.map((_, i) => (
+                                                    <Cell key={i} fill={DONUT_COLORS[i]} />
+                                                ))}
                                             </Pie>
                                             <Tooltip />
                                         </PieChart>
@@ -259,7 +290,7 @@ function TrackerContent() {
                             </ChartCard>
 
                             {/* Bar: top bots */}
-                            <ChartCard title="Top Bots de IA">
+                            <ChartCard title="Rastreadores de IA (top)">
                                 {data.topBots.length > 0 ? (
                                     <ResponsiveContainer width="100%" height={220}>
                                         <BarChart data={data.topBots} layout="vertical" margin={{ left: 80 }}>
@@ -272,6 +303,23 @@ function TrackerContent() {
                                     </ResponsiveContainer>
                                 ) : (
                                     <p className="text-center text-[#333]/40 py-10 text-sm">Sin bots detectados</p>
+                                )}
+                            </ChartCard>
+
+                            {/* Bar: agentes */}
+                            <ChartCard title="Llamadas por agente">
+                                {data.topAgents.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height={220}>
+                                        <BarChart data={data.topAgents} layout="vertical" margin={{ left: 80 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#eee" />
+                                            <XAxis type="number" tick={{ fontSize: 10, fill: "#999" }} allowDecimals={false} />
+                                            <YAxis type="category" dataKey="name" tick={{ fontSize: 10, fill: "#666" }} width={75} />
+                                            <Tooltip />
+                                            <Bar dataKey="count" fill={GOLD} radius={[0, 4, 4, 0]} barSize={16} />
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : (
+                                    <p className="text-center text-[#333]/40 py-10 text-sm">Sin llamadas de agentes</p>
                                 )}
                             </ChartCard>
 
@@ -372,10 +420,10 @@ function TrackerContent() {
                                 {data.recentVisits.length > 0 ? (
                                     <div className="space-y-2 max-h-96 overflow-y-auto">
                                         {data.recentVisits.map((visit) => (
-                                            <div key={visit._id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-[#F8F5F0]/60 transition-colors text-xs">
+                                            <div key={visit._id} className="flex items-center gap-3 py-2 px-3 rounded-lg hover:bg-[#faf8f3]/60 transition-colors text-xs">
                                                 {/* Pulse indicator */}
                                                 <div className={`w-2 h-2 rounded-full flex-shrink-0 ${
-                                                    visit.visitorType === 'bot' ? 'bg-[#333]' : 'bg-[#C5A47E]'
+                                                    visit.visitorType === 'human' ? 'bg-[#7a1a2e]' : 'bg-[#333]'
                                                 } ${visit === data.recentVisits[0] ? 'animate-pulse' : ''}`} />
                                                 {/* Time */}
                                                 <span className="text-[#333]/40 w-14 flex-shrink-0">
@@ -383,11 +431,14 @@ function TrackerContent() {
                                                 </span>
                                                 {/* Type badge */}
                                                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-medium flex-shrink-0 ${
-                                                    visit.visitorType === 'bot'
-                                                        ? 'bg-[#333]/10 text-[#333]'
-                                                        : 'bg-[#C5A47E]/15 text-[#8B7355]'
+                                                    visit.visitorType === 'human'
+                                                        ? 'bg-[#7a1a2e]/15 text-[#7a1a2e]'
+                                                        : 'bg-[#333]/10 text-[#333]'
                                                 }`}>
-                                                    {visit.visitorType === 'bot' ? visit.botName || 'Bot' : 'Humano'}
+                                                    {visit.visitorType === 'human' ? 'Persona'
+                                                        : visit.visitorType === 'other_bot' ? 'Otro bot'
+                                                        : visit.visitorType === 'agent' ? `Agente · ${visit.botName || '?'}`
+                                                        : visit.botName || 'Rastreador IA'}
                                                 </span>
                                                 {/* Path */}
                                                 <span className="text-[#333]/70 truncate">{visit.path}</span>
