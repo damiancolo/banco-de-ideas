@@ -86,6 +86,7 @@ function detectDeviceType(ua: string): 'mobile' | 'tablet' | 'desktop' {
 // ─── Should track this path? ───
 function shouldTrack(path: string): boolean {
     if (path.startsWith('/api/')) return false;
+    if (path === '/mcp') return false; // el servidor MCP registra sus llamadas como 'agent'
     if (path.startsWith('/_next/')) return false;
     if (path === '/tracker') return false; // don't track the dashboard itself
     if (path.includes('.')) return false; // static files
@@ -179,9 +180,9 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     response.headers.set('X-AI-Agent-API', '/api/agent');
     response.headers.set('X-AI-Capabilities', 'read,write,search');
     response.headers.set('X-AI-Docs', '/llms.txt');
-    // El servidor MCP habla por stdio (npm: banco-de-ideas-mcp), no por HTTP.
-    // Apuntamos al manifiesto, que es lo unico que existe de verdad.
-    response.headers.set('X-AI-MCP', '/.well-known/mcp.json');
+    // Servidor MCP por HTTP (Streamable HTTP). El paquete npm banco-de-ideas-mcp
+    // sigue disponible para clientes que sólo hablan stdio.
+    response.headers.set('X-AI-MCP', '/mcp');
     response.headers.set('X-AI-Plugin', '/.well-known/ai-plugin.json');
 
     // ─── Content Negotiation ───

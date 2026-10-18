@@ -17,6 +17,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.36.3",
     "@auth/mongodb-adapter": "^3.11.1",
+    "@modelcontextprotocol/sdk": "^1.32.1",
     "@tailwindcss/typography": "^0.5.19",
     "mongoose": "^9.0.1",
     "next": "^16.2.6",
@@ -28,7 +29,8 @@
     "react-markdown": "^10.1.0",
     "recharts": "^3.8.0",
     "remark-gfm": "^4.0.1",
-    "resend": "^6.29.0"
+    "resend": "^6.29.0",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
     "@anthropic-ai/claude-code": "^2.1.3",
