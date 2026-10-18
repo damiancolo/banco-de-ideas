@@ -6,8 +6,8 @@ Aplicacion web de gestion creativa con IA. La entrada es texto (para dictar se u
 ## Stack
 - **Framework**: Next.js 16 (App Router) + React 19 + TypeScript
 - **Base de datos**: MongoDB Atlas (Mongoose 9)
-- **IA chat/análisis**: DeepSeek `deepseek-v4-pro` vía SDK OpenAI-compatible
-- **IA voz**: gpt-4o-mini-tts Shimmer (TTS, solo salida), text-embedding-3-small (embeddings)
+- **IA** (modelos vigentes tras la auditoría del 18 oct 2026; ver `~/Desktop/programeitor/INTELIGENCIAS.md`): análisis privado `claude-opus-5-5` (Anthropic; lee el bloque de texto, no `content[0]`); organizaciones `deepseek-v4-pro` (datos de clientes, no se migró); `gamegen` y clasificador de tareas `deepseek-flash` con `thinking: {type:'disabled'}`; defaults de proveedor: `claude-sonnet-5-5` y `gpt-6-luna`
+- **IA voz/embeddings (OpenAI)**: `gpt-4o-mini-tts` Shimmer (TTS), `text-embedding-3-small`. ⚠️ **Banco usa SU PROPIA cuenta/clave de OpenAI, distinta de la de estudioprompt, y estaba SIN CRÉDITO el 18 oct 2026** (`credit_balance_exhausted`): `/api/speak` y la búsqueda semántica devuelven 500 hasta recargarla
 - **Sin STT**: la grabacion por microfono se quito en ago 2026 — el dictado del teclado de iOS/Android lo hace mejor
 - **Auth**: NextAuth v5 beta (next-auth@5.0.0-beta) + @auth/mongodb-adapter + Google OAuth
 - **Estilos**: TailwindCSS 4
@@ -154,11 +154,11 @@ app/
     PrivadoChat.tsx             # Chat privado usando ChatEngine con prefijo /api/privado
     banco/page.tsx              # Dashboard de ideas privadas del usuario
   api/
-    analyze/route.ts            # Chat/bisociaciones/analisis (OpenAI) [rate limit: 15/min]
-    speak/route.ts              # Text-to-speech (TTS) [rate limit: 10/min]
+    analyze/route.ts            # Chat/bisociaciones/analisis [rate limit: 15/min]
+    speak/route.ts              # Text-to-speech (TTS) [rate limit: 10/min por IP + tope global 400/h]
     ideas/route.ts              # CRUD de ideas publicas, GET paginado (limit/skip -> total/hasMore) [rate limit: 5/min POST, 10/min DELETE]
     ideas/comments/route.ts     # Comentarios en ideas [rate limit: 10/min]
-    search/semantic/route.ts    # Busqueda semantica publica [rate limit: 15/min]
+    search/semantic/route.ts    # Busqueda semantica publica [rate limit: 15/min por IP + tope global 600/h]
     search/keywords/route.ts    # Busqueda por texto publica [rate limit: 20/min]
     agent/route.ts              # API para agentes de IA (GET/POST/OPTIONS) [rate limit: 20/min]
     track/route.ts              # POST interno para guardar visitas (protegido con TRACK_SECRET)
@@ -328,11 +328,7 @@ El proyecto incluye una capa completa para que agentes de IA descubran e interac
 - **Descubrimiento**: `llms.txt`, `ai-plugin.json`, `openapi.json`, headers HTTP (`X-AI-Agent-API`, `X-AI-Docs`), JSON-LD semantico, comentario HTML invisible
 - **API REST**: `GET/POST /api/agent` — listar, publicar bisociaciones/ideas, buscar (rate limit: 20/min)
 - **MCP Server**: `mcp-server/` — servidor Model Context Protocol con tools (`leer_ideas`, `publicar_bisociacion`, `publicar_idea`, `buscar_ideas`, `estadisticas`), resources y prompts.
-  ⚠️ Habla por **stdio** (npm `banco-de-ideas-mcp`). **No hay endpoint MCP por HTTP**:
-  hasta el 25 de ago 2026 el sitio anunciaba `/mcp` en la cabecera `X-AI-MCP`, el
-  JSON-LD y el `llms.txt`, y esa ruta daba 404. Ahora todo eso apunta a
-  `/.well-known/mcp.json`, que sí existe. El diseño del endpoint HTTP, si se decide
-  hacerlo, está en `~/Desktop/programeitor/BRIEF-MCP-HTTP.md`
+  Habla por **stdio** (npm `banco-de-ideas-mcp`) **y por HTTP en `/mcp`** (Streamable HTTP sin sesión; `app/mcp/route.ts` + `lib/mcp/server.ts`, commit `4af0129`, oct 2026). ⚠️ En producción `POST /mcp` registra `MongoServerSelectionError` (timeout 2 s): revisar la lista de IPs de Atlas y manejar el error. Diseño: `~/Desktop/programeitor/BRIEF-MCP-HTTP.md`
 - **Middleware**: headers invisibles en todas las respuestas + content negotiation (JSON requests a `/` o `/banco` redirigen a `/api/agent`)
 - **Sin autenticacion**: la API de agentes es abierta, protegida solo por rate limiting
 
@@ -380,14 +376,10 @@ El proyecto incluye una capa completa para que agentes de IA descubran e interac
 - **Navegadores**: Chrome, Safari, Firefox, Edge, Opera
 - **Dispositivos**: mobile, tablet, desktop (via regex en user-agent)
 - **Excluye**: rutas `/api/*`, `/_next/*`, y archivos estaticos (`.ext`)
-- **Dual tracking**: bots se envian tambien a WordPress (`estudioprompt.com/wp-json/ai-tracker/v1/visit`)
+- (Ya no hay «dual tracking» con WordPress: el WordPress de estudioprompt murió en oct 2026; ningún código de este repo lo llama.)
 
-### WordPress: AI Bot Tracker plugin
-El plugin en `estudioprompt.com/wp-content/plugins/ai-bot-tracker/ai-bot-tracker.php` fue modificado:
-- `aibt_track_visit()`: ademas de guardar en WordPress, envia `wp_remote_post` a `unbancodeideas.com/api/track` con TRACK_SECRET
-- `aibt_render_dashboard()`: muestra iframe de `unbancodeideas.com/tracker` en vez del dashboard original
-- Ruta: `estudioprompt.com/ai-stats/` (password: `estudioprompt2026`)
-- El plugin tambien rastrea bots que visitan estudioprompt.com y los envia al mismo MongoDB
+### WordPress: AI Bot Tracker plugin — HISTÓRICO
+El plugin `ai-bot-tracker` (WordPress de estudioprompt.com) enviaba visitas a `/api/track` con `TRACK_SECRET`. **El WordPress ya no corre** (verificado 18 oct 2026); el conteo de bots de estudioprompt lo hace su `middleware.ts` de Vercel y `estudioprompt.com/ai-stats` es una página Astro pública. ⚠️ Si `TRACK_SECRET` coincide con valores que estuvieron en el JS público de estudioprompt (`internal_track_2026_banco`), **rotarlo**: además es la sal del hash anónimo de visitantes.
 
 ### iframe embed (next.config.mjs)
 - `/tracker`: CSP `frame-ancestors https://estudioprompt.com` (permite iframe solo desde estudioprompt)
