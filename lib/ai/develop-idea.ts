@@ -42,7 +42,7 @@ export async function classifyTask(rawText: string): Promise<ClassifyResult> {
 
     const run = async (): Promise<ClassifyResult> => {
         const response = await client.chat.completions.create({
-            model: 'deepseek-v4-pro',
+            model: 'deepseek-flash', // 18 oct 2026: antes deepseek-v4-pro; es un clasificador de 60 tokens
             messages: [
                 { role: 'system', content: SYSTEM_PROMPT },
                 { role: 'user', content: rawText },
@@ -50,6 +50,8 @@ export async function classifyTask(rawText: string): Promise<ClassifyResult> {
             response_format: { type: 'json_object' },
             temperature: 0,
             max_tokens: 60,
+            // deepseek-flash razona por defecto; con 60 tokens de tope se quedaría sin respuesta
+            ...({ thinking: { type: 'disabled' } } as object),
         }, { timeout: 30000, maxRetries: 0 });
         const content = response.choices[0]?.message?.content || '{}';
         const parsed = JSON.parse(content);

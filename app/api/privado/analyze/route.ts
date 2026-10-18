@@ -81,10 +81,11 @@ export async function POST(request: Request) {
     }
 
     // Hubo un tiempo en que el owner tenía un modelo distinto al del resto. Desde
-    // la auditoría de ago 2026 los dos usan claude-opus-5 —cuesta igual y es mejor—,
+    // la auditoría de ago 2026 los dos usan el mismo modelo; el 18 oct 2026 pasó a opus-5.5 (4/20 en vez de 5/25),
     // así que el ternario que quedaba comparaba dos constantes idénticas y no hacía
     // nada salvo hacer creer que había una distinción.
-    const claudeModel = 'claude-opus-5';
+    // Opus 5.5 no admite apagar el razonamiento ni `temperature`; el esfuerzo por defecto es `medium`.
+    const claudeModel = 'claude-opus-5-5';
 
     try {
         const ip = getIp(request);

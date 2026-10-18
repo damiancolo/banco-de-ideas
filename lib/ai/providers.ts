@@ -17,7 +17,7 @@ export class ClaudeProvider implements AIProvider {
     private client: Anthropic;
     private model: string;
 
-    constructor(apiKey: string, model: string = 'claude-sonnet-5') {
+    constructor(apiKey: string, model: string = 'claude-sonnet-5-5') {
         this.client = new Anthropic({ apiKey });
         this.model = model;
     }
@@ -138,7 +138,7 @@ export function getAIProvider(org: { aiProvider: string, aiModel: string }): AIP
             }
             return new OpenAICompatibleProvider(
                 process.env.OPENAI_API_KEY, 
-                org.aiModel || 'gpt-5.6-luna'
+                org.aiModel || 'gpt-6-luna'
             );
             
         default:

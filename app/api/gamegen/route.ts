@@ -7,7 +7,7 @@ export const maxDuration = 300;
 
 // ── Modelo ────────────────────────────────────────────────────────────────
 // Cambiar aquí cuando haya un modelo mejor/más barato disponible
-const MODEL = 'deepseek-v4-pro';
+const MODEL = 'deepseek-flash'; // 18 oct 2026: antes deepseek-v4-pro; 4× más barato para generar un juego corto
 
 const client = new OpenAI({
     apiKey: process.env.DEEPSEEK_API_KEY!,
@@ -96,6 +96,8 @@ export async function POST(request: Request) {
                     max_tokens: 4000,
                     temperature: 0.8,
                     stream: true,
+                    // deepseek-flash razona por defecto y el razonamiento se come max_tokens
+                    ...({ thinking: { type: 'disabled' } } as object),
                 });
 
                 for await (const chunk of gameStream) {
