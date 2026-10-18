@@ -23,6 +23,16 @@ export async function POST(req: Request) {
             );
         }
 
+        // Tope global por hora: el TTS es público y cada petición puede costar centavos; el límite por IP
+        // no frena a quien rota de IP. 400/hora entre todos es holgado para el uso real.
+        const global = await checkRateLimit('global', 'speak-global', 400, 3600);
+        if (!global.success) {
+            return NextResponse.json(
+                { error: 'El servicio de audio está saturado. Intenta de nuevo más tarde.' },
+                { status: 429 }
+            );
+        }
+
         const { text } = await req.json();
 
         if (!text || typeof text !== "string") {

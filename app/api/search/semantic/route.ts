@@ -35,6 +35,15 @@ export async function POST(req: Request) {
             );
         }
 
+        // Tope global por hora (los embeddings se pagan): frena el abuso desde muchas IPs.
+        const global = await checkRateLimit('global', 'semantic-global', 600, 3600);
+        if (!global.success) {
+            return NextResponse.json(
+                { error: 'La búsqueda está saturada. Intenta de nuevo más tarde.' },
+                { status: 429 }
+            );
+        }
+
         const { query } = await req.json();
 
         if (!query || typeof query !== 'string' || query.trim().length === 0) {
