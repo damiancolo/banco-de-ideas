@@ -109,10 +109,18 @@ export default function RootLayout({
                 "priceCurrency": "USD"
               },
               "description": "Plataforma de IA para gestión y expansión de ideas creativas.",
-              "author": {
-                "@type": "Person",
-                "name": "Damián Lafferranderie",
-                "url": "https://estudioprompt.com"
+              "author": { "@id": "https://estudioprompt.com/#organization" },
+              "publisher": {
+                "@type": "Organization",
+                "@id": "https://estudioprompt.com/#organization",
+                "name": "Estudioprompt",
+                "url": "https://estudioprompt.com",
+                "founder": {
+                  "@type": "Person",
+                  "@id": "https://estudioprompt.com/#damian-lafferranderie",
+                  "name": "Damián Lafferranderie",
+                  "url": "https://estudioprompt.com/perfil"
+                }
               }
             })
           }}

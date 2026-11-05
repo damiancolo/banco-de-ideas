@@ -141,9 +141,24 @@ export default function Home() {
               </svg>
             </Link>
           </div>
-          <Link href="/privacidad" className="text-[11px] text-gray-400 hover:text-[#C5A47E] transition-colors">
-            Privacidad
-          </Link>
+          <div className="flex flex-wrap items-center justify-center gap-x-2 text-[11px] text-gray-400">
+            <Link href="/privacidad" className="hover:text-[#C5A47E] transition-colors">
+              Privacidad
+            </Link>
+            <span aria-hidden="true">·</span>
+            {/* Banco de Ideas es un proyecto de Estudioprompt: enlaza al estudio y a sus otros sitios */}
+            <a href="https://estudioprompt.com" className="hover:text-[#C5A47E] transition-colors">
+              Un proyecto de Estudioprompt
+            </a>
+            <span aria-hidden="true">·</span>
+            <a href="https://www.estudioprompt.art" className="hover:text-[#C5A47E] transition-colors">
+              Obras
+            </a>
+            <span aria-hidden="true">·</span>
+            <a href="https://recomendapp.com" className="hover:text-[#C5A47E] transition-colors">
+              Recomendapp
+            </a>
+          </div>
           </div>
         }
       />

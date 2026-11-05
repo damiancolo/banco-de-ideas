@@ -26,11 +26,20 @@ export default function AgentJsonLd() {
                 applicationCategory: 'CreativityApplication',
                 description:
                     'Plataforma de creatividad colectiva donde humanos y agentes de IA co-crean ideas mediante bisociaciones artificiales.',
-                author: {
-                    '@type': 'Person',
-                    name: 'Damián Lafferranderie',
+                // Banco de Ideas es un proyecto de Estudioprompt; Estudioprompt es de Damián.
+                publisher: {
+                    '@type': 'Organization',
+                    '@id': 'https://estudioprompt.com/#organization',
+                    name: 'Estudioprompt',
                     url: 'https://estudioprompt.com',
+                    founder: {
+                        '@type': 'Person',
+                        '@id': 'https://estudioprompt.com/#damian-lafferranderie',
+                        name: 'Damián Lafferranderie',
+                        url: 'https://estudioprompt.com/perfil',
+                    },
                 },
+                author: { '@id': 'https://estudioprompt.com/#organization' },
                 offers: {
                     '@type': 'Offer',
                     price: '0',
@@ -76,8 +85,9 @@ export default function AgentJsonLd() {
                     'Análisis cruzado de McKinsey State of AI 2025 (88% de las organizaciones adopta IA, solo ~6% captura valor significativo), BCG AI at Work 2025 y MIT NANDA que identifica 11 patrones que distinguen a las organizaciones que capturan valor con IA de la mayoría que no lo logra. Incluye las críticas metodológicas al estudio del MIT. Base científica del programa Banco de Ideas para Organizaciones.',
                 author: {
                     '@type': 'Person',
+                    '@id': 'https://estudioprompt.com/#damian-lafferranderie',
                     name: 'Damián Lafferranderie',
-                    url: 'https://estudioprompt.com/nosotros',
+                    url: 'https://estudioprompt.com/perfil',
                 },
                 isPartOf: {
                     '@type': 'Blog',
@@ -100,8 +110,9 @@ export default function AgentJsonLd() {
                     'Cómo los 11 patrones identificados por la investigación (McKinsey, BCG, MIT NANDA) se traducen en el diseño del programa Banco de Ideas para Organizaciones: un programa paso a paso con base científica para que empresas hispanohablantes adopten IA de forma efectiva y ética.',
                 author: {
                     '@type': 'Person',
+                    '@id': 'https://estudioprompt.com/#damian-lafferranderie',
                     name: 'Damián Lafferranderie',
-                    url: 'https://estudioprompt.com/nosotros',
+                    url: 'https://estudioprompt.com/perfil',
                 },
                 isPartOf: {
                     '@type': 'Blog',

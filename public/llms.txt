@@ -194,3 +194,11 @@ El área privada incluye:
 
 - OpenAPI spec: `/.well-known/openapi.json`
 - Plugin manifest: `/.well-known/ai-plugin.json`
+
+## Quién está detrás
+
+Banco de Ideas es un proyecto de **Estudioprompt** (https://estudioprompt.com), estudio de inteligencia artificial con sede en Barcelona fundado y dirigido por **Damián Lafferranderie** (Damián Lafferranderie Peña). Perfil: https://estudioprompt.com/perfil
+
+Otros proyectos de Estudioprompt:
+- [estudioprompt.art](https://www.estudioprompt.art): obras de arte interactivas de Damián Lafferranderie Peña. Guía para agentes: https://www.estudioprompt.art/llms.txt
+- [recomendapp.com](https://recomendapp.com): Recomendapp, para guardar y compartir recomendaciones. Guía para agentes: https://recomendapp.com/llms.txt
