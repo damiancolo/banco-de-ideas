@@ -444,6 +444,25 @@ npm run map-project  # Genera esquema visual del proyecto
 - MongoDB Atlas tiene `0.0.0.0/0` en whitelist (necesario para Vercel/serverless)
 - `credentials.md` esta gitignoreado — contiene credenciales reales, no commitear
 
+## Identidad compartida con los otros sitios de Estudioprompt (nov 2026)
+
+Banco de Ideas, estudioprompt.com, estudioprompt.art y recomendapp.com usan **la misma
+identidad** en su JSON-LD y en su `llms.txt`. Pedido de Damián: cada sitio dice que es
+**un proyecto de Estudioprompt**, y Estudioprompt dice que es **de Damián**.
+
+| Qué | `@id` (igual en todos los sitios) |
+|---|---|
+| La organización Estudioprompt | `https://estudioprompt.com/#organization` |
+| Damián Lafferranderie (Peña) | `https://estudioprompt.com/#damian-lafferranderie` |
+
+- JSON-LD: el sitio lo **publica** (`publisher`) la organización, cuyo **fundador**
+  (`founder`) es Damián. Los artículos siguen firmados por Damián (`author`).
+- Visible: un pie discreto «Un proyecto de Estudioprompt» con enlaces a los otros sitios.
+- `llms.txt`: sección «Quién está detrás» con el nombre de Damián explícito.
+- **chiaraestudio.com no se toca** (es el sitio de Chiara; se habla con ella primero).
+- Si cambia un @id, cambia en los cuatro repositorios a la vez. La guía completa está
+  en el `CLAUDE.md` de `damiancolo/estudioprompt`.
+
 ## Trabajo en curso — Plan Enterprise
 
 **Estamos construyendo un tercer entorno: entorno empresa.**
