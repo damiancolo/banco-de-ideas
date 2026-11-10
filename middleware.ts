@@ -86,7 +86,10 @@ function detectDeviceType(ua: string): 'mobile' | 'tablet' | 'desktop' {
 // ─── Should track this path? ───
 function shouldTrack(path: string): boolean {
     if (path.startsWith('/api/')) return false;
-    if (path === '/mcp') return false; // el servidor MCP registra sus llamadas como 'agent'
+    // El servidor MCP registra sus llamadas como 'agent'. Lo que cuelga de /mcp
+    // (p. ej. /mcp/server-card) son sondeos de directorios, no visitas.
+    if (path === '/mcp' || path.startsWith('/mcp/')) return false;
+    if (path === '/icon' || path === '/opengraph-image') return false; // imágenes, no páginas
     if (path.startsWith('/_next/')) return false;
     if (path === '/tracker') return false; // don't track the dashboard itself
     if (path.includes('.')) return false; // static files
@@ -144,7 +147,13 @@ export async function middleware(request: NextRequest, event: NextFetchEvent) {
     // ─── Visit Tracking (MongoDB via /api/track) ───
     const excluido = request.cookies.get(NO_TRACK_COOKIE)?.value === '1' || noContarme === '1';
 
-    if (shouldTrack(path) && !isInternalNavigation(request) && !excluido) {
+    // Los «otros bots» (buscadores, curl, previews, escáneres) NO se registran desde
+    // nov 2026: cada registro es una invocación extra de /api/track, y con páginas
+    // estáticas eso significaba arrancar una función sólo para anotar a un bot
+    // (~900 al mes). Personas y rastreadores de IA se siguen contando igual.
+    const seRegistra = visitorType !== 'other_bot';
+
+    if (seRegistra && shouldTrack(path) && !isInternalNavigation(request) && !excluido) {
         const country = request.headers.get('x-vercel-ip-country') || null;
         const referrer = request.headers.get('referer') || null;
         const isHuman = visitorType === 'human';

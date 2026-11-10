@@ -26,17 +26,34 @@ declare global {
     var _authMongoClientPromise: Promise<MongoClient> | undefined;
 }
 
-let clientPromise: Promise<MongoClient>;
-
-if (process.env.NODE_ENV === 'development') {
-    if (!global._authMongoClientPromise) {
-        global._authMongoClientPromise = new MongoClient(MONGODB_URI, OPCIONES).connect();
-    }
-    clientPromise = global._authMongoClientPromise;
-} else {
-    clientPromise = new MongoClient(MONGODB_URI, OPCIONES).connect();
-}
-
+/**
+ * La conexión se abre la primera vez que alguien la pide, NO al importar este
+ * archivo.
+ *
+ * Hasta nov 2026 se abría al cargar el módulo, sin que nadie la esperara. En
+ * Vercel eso tumbaba el proceso: una petición que no usaba la base (un
+ * `initialize` de /mcp, una página con sesión JWT) respondía antes de que la
+ * conexión terminara, Vercel congelaba la instancia con la conexión a medias y,
+ * al despertarla la petición siguiente, saltaba el timeout de 2 s sin nadie que
+ * capturara el error → `unhandledRejection` → `Node.js process exited with exit
+ * status: 128`. Eran ~125 caídas al día; cada una mataba la petición en curso y
+ * obligaba a un arranque en frío, que es lo que se comió el cupo de CPU de
+ * Vercel (aviso del 90 % del 10 nov 2026).
+ *
+ * Si se vuelve a conectar al importar, vuelve el problema.
+ */
 export function getMongoClient(): Promise<MongoClient> {
-    return clientPromise;
+    if (!global._authMongoClientPromise) {
+        const promesa = new MongoClient(MONGODB_URI, OPCIONES).connect();
+        // Si falla, se olvida para que la próxima llamada reintente en vez de
+        // quedarse con un rechazo guardado para siempre. Este catch además deja
+        // el rechazo atendido; quien espere la promesa recibe el error igual.
+        promesa.catch(() => {
+            if (global._authMongoClientPromise === promesa) {
+                global._authMongoClientPromise = undefined;
+            }
+        });
+        global._authMongoClientPromise = promesa;
+    }
+    return global._authMongoClientPromise;
 }

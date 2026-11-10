@@ -1,18 +1,7 @@
 import { after } from 'next/server';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { z } from 'zod';
-import {
-    getIdeas,
-    countPublicIdeas,
-    getPublicIdeaById,
-    getPublicIdeaStats,
-    addComment,
-    saveIdea,
-    searchIdeasByKeywords,
-} from '@/lib/db';
-import { checkRateLimit } from '@/lib/rate-limit';
 import { getIp } from '@/lib/request-utils';
-import { notifyAdminNewIdea, notifyAdminAgentComment } from '@/lib/notifications/notifyAdminNewIdea';
 import {
     esTexto,
     limpiarTags,
@@ -22,6 +11,20 @@ import {
     textoComentario,
     registrarLlamadaAgente,
 } from '@/lib/agent-actions';
+
+/**
+ * Carga perezosa de todo lo que toca la base (Mongoose, el cliente de Mongo, Resend).
+ *
+ * La mayoría de las peticiones a /mcp son `initialize` y `tools/list` de
+ * directorios de MCP que sondean el servidor: no usan la base. Con imports
+ * estáticos cada una cargaba Mongoose y abría conexiones igual, y eso en Vercel
+ * es CPU de arranque en frío (nov 2026: aviso del 90 % del cupo gratuito). Así
+ * sólo paga quien llama a una herramienta. No volver a subir estos imports
+ * arriba del archivo.
+ */
+const db = () => import('@/lib/db');
+const limites = () => import('@/lib/rate-limit');
+const avisos = () => import('@/lib/notifications/notifyAdminNewIdea');
 
 /**
  * Servidor MCP del Banco de Ideas para el transporte HTTP (/mcp).
@@ -51,6 +54,7 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
     // Límite por herramienta, no por petición: una petición MCP puede traer varias
     // llamadas. Escritura y búsqueda comparten el cupo de /api/agent (20/min).
     async function dentroDelLimite(tipo: 'escritura' | 'lectura'): Promise<boolean> {
+        const { checkRateLimit } = await limites();
         const { success } =
             tipo === 'escritura'
                 ? await checkRateLimit(ip, 'agent-api', 20, 60)
@@ -97,6 +101,7 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
         herramienta('leer_ideas', 'lectura', async ({ category, limit, offset }: { category: 'user' | 'bisociation' | 'all'; limit: number; offset?: number }) => {
             const filtro = category === 'all' ? undefined : category;
             const skip = offset ?? 0;
+            const { getIdeas, countPublicIdeas } = await db();
             const [ideas, total] = await Promise.all([
                 getIdeas({ limit, skip, category: filtro }),
                 countPublicIdeas(filtro),
@@ -127,6 +132,7 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
             annotations: SOLO_LECTURA,
         },
         herramienta('leer_idea', 'lectura', async ({ id }: { id: string }) => {
+            const { getPublicIdeaById } = await db();
             const idea = await getPublicIdeaById(id);
             if (!idea) return fallo(`Idea no encontrada: ${id}`);
             return ok({
@@ -166,8 +172,9 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
                 if (texto.length > MAX_TEXTO_AGENTE) {
                     return fallo(`El texto total excede ${MAX_TEXTO_AGENTE} caracteres. Sé más conciso.`);
                 }
+                const { saveIdea } = await db();
                 const idea = await saveIdea(texto, 'bisociation');
-                after(() => notifyAdminNewIdea({ ...idea, scope: 'public', origin: 'agent' }, null));
+                after(async () => (await avisos()).notifyAdminNewIdea({ ...idea, scope: 'public', origin: 'agent' }, null));
                 return ok({
                     success: true,
                     message: '¡Bisociación publicada! Ya es visible para humanos y agentes.',
@@ -194,8 +201,9 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
             if (textoFinal.length > MAX_TEXTO_AGENTE) {
                 return fallo(`El texto excede ${MAX_TEXTO_AGENTE} caracteres.`);
             }
+            const { saveIdea } = await db();
             const idea = await saveIdea(textoFinal, 'bisociation');
-            after(() => notifyAdminNewIdea({ ...idea, scope: 'public', origin: 'agent' }, null));
+            after(async () => (await avisos()).notifyAdminNewIdea({ ...idea, scope: 'public', origin: 'agent' }, null));
             return ok({
                 success: true,
                 message: '¡Idea publicada!',
@@ -218,11 +226,12 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
         },
         herramienta('comentar_idea', 'escritura', async ({ id, texto }: { id: string; texto: string }) => {
             // addComment no mira el scope: sólo se comentan ideas públicas.
+            const { getPublicIdeaById, addComment } = await db();
             const idea = await getPublicIdeaById(id);
             if (!idea) return fallo(`Idea no encontrada: ${id}`);
             const firmado = textoComentario(texto.trim(), FIRMA);
             if (!(await addComment(id, firmado))) return fallo('No se pudo guardar el comentario.');
-            after(() => notifyAdminAgentComment({ id: idea.id, text: idea.text }, firmado));
+            after(async () => (await avisos()).notifyAdminAgentComment({ id: idea.id, text: idea.text }, firmado));
             return ok({ success: true, message: 'Comentario publicado.', comment: { text: firmado }, idea_id: id });
         })
     );
@@ -237,6 +246,7 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
         },
         herramienta('buscar_ideas', 'escritura', async ({ query }: { query: string }) => {
             if (!esTexto(query) || query.trim().length > 200) return fallo('query es obligatorio y de hasta 200 caracteres.');
+            const { searchIdeasByKeywords } = await db();
             const results = await searchIdeasByKeywords(query);
             return ok({
                 results: results.map((idea) => ({ id: idea.id, text: idea.text, category: idea.category, createdAt: idea.createdAt })),
@@ -255,6 +265,7 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
             annotations: SOLO_LECTURA,
         },
         herramienta('estadisticas', 'lectura', async () => {
+            const { getPublicIdeaStats } = await db();
             const stats = await getPublicIdeaStats();
             return ok({
                 stats: {

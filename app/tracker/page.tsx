@@ -207,7 +207,7 @@ function TrackerContent() {
                                 { label: "Personas únicas", value: data.uniquePeople, hint: "por día, sin cookies" },
                                 { label: "Páginas vistas por personas", value: data.humanCount, hint: "sin bots ni agentes" },
                                 { label: "Rastreadores de IA", value: data.crawlerCount, hint: "GPTBot, ClaudeBot…" },
-                                { label: "Otros bots", value: data.otherBotCount, hint: "buscadores, curl, previews" },
+                                { label: "Otros bots", value: data.otherBotCount, hint: "buscadores, curl, previews · sin registrar desde nov 2026" },
                                 { label: "Llamadas de agentes (API/MCP)", value: data.agentCount, hint: "acciones en /api/agent" },
                             ].map((stat) => (
                                 <div key={stat.label} className="bg-white/80 rounded-2xl p-4 shadow-sm border border-[#7a1a2e]/10">

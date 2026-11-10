@@ -4,7 +4,9 @@ import { MongoDBAdapter } from '@auth/mongodb-adapter';
 import { getMongoClient } from '@/lib/auth-client';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
-    adapter: MongoDBAdapter(getMongoClient()),
+    // Se pasa la función, no la promesa: así el adapter conecta cuando necesita
+    // la base y no al cargar este archivo (ver lib/auth-client.ts).
+    adapter: MongoDBAdapter(getMongoClient),
     providers: [Google({
         client: { token_endpoint_auth_method: "client_secret_post" },
     })],

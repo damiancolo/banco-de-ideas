@@ -328,7 +328,7 @@ El proyecto incluye una capa completa para que agentes de IA descubran e interac
 - **Descubrimiento**: `llms.txt`, `ai-plugin.json`, `openapi.json`, headers HTTP (`X-AI-Agent-API`, `X-AI-Docs`), JSON-LD semantico, comentario HTML invisible
 - **API REST**: `GET/POST /api/agent` — listar, publicar bisociaciones/ideas, buscar (rate limit: 20/min)
 - **MCP Server**: `mcp-server/` — servidor Model Context Protocol con tools (`leer_ideas`, `publicar_bisociacion`, `publicar_idea`, `buscar_ideas`, `estadisticas`), resources y prompts.
-  Habla por **stdio** (npm `banco-de-ideas-mcp`) **y por HTTP en `/mcp`** (Streamable HTTP sin sesión; `app/mcp/route.ts` + `lib/mcp/server.ts`, commit `4af0129`, oct 2026). ⚠️ En producción `POST /mcp` registra `MongoServerSelectionError` (timeout 2 s): revisar la lista de IPs de Atlas y manejar el error. Diseño: `~/Desktop/programeitor/BRIEF-MCP-HTTP.md`
+  Habla por **stdio** (npm `banco-de-ideas-mcp`) **y por HTTP en `/mcp`** (Streamable HTTP sin sesión; `app/mcp/route.ts` + `lib/mcp/server.ts`, commit `4af0129`, oct 2026). El `MongoServerSelectionError` que registraba `POST /mcp` en producción no era la lista de IPs de Atlas: era la conexión que `lib/auth-client.ts` abría al importarse (ver «Consumo en Vercel»). Diseño: `~/Desktop/programeitor/BRIEF-MCP-HTTP.md`
 - **Middleware**: headers invisibles en todas las respuestas + content negotiation (JSON requests a `/` o `/banco` redirigen a `/api/agent`)
 - **Sin autenticacion**: la API de agentes es abierta, protegida solo por rate limiting
 
@@ -375,7 +375,8 @@ El proyecto incluye una capa completa para que agentes de IA descubran e interac
 - **Bots de IA**: detecta 14 patrones (GPTBot, ClaudeBot, GoogleBot, PerplexityBot, Meta, DeepSeek, etc.)
 - **Navegadores**: Chrome, Safari, Firefox, Edge, Opera
 - **Dispositivos**: mobile, tablet, desktop (via regex en user-agent)
-- **Excluye**: rutas `/api/*`, `/_next/*`, y archivos estaticos (`.ext`)
+- **Excluye**: rutas `/api/*`, `/_next/*`, `/mcp` y lo que cuelga de él, `/icon`, `/opengraph-image` y archivos estaticos (`.ext`)
+- **No registra «otros bots»** (buscadores, curl, previews, escáneres) desde nov 2026: se clasifican para no contarlos como personas, pero no se guardan. La tarjeta «Otros bots» del panel se irá a cero; es lo esperado.
 - (Ya no hay «dual tracking» con WordPress: el WordPress de estudioprompt murió en oct 2026; ningún código de este repo lo llama.)
 
 ### WordPress: AI Bot Tracker plugin — HISTÓRICO
@@ -393,6 +394,25 @@ El plugin `ai-bot-tracker` (WordPress de estudioprompt.com) enviaba visitas a `/
 - Feed de actividad reciente (ultimas 20 visitas)
 - Auto-refresh cada 60 segundos
 - Estetica gold/beige (#C5A47E, #F8F5F0)
+
+## Consumo en Vercel (plan gratuito) — nov 2026
+
+El 10 nov 2026 Vercel avisó del 90 % del cupo de **Fluid Active CPU** (4 h al mes;
+si se pasa, pausa todos los proyectos de la cuenta). No era tráfico —unas 140
+visitas al día—, era el coste de cada petición. Lo que se cambió, y por qué no hay
+que deshacerlo:
+
+| Regla | Dónde | Qué pasaba |
+|---|---|---|
+| **No conectar a Mongo al importar un módulo** | `lib/auth-client.ts`, `auth.ts` | El cliente nativo conectaba al cargarse, sin que nadie lo esperara. Una petición que no usaba la base respondía antes, Vercel congelaba la instancia a medio conectar y la siguiente petición recibía el timeout sin capturar → el proceso moría (`exit status: 128`). ~125 caídas al día, cada una con su arranque en frío. Ahora conecta al primer uso y al adapter se le pasa la función, no la promesa. |
+| **`/mcp` no carga la base hasta que se llama a una herramienta** | `lib/mcp/server.ts`, `lib/agent-actions.ts` | Casi todo lo que llega a `/mcp` son `initialize` y `tools/list` de directorios de MCP. Los imports de `lib/db`, `rate-limit` y los avisos son `import()` dentro de cada herramienta. |
+| **Los «otros bots» no se registran** | `middleware.ts` | Cada visita registrada es una invocación extra de `/api/track`. |
+| **`/api/tracker` se cachea 60 s en la CDN** | `app/api/tracker/route.ts` | El panel se refresca solo cada minuto y lanzaba 12 agregaciones cada vez. |
+| **`/icon` y `/opengraph-image` son estáticos** | `app/icon.tsx`, `app/opengraph-image.tsx` | Con `runtime = 'edge'` se dibujaban en cada petición. |
+
+Para comprobarlo tras un cambio: `npm run build` debe listar `/icon` y
+`/opengraph-image` con `○`, y en Vercel → Logs no debe aparecer
+`unhandledRejection: MongoServerSelectionError`.
 
 ## Seguridad implementada
 - Rate limiting en **todos** los endpoints API (fail-closed: si la BD falla, rechaza).

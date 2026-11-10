@@ -144,6 +144,12 @@ export async function GET(request: Request) {
             devices: (devices as Counted[]).map((d) => ({ type: d._id, count: d.count })),
             countries: (countries as Counted[]).map((c) => ({ code: c._id, count: c.count })),
             recentVisits,
+        }, {
+            // Cifras públicas y agregadas: la CDN de Vercel guarda la respuesta 60 s
+            // (por rango y sitio), así el panel —que se refresca solo cada minuto— y
+            // el iframe de estudioprompt no lanzan 12 agregaciones por cada consulta.
+            // Sólo se cachea el 200; los 429 y 500 siguen sin caché.
+            headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120' },
         });
     } catch (error) {
         logger.error('Error fetching tracker data:', error);

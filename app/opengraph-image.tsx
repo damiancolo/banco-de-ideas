@@ -1,6 +1,7 @@
 import { ImageResponse } from 'next/og';
 
-export const runtime = 'edge';
+// Sin `runtime = 'edge'`: así Next genera la imagen una vez en el build y la sirve
+// como archivo estático, en vez de dibujarla en cada petición.
 
 export const alt = 'Banco de Ideas';
 export const size = {

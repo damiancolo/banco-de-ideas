@@ -5,7 +5,6 @@
  * quede igual en el banco.
  */
 
-import { recordVisit } from '@/lib/visits';
 import { logger } from '@/lib/logger';
 
 export const esTexto = (v: unknown): v is string => typeof v === 'string' && v.trim().length > 0;
@@ -44,6 +43,9 @@ export function textoComentario(text: string, firma: string): string {
  */
 export async function registrarLlamadaAgente(request: Request, path: string, agentName?: unknown): Promise<void> {
     try {
+        // Import perezoso: este archivo lo carga /mcp también para peticiones que
+        // no tocan la base, y lib/visits arrastra Mongoose.
+        const { recordVisit } = await import('@/lib/visits');
         const userAgent = request.headers.get('user-agent') || '';
         const name = esTexto(agentName) ? agentName.trim() : userAgent;
         await recordVisit({
