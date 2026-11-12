@@ -37,19 +37,23 @@ const COLOR_ACCENT = '#7a1a2e';
  */
 const DEFAULT_FROM = 'Banco de Ideas <onboarding@resend.dev>';
 
+const SITE_URL = 'https://www.unbancodeideas.com';
+
 /**
  * Configuración con respaldo: la API key también se acepta como `RESEND` (así
  * quedó guardada en Vercel), y destinatario/admin caen en el owner del proyecto.
  */
 function config() {
-    const vercelUrl = process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : undefined;
     return {
         apiKey: process.env.RESEND_API_KEY || process.env.RESEND,
         to: process.env.NOTIFY_EMAIL_TO || OWNER_EMAIL,
         from: process.env.NOTIFY_EMAIL_FROM || DEFAULT_FROM,
         adminUserId: process.env.ADMIN_USER_ID?.trim(),
         adminEmail: (process.env.ADMIN_EMAIL || OWNER_EMAIL).trim().toLowerCase(),
-        siteUrl: process.env.NEXT_PUBLIC_SITE_URL || vercelUrl,
+        // Nunca VERCEL_URL: es la URL interna del despliegue (*.vercel.app), que
+        // tiene la protección de Vercel y pide iniciar sesión. Los enlaces de los
+        // mails van siempre al dominio público.
+        siteUrl: process.env.NEXT_PUBLIC_SITE_URL || SITE_URL,
     };
 }
 
@@ -81,13 +85,13 @@ function titleOf(text: string): string {
 }
 
 /**
- * No hay una página por idea en el sitio; el único enlace directo y público a
- * una idea concreta es la lectura por id de la API de agentes.
+ * Enlace a la idea dentro del banco: `/banco?idea=<id>` abre su ficha
+ * (BancoView). Antes apuntaba a `/api/agent?action=get`, que devuelve JSON.
  */
 function publicIdeaUrl(ideaId: string): string | null {
     const base = config().siteUrl?.trim().replace(/\/+$/, '');
     if (!base) return null;
-    return `${base}/api/agent?action=get&id=${encodeURIComponent(ideaId)}`;
+    return `${base}/banco?idea=${encodeURIComponent(ideaId)}`;
 }
 
 async function emailOfUser(userId: string): Promise<string | null> {

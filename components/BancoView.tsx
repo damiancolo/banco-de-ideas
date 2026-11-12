@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { logger } from '@/lib/logger';
 import IdeaModal from './IdeaModal';
 
@@ -58,6 +58,21 @@ export default function BancoView({
     const [selectedIdea, setSelectedIdea] = useState<SavedIdea | null>(null);
     const [cargandoMas, setCargandoMas] = useState(false);
     const [errorCarga, setErrorCarga] = useState<string | null>(null);
+
+    /**
+     * Enlace directo a una idea: `/banco?idea=<id>` abre su ficha al cargar.
+     * Lo usan los avisos por mail. Si la idea no está entre las cargadas (es
+     * vieja o se borró), la página se ve igual, sin ficha abierta.
+     */
+    useEffect(() => {
+        const id = new URLSearchParams(window.location.search).get('idea');
+        if (!id) return;
+        const idea = initialIdeas.find(i => i.id === id);
+        if (!idea) return;
+        setView(idea.category === 'bisociation' ? 'bisociation' : 'user');
+        setSelectedIdea(idea);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []);
 
     /**
      * Las resaltadas van aparte. Cuando se pagina ya no se pueden sacar
