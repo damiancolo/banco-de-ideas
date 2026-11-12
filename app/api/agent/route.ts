@@ -22,6 +22,9 @@ import {
     textoIdea,
     textoComentario,
     registrarLlamadaAgente,
+    pareceAtaque,
+    MENSAJE_RECHAZO,
+    dentroDelCupoDeEscritura,
 } from '@/lib/agent-actions';
 
 /**
@@ -240,6 +243,19 @@ export async function POST(request: Request) {
 
         if (typeof action === 'string') {
             after(() => recordAgentCall(request, action.slice(0, 40), body.agent_name));
+        }
+
+        // Escritura: filtro de pruebas de ataque y cupo propio (5/min, 20/h).
+        if (action === 'publish' || action === 'publish_idea' || action === 'comment') {
+            if (pareceAtaque(body.conceptA, body.conceptB, body.insight, body.text, body.agent_name, ...(Array.isArray(body.tags) ? body.tags : []))) {
+                return agentResponse({ error: MENSAJE_RECHAZO }, 400);
+            }
+            if (!(await dentroDelCupoDeEscritura(ip))) {
+                return agentResponse(
+                    { error: 'Límite de publicación alcanzado: 5 por minuto y 20 por hora.', retry_after_seconds: 3600 },
+                    429
+                );
+            }
         }
 
         // ACTION: publish (bisociación)

@@ -19,6 +19,47 @@ export function firmaAgente(agentName: unknown, porDefecto = 'agente-ia'): strin
     return esTexto(agentName) ? agentName.trim().slice(0, 100) : porDefecto;
 }
 
+/**
+ * Patrones de las pruebas de ataque que mandan los escáneres automáticos.
+ * Nada de esto se ejecuta en el banco (las ideas se guardan como texto), pero
+ * el 12 nov 2026 un escáner publicó ~40 en tres minutos y quedaron visibles en
+ * el banco público y en el mail. Se rechazan antes de guardar.
+ */
+const PATRONES_ATAQUE: RegExp[] = [
+    // Comandos de shell, sólo tras un separador (; | & `): «Sleep tracking
+    // para plantas» o «Echo de menos el mar» son ideas, no ataques.
+    /[;|&`]\s*(curl|wget|sleep|echo|touch|whoami|nc|bash|sh)\b/i,
+    /\$\(\(?|`[^`]*`/,                       // sustitución de comandos
+    /-oProxyCommand/i,                       // inyección en ssh
+    /\{\{.*\}\}|\$\{.*\}/,                   // inyección de plantillas
+    /__import__|\beval\s*\(|\bexec\s*\(/i,   // código Python/JS
+    /(\.\.\/){2,}|\/etc\/passwd|\/tmp\//i,   // recorrido de rutas
+    /169\.254\.169\.254|metadata\.google/i,  // metadatos de la nube (SSRF)
+    /\boob:\d+|\binteractsh|\bburpcollaborator/i, // callbacks fuera de banda
+    /<script\b|javascript:/i,                // XSS
+];
+
+/** true si el texto parece una prueba de ataque y no una idea. */
+export function pareceAtaque(...textos: unknown[]): boolean {
+    return textos.some((t) => typeof t === 'string' && PATRONES_ATAQUE.some((p) => p.test(t)));
+}
+
+export const MENSAJE_RECHAZO =
+    'Contenido rechazado: parece una prueba de seguridad, no una idea. El banco guarda ideas en texto plano.';
+
+/**
+ * Cupo de escritura de los agentes (publicar y comentar), además del límite por
+ * minuto general: 5 por minuto y 20 por hora por IP. Lo comparten la API REST y
+ * el MCP por HTTP.
+ */
+export async function dentroDelCupoDeEscritura(ip: string): Promise<boolean> {
+    const { checkRateLimit } = await import('@/lib/rate-limit');
+    const minuto = await checkRateLimit(ip, 'agent-escritura-min', 5, 60);
+    if (!minuto.success) return false;
+    const hora = await checkRateLimit(ip, 'agent-escritura-hora', 20, 3600);
+    return hora.success;
+}
+
 /** Mismo tope que una idea humana. */
 export const MAX_TEXTO_AGENTE = 1500;
 

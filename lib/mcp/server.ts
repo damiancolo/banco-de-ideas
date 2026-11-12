@@ -10,6 +10,9 @@ import {
     textoIdea,
     textoComentario,
     registrarLlamadaAgente,
+    pareceAtaque,
+    MENSAJE_RECHAZO,
+    dentroDelCupoDeEscritura,
 } from '@/lib/agent-actions';
 
 /**
@@ -39,6 +42,8 @@ const avisos = () => import('@/lib/notifications/notifyAdminNewIdea');
 
 // Firma de lo que se publica por esta puerta (el stdio firma 'mcp-agent').
 const FIRMA = 'mcp-http';
+
+const LIMITE_ESCRITURA = 'Límite de publicación alcanzado: 5 por minuto y 20 por hora. Volvé a intentar más tarde.';
 
 const SOLO_LECTURA = { readOnlyHint: true, openWorldHint: true };
 const ESCRITURA = { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true };
@@ -168,6 +173,8 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
                 if (!esTexto(conceptoA) || !esTexto(conceptoB) || !esTexto(insight)) {
                     return fallo('Se requieren conceptoA, conceptoB e insight.');
                 }
+                if (pareceAtaque(conceptoA, conceptoB, insight, ...(tags ?? []))) return fallo(MENSAJE_RECHAZO);
+                if (!(await dentroDelCupoDeEscritura(ip))) return fallo(LIMITE_ESCRITURA);
                 const texto = textoBisociacion(conceptoA, conceptoB, insight, limpiarTags(tags), FIRMA);
                 if (texto.length > MAX_TEXTO_AGENTE) {
                     return fallo(`El texto total excede ${MAX_TEXTO_AGENTE} caracteres. Sé más conciso.`);
@@ -197,6 +204,8 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
         },
         herramienta('publicar_idea', 'escritura', async ({ texto, tags }: { texto: string; tags?: string[] }) => {
             if (!esTexto(texto)) return fallo('Se requiere texto.');
+            if (pareceAtaque(texto, ...(tags ?? []))) return fallo(MENSAJE_RECHAZO);
+            if (!(await dentroDelCupoDeEscritura(ip))) return fallo(LIMITE_ESCRITURA);
             const textoFinal = textoIdea(texto, limpiarTags(tags), FIRMA);
             if (textoFinal.length > MAX_TEXTO_AGENTE) {
                 return fallo(`El texto excede ${MAX_TEXTO_AGENTE} caracteres.`);
@@ -225,6 +234,8 @@ export function crearServidorMcp(request: Request, version: string): McpServer {
             annotations: ESCRITURA,
         },
         herramienta('comentar_idea', 'escritura', async ({ id, texto }: { id: string; texto: string }) => {
+            if (pareceAtaque(texto)) return fallo(MENSAJE_RECHAZO);
+            if (!(await dentroDelCupoDeEscritura(ip))) return fallo(LIMITE_ESCRITURA);
             // addComment no mira el scope: sólo se comentan ideas públicas.
             const { getPublicIdeaById, addComment } = await db();
             const idea = await getPublicIdeaById(id);
