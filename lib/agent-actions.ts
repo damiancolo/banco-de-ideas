@@ -37,6 +37,7 @@ const PATRONES_ATAQUE: RegExp[] = [
     /169\.254\.169\.254|metadata\.google/i,  // metadatos de la nube (SSRF)
     /\boob:\d+|\binteractsh|\bburpcollaborator/i, // callbacks fuera de banda
     /<script\b|javascript:/i,                // XSS
+    /shadow_tool|"inputSchema"\s*:/i,        // definiciones de herramientas MCP inyectadas
 ];
 
 /** true si el texto parece una prueba de ataque y no una idea. */
