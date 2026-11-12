@@ -132,7 +132,7 @@ OPENAI_API_KEY=sk-proj-...
 # MongoDB Atlas
 MONGODB_URI=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas?retryWrites=true&w=majority&appName=bancodeideas
 MONGODB_URI_PRUEBAS=mongodb+srv://bancodeideas:<password>@bancodeideas.0qdelgq.mongodb.net/banco-ideas-pruebas?retryWrites=true&w=majority&appName=bancodeideas
-TRACK_SECRET=internal_track_2026_banco
+TRACK_SECRET=<secreto-aleatorio-32-bytes>
 # Autenticacion Google (NextAuth v5)
 AUTH_SECRET=<random-32-bytes-base64>
 AUTH_GOOGLE_ID=<google-oauth-client-id>
@@ -380,7 +380,7 @@ El proyecto incluye una capa completa para que agentes de IA descubran e interac
 - (Ya no hay «dual tracking» con WordPress: el WordPress de estudioprompt murió en oct 2026; ningún código de este repo lo llama.)
 
 ### WordPress: AI Bot Tracker plugin — HISTÓRICO
-El plugin `ai-bot-tracker` (WordPress de estudioprompt.com) enviaba visitas a `/api/track` con `TRACK_SECRET`. **El WordPress ya no corre** (verificado 18 oct 2026); el conteo de bots de estudioprompt lo hace su `middleware.ts` de Vercel y `estudioprompt.com/ai-stats` es una página Astro pública. ⚠️ Si `TRACK_SECRET` coincide con valores que estuvieron en el JS público de estudioprompt (`internal_track_2026_banco`), **rotarlo**: además es la sal del hash anónimo de visitantes.
+El plugin `ai-bot-tracker` (WordPress de estudioprompt.com) enviaba visitas a `/api/track` con `TRACK_SECRET`. **El WordPress ya no corre** (verificado 18 oct 2026); el conteo de bots de estudioprompt lo hace su `middleware.ts` de Vercel y `estudioprompt.com/ai-stats` es una página Astro pública. ⚠️ Si `TRACK_SECRET` coincide con valores que estuvieron en el JS público de estudioprompt (el valor que figuraba antes en este archivo), **rotarlo**: además es la sal del hash anónimo de visitantes.
 
 ### iframe embed (next.config.mjs)
 - `/tracker`: CSP `frame-ancestors https://estudioprompt.com` (permite iframe solo desde estudioprompt)
